@@ -14,6 +14,11 @@ Pasar de repositorio clonado a demo funcional local con comandos concretos.
 pnpm install
 ```
 
+Nota:
+- La primera configuracion/build del motor C++ descarga dependencias fijadas (`nlohmann/json`, `CLI11`, `GoogleTest`) mediante `FetchContent`.
+- Esa descarga ocurre durante `cmake -S ... -B ...`.
+- En entornos sin salida a internet, se debe usar un cache previo de CMake o vendorizar esas dependencias antes del build.
+
 ## 4. Build del motor C++
 ```bash
 cmake -S services/engine-cpp -B services/engine-cpp/build

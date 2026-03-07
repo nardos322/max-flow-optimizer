@@ -24,6 +24,11 @@ Campos recomendados por corrida:
 - `runtimeMs`
 - `augmentingPaths` (si se expone)
 
+Nota v1:
+- El engine no emite logs persistentes propios en la implementacion actual del MVP.
+- La API sigue siendo la fuente primaria de correlacion y logging operativo.
+- `requestId` igualmente viaja en el wrapper interno para mantener estable el contrato API-engine y habilitar logs del engine en una version futura sin romper I/O.
+
 ## 4. Metricas operativas v1
 - `solve_requests_total`
 - `solve_failures_total`

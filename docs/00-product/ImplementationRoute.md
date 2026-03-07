@@ -9,7 +9,7 @@
 ## Estado por bloque
 - [x] Bloque 0 - Bootstrap Monorepo
 - [x] Bloque 1 - Contratos y Fixtures
-- [ ] Bloque 2 - Motor C++
+- [x] Bloque 2 - Motor C++
 - [ ] Bloque 3 - API
 - [ ] Bloque 4 - Web MVP
 - [ ] Bloque 5 - Calidad y cierre
@@ -26,7 +26,7 @@
 ### [x] T0.3 Scaffold engine C++
 - Crear `CMakeLists.txt` raiz en `services/engine-cpp`.
 - Configurar target del binario y target de tests GTest.
-- DoD: `cmake --build` funciona y ejecuta test dummy.
+- DoD: `cmake --build` funciona y ejecuta al menos una suite minima en `GoogleTest`.
 
 ## Bloque 1 - Contratos y Fixtures (Dia 2)
 ### [x] T1.1 Contrato JSON v1
@@ -44,23 +44,23 @@
 - DoD: `packages/test-data` cubre el set canonico definido en `docs/40-quality/TestPlan.md`, con snapshots exactos para casos `feasible`, `infeasible` e `invalid` segun corresponda.
 
 ## Bloque 2 - Motor C++ (Dias 3-4)
-### [ ] T2.1 Modelo de grafo interno
+### [x] T2.1 Modelo de grafo interno
 - Estructuras para nodos, aristas y residual.
 - DoD: tests unitarios de construccion de red en verde.
 
-### [ ] T2.2 Edmonds-Karp
+### [x] T2.2 Edmonds-Karp
 - BFS de caminos aumentantes + actualizacion de flujo.
 - DoD: test de maxflow sobre grafos pequenos conocidos.
 
-### [ ] T2.3 Adaptador problema -> red
+### [x] T2.3 Adaptador problema -> red
 - Mapear instancia (medico/periodo/dia) a red segun `docs/10-model/Model.md`.
 - DoD: constraints quedan reflejadas por capacidades correctas.
 
-### [ ] T2.4 Extraccion de asignaciones
+### [x] T2.4 Extraccion de asignaciones
 - Reconstruir `assignments` desde arcos con flujo 1.
 - DoD: salida determinista ordenada por `dayId`.
 
-### [ ] T2.5 CLI I/O y errores
+### [x] T2.5 CLI I/O y errores
 - `--input` y `--stdin`, stdout JSON, stderr JSON de error.
 - DoD: cumple `docs/20-architecture/EngineSpec.md` y codigos de salida.
 

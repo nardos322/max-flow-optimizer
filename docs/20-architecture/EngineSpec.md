@@ -31,6 +31,7 @@ Reglas:
 - `requestId` es obligatorio para correlacion de logs.
 - `input` corresponde al request HTTP publico ya validado por API.
 - En v1, el engine puede revalidar consistencia por defensa, pero la validacion primaria ocurre antes en API/domain.
+- En v1, el engine parsea `requestId` y lo conserva como parte del contrato interno, pero no emite logs propios persistentes; la correlacion operativa efectiva ocurre en la API, que ya conoce el `requestId` y el `engineExitCode`.
 
 ## 4. Salida estandar (stdout)
 JSON con esta forma:
