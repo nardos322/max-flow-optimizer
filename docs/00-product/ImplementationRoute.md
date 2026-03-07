@@ -8,7 +8,7 @@
 
 ## Estado por bloque
 - [x] Bloque 0 - Bootstrap Monorepo
-- [ ] Bloque 1 - Contratos y Fixtures
+- [x] Bloque 1 - Contratos y Fixtures
 - [ ] Bloque 2 - Motor C++
 - [ ] Bloque 3 - API
 - [ ] Bloque 4 - Web MVP
@@ -29,16 +29,16 @@
 - DoD: `cmake --build` funciona y ejecuta test dummy.
 
 ## Bloque 1 - Contratos y Fixtures (Dia 2)
-### [ ] T1.1 Contrato JSON v1
+### [x] T1.1 Contrato JSON v1
 - Implementar schemas en `packages/contracts`.
 - DoD: request/response estructurales de `docs/30-api/API.md` validan correctamente.
 
-### [ ] T1.2 Validaciones de dominio
+### [x] T1.2 Validaciones de dominio
 - Implementar invariantes en `packages/domain`.
 - Validar reglas cross-field y limites operativos que no viven solo en schema.
 - DoD: errores mapeados a codigos de `docs/30-api/ErrorCatalog.md`.
 
-### [ ] T1.3 Fixtures canonicos
+### [x] T1.3 Fixtures canonicos
 - Crear `packages/test-data/input/*` y `expected/*`.
 - Agregar `fixtures.manifest.json` recomendado para categorizar fixtures y modo de asercion.
 - DoD: `packages/test-data` cubre el set canonico definido en `docs/40-quality/TestPlan.md`, con snapshots exactos para casos `feasible`, `infeasible` e `invalid` segun corresponda.

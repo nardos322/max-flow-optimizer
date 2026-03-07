@@ -3,10 +3,18 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js",
+    "./v1": "./src/v1/index.js"
+  },
   "scripts": {
-    "build": "node -e \"console.log('contracts scaffold build')\"",
-    "test": "node -e \"console.log('contracts scaffold test')\"",
-    "lint": "node -e \"console.log('contracts scaffold lint')\"",
-    "typecheck": "node -e \"console.log('contracts scaffold typecheck')\""
+    "build": "node ./scripts/build.mjs",
+    "test": "node --test ./tests/**/*.test.js",
+    "lint": "node ./scripts/lint.mjs",
+    "typecheck": "node ./scripts/typecheck.mjs"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1"
   }
 }

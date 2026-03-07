@@ -2,7 +2,7 @@
   "instanceId": "invalid-duplicate-id",
   "maxDaysPerMedic": 2,
   "periods": [
-    { "id": "p1", "dayIds": ["d1", "d1"] }
+    { "id": "p1", "dayIds": ["d1"] }
   ],
   "days": [
     { "id": "d1", "date": "2026-04-17" },

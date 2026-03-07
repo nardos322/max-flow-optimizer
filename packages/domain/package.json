@@ -3,10 +3,13 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "exports": {
+    ".": "./src/index.js"
+  },
   "scripts": {
-    "build": "node -e \"console.log('domain scaffold build')\"",
-    "test": "node -e \"console.log('domain scaffold test')\"",
-    "lint": "node -e \"console.log('domain scaffold lint')\"",
-    "typecheck": "node -e \"console.log('domain scaffold typecheck')\""
+    "build": "node ./scripts/build.mjs",
+    "test": "node --test ./tests/**/*.test.js",
+    "lint": "node ./scripts/lint.mjs",
+    "typecheck": "node ./scripts/typecheck.mjs"
   }
 }
