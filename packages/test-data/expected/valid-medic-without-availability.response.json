@@ -1,0 +1,16 @@
+{
+  "instanceId": "valid-medic-without-availability",
+  "feasible": true,
+  "requiredFlow": 3,
+  "maxFlow": 3,
+  "assignments": [
+    { "dayId": "d1", "medicId": "m1", "periodId": "p1" },
+    { "dayId": "d2", "medicId": "m2", "periodId": "p1" },
+    { "dayId": "d3", "medicId": "m1", "periodId": "p2" }
+  ],
+  "stats": {
+    "nodes": 14,
+    "edges": 15,
+    "runtimeMs": 0
+  }
+}

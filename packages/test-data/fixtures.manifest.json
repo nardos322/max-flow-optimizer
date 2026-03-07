@@ -3,38 +3,94 @@
   "fixtures": [
     {
       "id": "tiny-feasible",
-      "input": "input/tiny-feasible.json",
-      "expected": "expected/tiny-feasible.output.json",
-      "expectedFeasible": true,
-      "matchMode": "subset"
+      "inputPath": "input/tiny-feasible.json",
+      "expectedPath": "expected/tiny-feasible.response.json",
+      "category": "feasible",
+      "assertionMode": "exact-response"
     },
     {
       "id": "tiny-infeasible-availability",
-      "input": "input/tiny-infeasible-availability.json",
-      "expected": "expected/tiny-infeasible-availability.output.json",
-      "expectedFeasible": false,
-      "matchMode": "subset"
+      "inputPath": "input/tiny-infeasible-availability.json",
+      "expectedPath": "expected/tiny-infeasible-availability.response.json",
+      "category": "infeasible",
+      "assertionMode": "exact-response"
     },
     {
       "id": "tiny-infeasible-capacity",
-      "input": "input/tiny-infeasible-capacity.json",
-      "expected": "expected/tiny-infeasible-capacity.output.json",
-      "expectedFeasible": false,
-      "matchMode": "subset"
+      "inputPath": "input/tiny-infeasible-capacity.json",
+      "expectedPath": "expected/tiny-infeasible-capacity.response.json",
+      "category": "infeasible",
+      "assertionMode": "exact-response"
     },
     {
       "id": "tiny-infeasible-per-period",
-      "input": "input/tiny-infeasible-per-period.json",
-      "expected": "expected/tiny-infeasible-per-period.output.json",
-      "expectedFeasible": false,
-      "matchMode": "subset"
+      "inputPath": "input/tiny-infeasible-per-period.json",
+      "expectedPath": "expected/tiny-infeasible-per-period.response.json",
+      "category": "infeasible",
+      "assertionMode": "exact-response"
+    },
+    {
+      "id": "invalid-duplicate-id",
+      "inputPath": "input/invalid-duplicate-id.json",
+      "expectedPath": "expected/invalid-duplicate-id.error.json",
+      "category": "invalid",
+      "assertionMode": "exact-error"
+    },
+    {
+      "id": "invalid-duplicate-day-date",
+      "inputPath": "input/invalid-duplicate-day-date.json",
+      "expectedPath": "expected/invalid-duplicate-day-date.error.json",
+      "category": "invalid",
+      "assertionMode": "exact-error"
+    },
+    {
+      "id": "invalid-day-without-period",
+      "inputPath": "input/invalid-day-without-period.json",
+      "expectedPath": "expected/invalid-day-without-period.error.json",
+      "category": "invalid",
+      "assertionMode": "exact-error"
+    },
+    {
+      "id": "invalid-day-in-multiple-periods",
+      "inputPath": "input/invalid-day-in-multiple-periods.json",
+      "expectedPath": "expected/invalid-day-in-multiple-periods.error.json",
+      "category": "invalid",
+      "assertionMode": "exact-error"
+    },
+    {
+      "id": "valid-non-contiguous-period",
+      "inputPath": "input/valid-non-contiguous-period.json",
+      "expectedPath": "expected/valid-non-contiguous-period.response.json",
+      "category": "feasible",
+      "assertionMode": "exact-response"
+    },
+    {
+      "id": "valid-medic-without-availability",
+      "inputPath": "input/valid-medic-without-availability.json",
+      "expectedPath": "expected/valid-medic-without-availability.response.json",
+      "category": "feasible",
+      "assertionMode": "exact-response"
+    },
+    {
+      "id": "valid-same-instance-different-order",
+      "inputPath": "input/valid-same-instance-different-order.json",
+      "expectedPath": "expected/valid-same-instance-different-order.response.json",
+      "category": "feasible",
+      "assertionMode": "exact-response"
     },
     {
       "id": "medium-random-50x50",
-      "input": "input/medium-random-50x50.json",
-      "expected": null,
-      "expectedFeasible": null,
-      "performanceOnly": true
+      "inputPath": "input/medium-random-50x50.json",
+      "expectedPath": null,
+      "category": "smoke",
+      "assertionMode": "invariants-only"
+    },
+    {
+      "id": "large-random-200x200",
+      "inputPath": "input/large-random-200x200.json",
+      "expectedPath": null,
+      "category": "benchmark",
+      "assertionMode": "invariants-only"
     }
   ]
 }

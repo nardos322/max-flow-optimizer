@@ -1,0 +1,12 @@
+{
+  "name": "max-flow-optimizer",
+  "private": true,
+  "packageManager": "pnpm@9.12.2",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @maxflow/api --filter @maxflow/web run dev",
+    "build": "pnpm -r --if-present run build && cmake -S services/engine-cpp -B services/engine-cpp/build && cmake --build services/engine-cpp/build",
+    "test": "pnpm -r --if-present run test && cmake -S services/engine-cpp -B services/engine-cpp/build && ctest --test-dir services/engine-cpp/build --output-on-failure",
+    "lint": "pnpm -r --if-present run lint",
+    "typecheck": "pnpm -r --if-present run typecheck"
+  }
+}

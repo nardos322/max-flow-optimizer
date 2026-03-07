@@ -1,0 +1,13 @@
+{
+  "name": "@maxflow/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.log('web scaffold dev')\"",
+    "build": "node -e \"console.log('web scaffold build')\"",
+    "test": "node -e \"console.log('web scaffold test')\"",
+    "lint": "node -e \"console.log('web scaffold lint')\"",
+    "typecheck": "node -e \"console.log('web scaffold typecheck')\""
+  }
+}

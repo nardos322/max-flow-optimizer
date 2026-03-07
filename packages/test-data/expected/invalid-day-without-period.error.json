@@ -1,0 +1,11 @@
+{
+  "error": {
+    "requestId": "00000000-0000-0000-0000-000000000000",
+    "timestamp": "2026-03-07T00:00:00.000Z",
+    "code": "DAY_WITHOUT_PERIOD",
+    "message": "Each day must belong to exactly one period.",
+    "details": {
+      "dayId": "d2"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "instanceId": "valid-same-instance-different-order",
+  "maxDaysPerMedic": 2,
+  "periods": [
+    { "id": "p2", "dayIds": ["d3"] },
+    { "id": "p1", "dayIds": ["d2", "d1"] }
+  ],
+  "days": [
+    { "id": "d3", "date": "2026-04-20" },
+    { "id": "d1", "date": "2026-04-17" },
+    { "id": "d2", "date": "2026-04-18" }
+  ],
+  "medics": [
+    { "id": "m2", "name": "Luis" },
+    { "id": "m1", "name": "Ana" }
+  ],
+  "availability": [
+    { "medicId": "m2", "dayId": "d2" },
+    { "medicId": "m1", "dayId": "d3" },
+    { "medicId": "m1", "dayId": "d1" }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "instanceId": "tiny-feasible",
+  "feasible": true,
+  "requiredFlow": 3,
+  "maxFlow": 3,
+  "assignments": [
+    { "dayId": "d1", "medicId": "m1", "periodId": "p1" },
+    { "dayId": "d2", "medicId": "m2", "periodId": "p1" },
+    { "dayId": "d3", "medicId": "m1", "periodId": "p2" }
+  ],
+  "stats": {
+    "nodes": 11,
+    "edges": 12,
+    "runtimeMs": 0
+  }
+}

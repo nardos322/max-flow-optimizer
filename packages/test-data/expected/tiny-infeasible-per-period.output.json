@@ -1,8 +1,0 @@
-{
-  "instanceId": "tiny-infeasible-per-period",
-  "feasible": false,
-  "requiredFlow": 2,
-  "maxFlow": 1,
-  "assignments": []
-}
-

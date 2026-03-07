@@ -1,8 +1,8 @@
 # packages/test-data
 
-Datasets de prueba y expected outputs para unit/integration/e2e.
+Fixtures canonicos y expected files usados por unit, integration, smoke y benchmark.
 
-## Estructura recomendada
+## Estructura canonica
 ```text
 packages/test-data/
 ├── fixtures.manifest.json
@@ -11,30 +11,30 @@ packages/test-data/
 │   ├── tiny-infeasible-availability.json
 │   ├── tiny-infeasible-capacity.json
 │   ├── tiny-infeasible-per-period.json
-│   └── medium-random-50x50.json
+│   ├── invalid-duplicate-id.json
+│   ├── invalid-duplicate-day-date.json
+│   ├── invalid-day-without-period.json
+│   ├── invalid-day-in-multiple-periods.json
+│   ├── valid-non-contiguous-period.json
+│   ├── valid-medic-without-availability.json
+│   ├── valid-same-instance-different-order.json
+│   ├── medium-random-50x50.json
+│   └── large-random-200x200.json
 └── expected/
-    ├── tiny-feasible.output.json
-    ├── tiny-infeasible-availability.output.json
-    ├── tiny-infeasible-capacity.output.json
-    └── tiny-infeasible-per-period.output.json
+    ├── *.response.json
+    └── *.error.json
 ```
 
 ## Convenciones
-- Inputs en `snake-case`.
-- Outputs con sufijo `.output.json`.
+- Inputs en `kebab-case`.
+- Casos `HTTP 200` usan sufijo `.response.json`.
+- Casos `HTTP 400` usan sufijo `.error.json`.
 - `instanceId` debe ser estable por fixture.
-- Evitar fechas relativas; usar fechas absolutas (`YYYY-MM-DD`).
-- Los expected en v1 usan `matchMode=subset` (se comparan campos relevantes, no igualdad total del JSON).
-
-## Invariantes que deben validar los expected
-- `feasible=true` => `assignments.length == requiredFlow`.
-- `feasible=false` => `maxFlow < requiredFlow`.
-- Toda asignacion respeta disponibilidad y restricciones de dominio.
-- Orden determinista por `dayId`.
+- Las fechas deben ser absolutas en formato `YYYY-MM-DD`.
+- Los casos canonicos usan snapshots exactos; solo se excluyen de igualdad literal `requestId` y `timestamp` en errores.
 
 ## Uso en tests
-- Unit tests del motor consumen `input/*` y comparan invariantes.
-- Integration tests API comparan contra `expected/*` (golden files).
-- Casos `medium-*` se usan para smoke de performance, no para snapshots estrictos.
-- `fixtures.manifest.json` es la fuente de verdad para descubrir fixtures desde scripts de test.
-- En `matchMode=subset`, se ignoran campos no deterministas (ej: `stats.runtimeMs`).
+- `exact-response`: comparar cuerpo `HTTP 200` exacto.
+- `exact-error`: comparar cuerpo `HTTP 400` exacto, salvo `requestId` y `timestamp` por shape.
+- `invariants-only`: validar invariantes funcionales y limites de tiempo.
+- `fixtures.manifest.json` es la fuente de verdad para descubrir fixtures y modo de asercion.

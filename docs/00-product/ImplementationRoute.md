@@ -7,7 +7,7 @@
 - Marcar una tarea como completada solo cuando su DoD este cumplido.
 
 ## Estado por bloque
-- [ ] Bloque 0 - Bootstrap Monorepo
+- [x] Bloque 0 - Bootstrap Monorepo
 - [ ] Bloque 1 - Contratos y Fixtures
 - [ ] Bloque 2 - Motor C++
 - [ ] Bloque 3 - API
@@ -15,15 +15,15 @@
 - [ ] Bloque 5 - Calidad y cierre
 
 ## Bloque 0 - Bootstrap Monorepo (Dia 1)
-### [ ] T0.1 Workspace y scripts base
+### [x] T0.1 Workspace y scripts base
 - Crear `pnpm-workspace.yaml`, `package.json` raiz y scripts `dev/test/build`.
 - DoD: comandos base ejecutan sin error aunque haya modulos vacios.
 
-### [ ] T0.2 Scaffold apps y packages
+### [x] T0.2 Scaffold apps y packages
 - Inicializar `apps/api`, `apps/web`, `packages/contracts`, `packages/domain`, `packages/test-data`.
 - DoD: estructura compila en seco (`build`) y tests vacios pasan.
 
-### [ ] T0.3 Scaffold engine C++
+### [x] T0.3 Scaffold engine C++
 - Crear `CMakeLists.txt` raiz en `services/engine-cpp`.
 - Configurar target del binario y target de tests GTest.
 - DoD: `cmake --build` funciona y ejecuta test dummy.

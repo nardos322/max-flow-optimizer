@@ -1,0 +1,17 @@
+{
+  "instanceId": "tiny-infeasible-capacity",
+  "feasible": false,
+  "requiredFlow": 3,
+  "maxFlow": 2,
+  "assignments": [],
+  "stats": {
+    "nodes": 13,
+    "edges": 17,
+    "runtimeMs": 0
+  },
+  "diagnostics": {
+    "summaryCode": "INSUFFICIENT_COVERAGE",
+    "message": "Unable to cover all days under current constraints.",
+    "uncoveredDays": ["d3"]
+  }
+}

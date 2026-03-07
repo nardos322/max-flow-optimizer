@@ -1,0 +1,13 @@
+{
+  "name": "@maxflow/api",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node -e \"console.log('api scaffold dev')\"",
+    "build": "node -e \"console.log('api scaffold build')\"",
+    "test": "node -e \"console.log('api scaffold test')\"",
+    "lint": "node -e \"console.log('api scaffold lint')\"",
+    "typecheck": "node -e \"console.log('api scaffold typecheck')\""
+  }
+}

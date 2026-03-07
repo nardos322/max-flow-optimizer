@@ -1,0 +1,17 @@
+{
+  "instanceId": "invalid-duplicate-id",
+  "maxDaysPerMedic": 2,
+  "periods": [
+    { "id": "p1", "dayIds": ["d1", "d1"] }
+  ],
+  "days": [
+    { "id": "d1", "date": "2026-04-17" },
+    { "id": "d1", "date": "2026-04-18" }
+  ],
+  "medics": [
+    { "id": "m1", "name": "Ana" }
+  ],
+  "availability": [
+    { "medicId": "m1", "dayId": "d1" }
+  ]
+}
