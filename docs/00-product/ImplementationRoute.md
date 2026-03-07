@@ -20,7 +20,7 @@
 - DoD: comandos base ejecutan sin error aunque haya modulos vacios.
 
 ### [ ] T0.2 Scaffold apps y packages
-- Inicializar `apps/api`, `apps/web`, `packages/contracts`, `packages/domain`.
+- Inicializar `apps/api`, `apps/web`, `packages/contracts`, `packages/domain`, `packages/test-data`.
 - DoD: estructura compila en seco (`build`) y tests vacios pasan.
 
 ### [ ] T0.3 Scaffold engine C++
@@ -31,15 +31,17 @@
 ## Bloque 1 - Contratos y Fixtures (Dia 2)
 ### [ ] T1.1 Contrato JSON v1
 - Implementar schemas en `packages/contracts`.
-- DoD: request/response de `docs/30-api/API.md` validan correctamente.
+- DoD: request/response estructurales de `docs/30-api/API.md` validan correctamente.
 
 ### [ ] T1.2 Validaciones de dominio
 - Implementar invariantes en `packages/domain`.
+- Validar reglas cross-field y limites operativos que no viven solo en schema.
 - DoD: errores mapeados a codigos de `docs/30-api/ErrorCatalog.md`.
 
 ### [ ] T1.3 Fixtures canonicos
 - Crear `packages/test-data/input/*` y `expected/*`.
-- DoD: fixtures cubren 4 casos tiny (factible + 3 infactibles).
+- Agregar `fixtures.manifest.json` recomendado para categorizar fixtures y modo de asercion.
+- DoD: `packages/test-data` cubre el set canonico definido en `docs/40-quality/TestPlan.md`, con snapshots exactos para casos `feasible`, `infeasible` e `invalid` segun corresponda.
 
 ## Bloque 2 - Motor C++ (Dias 3-4)
 ### [ ] T2.1 Modelo de grafo interno
@@ -69,24 +71,34 @@
 
 ### [ ] T3.2 Integracion con engine
 - Ejecutar binario C++ desde API y parsear salida.
-- DoD: errores del motor mapeados a `ENGINE_*`.
+- Enviar wrapper interno `{ requestId, input }` por stdin al engine.
+- DoD: errores del motor mapeados a `ENGINE_*` y correlacion por `requestId` disponible en logs.
 
 ### [ ] T3.3 Tests API/integracion
 - Supertest para validaciones y casos factible/infactible.
 - DoD: tests con fixtures canonicos en verde.
 
 ## Bloque 4 - Web MVP (Dia 6)
-### [ ] T4.1 Pantalla unica
-- Input JSON + boton resolver + panel de resultado.
-- DoD: flujo completo manual con fixture factible.
+### [ ] T4.1 Navegacion y estado compartido
+- Implementar navegacion simple entre `Periodos`, `Medicos` y `Planificador`.
+- Centralizar en frontend un unico estado de instancia editable por las tres vistas.
+- Implementar ese estado global con `React Context` + `useReducer`.
+- Agregar accion de carga de fixture base para poblar la UI rapidamente.
+- DoD: cambiar de seccion no pierde datos y el fixture factible queda visible en las 3 vistas segun `docs/00-product/FrontendSpec.md`.
 
-### [ ] T4.2 Visualizacion de salida
-- Estado `feasible`, tabla de asignaciones y metricas.
-- DoD: estado infactible muestra diagnostico minimo.
+### [ ] T4.2 Captura de datos por seccion
+- Implementar formularios/tablas para crear `periods`, `days`, `medics` y `availability`.
+- Basar formularios en `react-hook-form` con validacion `zod` en cliente.
+- Implementar `availability` con UI por medico, dias agrupados por periodo y seleccion por checkbox.
+- Mostrar errores locales de campos requeridos y referencias obvias antes de resolver.
+- DoD: un usuario puede armar una instancia valida sin editar JSON crudo y los componentes siguen el contrato de `docs/00-product/FrontendSpec.md`.
 
-### [ ] T4.3 Exportacion
+### [ ] T4.3 Planificador, resultado y exportacion
+- Mostrar resumen de la instancia, boton resolver, estado `feasible`, tabla de asignaciones y metricas.
+- Mostrar diagnostico minimo en infactible.
 - Export JSON/CSV del resultado.
-- DoD: archivos descargan con contenido correcto.
+- Generar CSV uniendo `assignments` con el `instanceDraft` actual.
+- DoD: flujo completo manual `Periodos` -> `Medicos` -> `Planificador` funciona con caso factible e infactible y las descargas contienen contenido correcto segun `docs/00-product/FrontendSpec.md`.
 
 ## Bloque 5 - Calidad y cierre (Dia 7)
 ### [ ] T5.1 CI minima
@@ -95,7 +107,8 @@
 
 ### [ ] T5.2 Hardening
 - Manejo de edge cases y mensajes claros de error.
-- DoD: smoke completo con tiny + medium.
+- Ejecutar smoke con fixtures canonicos y benchmark local segun `docs/40-quality/BenchmarkProtocol.md`.
+- DoD: smoke completo con `tiny` + `medium`, y benchmark local documentado sin violar limites de `docs/40-quality/NonFunctionalLimits.md`.
 
 ### [ ] T5.3 Portfolio pack
 - README final, diagrama, capturas/gif y guion de demo.

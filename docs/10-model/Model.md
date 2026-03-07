@@ -67,3 +67,11 @@ Sustituyendo:
 
 Caso denso (`A` cercano a `|M||D|`): costo dominado por la densidad de disponibilidades.
 
+## 9. Regla de determinismo v1
+Para garantizar que mismo input implique mismo output:
+- El orden de entrada de `periods`, `days`, `medics` y `availability` no se considera semantico.
+- La construccion del grafo debe normalizar IDs en orden lexicografico ascendente.
+- La exploracion BFS de Edmonds-Karp debe respetar ese orden estable de adyacencias.
+- La salida final debe ordenarse por `dayId`.
+
+Con estas reglas, si existen multiples max-flows validos, v1 elige en forma determinista el inducido por el primer camino aumentante encontrado bajo ese orden estable.

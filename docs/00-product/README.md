@@ -7,6 +7,6 @@ Documentos de alcance, plan y entrega del MVP.
 - `Roadmap.md`: plan temporal de ejecucion.
 - `BACKLOG.md`: trabajo futuro fuera de v1.
 - `ImplementationRoute.md`: tareas secuenciadas para implementar.
+- `FrontendSpec.md`: contrato visual y de componentes del frontend.
 - `ReleaseChecklist.md`: checklist de salida v1.
 - `DemoScript.md`: guion de demo para portfolio.
-- `LocalRunbook.md`: arranque local paso a paso.

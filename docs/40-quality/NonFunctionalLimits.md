@@ -24,7 +24,11 @@ Definir umbrales concretos de rendimiento y capacidad para acotar el MVP.
 ## 5. Criterio de rechazo por limite
 - Si se excede un limite: `400` con `code=INVALID_INPUT` y detalle de limite violado.
 
+## 5.1 Protocolo de benchmark
+- El procedimiento oficial de medicion se define en `docs/40-quality/BenchmarkProtocol.md`.
+- El SLO de v1 se evalua sobre latencia HTTP total de `POST /v1/solve`.
+- `stats.runtimeMs` se considera una metrica diagnostica del motor, no el indicador principal de cumplimiento de SLO.
+
 ## 6. Revisit para v1.1
 - Recalibrar limites con benchmark real.
 - Agregar pruebas de carga automatizadas.
-

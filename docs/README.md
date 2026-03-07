@@ -10,8 +10,23 @@ docs/
 ├── 20-architecture/
 ├── 30-api/
 ├── 40-quality/
+├── 50-operations/
 └── README.md
 ```
+
+## Convencion de naming
+- Carpetas top-level de `docs/`:
+  - prefijo numerico para ordenar lectura (`00`, `10`, `20`, ...),
+  - sufijo en `kebab-case` para el dominio (`product`, `model`, `architecture`, `api`, `quality`, `operations`).
+- Archivos Markdown de contenido:
+  - usar `PascalCase.md` cuando el documento describe una decision, contrato o proceso.
+  - ejemplos: `FrontendSpec.md`, `EngineIntegrationContract.md`, `BenchmarkProtocol.md`.
+- Excepciones permitidas:
+  - `README.md` para indices de carpeta,
+  - acronimos canonicos ampliamente reconocidos: `PRD.md`, `API.md`, `CI.md`.
+- Regla practica:
+  - no renombrar archivos solo por estilo si ya son claros y estables,
+  - si se crea un nuevo documento, debe seguir esta convencion antes de agregarse al indice.
 
 ## Indice por carpeta
 ### `00-product`
@@ -21,7 +36,7 @@ docs/
 - `00-product/ImplementationRoute.md`: ruta en tareas secuenciadas.
 - `00-product/ReleaseChecklist.md`: checklist de salida.
 - `00-product/DemoScript.md`: guion de demo para portfolio.
-- `00-product/LocalRunbook.md`: arranque local paso a paso.
+- `00-product/FrontendSpec.md`: contrato visual y de componentes del frontend.
 
 ### `10-model`
 - `10-model/Model.md`: formulacion, correctitud y complejidad.
@@ -34,7 +49,6 @@ docs/
 - `20-architecture/EngineIntegrationContract.md`: contrato interno API <-> engine.
 - `20-architecture/DependencyPolicy.md`: criterio de dependencias y anti-reinvencion.
 - `20-architecture/DependencyList.md`: dependencias minimas recomendadas para v1.
-- `20-architecture/RuntimeConfig.md`: variables de entorno y defaults.
 - `20-architecture/WorkspaceScripts.md`: nombres de paquetes y scripts canonicos.
 
 ### `30-api`
@@ -46,10 +60,15 @@ docs/
 - `40-quality/TestPlan.md`: estrategia de pruebas.
 - `40-quality/CI.md`: quality gates de CI.
 - `40-quality/NonFunctionalLimits.md`: limites operativos y SLO.
+- `40-quality/BenchmarkProtocol.md`: procedimiento reproducible de benchmark.
 - `40-quality/Observability.md`: logs y metricas.
 - `40-quality/WorkflowConventions.md`: ramas, commits y PR.
 - `40-quality/RiskPlaybook.md`: respuestas a riesgos tecnicos.
 - `40-quality/TraceabilityMatrix.md`: trazabilidad tareas -> tests.
+
+### `50-operations`
+- `50-operations/RuntimeConfig.md`: variables de entorno y defaults.
+- `50-operations/LocalRunbook.md`: arranque local paso a paso.
 
 ## Orden recomendado de lectura
 1. `00-product/PRD.md`
@@ -65,15 +84,17 @@ docs/
 11. `20-architecture/DependencyList.md`
 12. `00-product/BACKLOG.md`
 13. `00-product/ImplementationRoute.md`
-14. `20-architecture/RuntimeConfig.md`
+14. `00-product/FrontendSpec.md`
 15. `20-architecture/WorkspaceScripts.md`
-16. `30-api/OpenAPI.md`
-17. `20-architecture/EngineIntegrationContract.md`
-18. `40-quality/NonFunctionalLimits.md`
-19. `40-quality/Observability.md`
-20. `40-quality/WorkflowConventions.md`
-21. `40-quality/TraceabilityMatrix.md`
-22. `40-quality/RiskPlaybook.md`
-23. `00-product/LocalRunbook.md`
-24. `00-product/ReleaseChecklist.md`
-25. `00-product/DemoScript.md`
+16. `50-operations/RuntimeConfig.md`
+17. `30-api/OpenAPI.md`
+18. `20-architecture/EngineIntegrationContract.md`
+19. `40-quality/NonFunctionalLimits.md`
+20. `40-quality/BenchmarkProtocol.md`
+21. `40-quality/Observability.md`
+22. `40-quality/WorkflowConventions.md`
+23. `40-quality/TraceabilityMatrix.md`
+24. `40-quality/RiskPlaybook.md`
+25. `50-operations/LocalRunbook.md`
+26. `00-product/ReleaseChecklist.md`
+27. `00-product/DemoScript.md`

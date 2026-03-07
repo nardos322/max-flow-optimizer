@@ -5,7 +5,8 @@ Permitir evolucionar el proyecto (auth, persistencia, multi-hospital, analitica)
 
 ## 2. Principios obligatorios
 ### 2.1 Contract-first
-- `packages/contracts` es la fuente unica de verdad para request/response.
+- `packages/contracts` es la fuente unica de verdad para request/response HTTP estructurales.
+- `packages/domain` es la fuente de verdad para validaciones semanticas y reglas cross-field.
 - Todo cambio de contrato debe ser versionado (`v1`, `v1.1`, `v2`).
 - Evitar breaking changes en la misma version.
 
@@ -19,22 +20,29 @@ Permitir evolucionar el proyecto (auth, persistencia, multi-hospital, analitica)
   - ejecutar solver (`SolverRunner`),
   - persistir corridas (`ResultStore`, futuro).
 - Implementaciones concretas (adaptadores) se enchufan sin tocar casos de uso.
+- El adaptador hacia el engine puede usar un contrato interno distinto del contrato HTTP publico.
 
 ### 2.4 Dominio independiente del framework
 - Reglas de negocio y validaciones en `packages/domain`.
 - `apps/api` solo traduce HTTP <-> dominio.
 - `apps/web` solo consume contratos, sin logica de negocio duplicada.
 
-### 2.5 Evolucion por modulos opcionales
+### 2.5 Estado frontend simple y explicito
+- `apps/web` mantiene un unico estado global `instanceDraft`.
+- Ese estado se implementa con `React Context` + `useReducer`.
+- `react-hook-form` se usa para estado local de formularios, no como store global.
+- Los formularios confirman cambios al `instanceDraft` mediante acciones del reducer.
+
+### 2.6 Evolucion por modulos opcionales
 - Features nuevas (auth, multi-hospital, historial) entran como modulos separados.
 - El camino feliz del MVP debe seguir funcionando sin esos modulos.
 
-### 2.6 Determinismo y observabilidad
+### 2.7 Determinismo y observabilidad
 - Misma instancia => misma salida (orden estable por `dayId`).
 - Toda corrida expone metadatos (`runtimeMs`, `nodes`, `edges`).
 - Errores estructurados con `code`, `message`, `details`.
 
-### 2.7 Test gate
+### 2.8 Test gate
 - No merge sin:
   - tests del motor en verde,
   - tests de integracion API-motor en verde,
@@ -62,4 +70,3 @@ Antes de agregar una feature grande:
 3. Definir tests de regresion.
 4. Implementar por modulo aislado.
 5. Verificar que MVP sigue intacto.
-

@@ -25,9 +25,13 @@ cmake --build services/engine-cpp/build -j
 ```env
 NODE_ENV=development
 PORT=3000
-ENGINE_PATH=/home/nardos322/max-flow-optimizer/services/engine-cpp/build/maxflow_engine
+ENGINE_PATH=/home/nardos322/projects/max-flow-optimizer/services/engine-cpp/build/maxflow_engine
 ENGINE_TIMEOUT_MS=2000
 MAX_REQUEST_BYTES=1000000
+MAX_DAYS=500
+MAX_MEDICS=500
+MAX_PERIODS=100
+MAX_AVAILABILITY_PAIRS=100000
 LOG_LEVEL=info
 ```
 
@@ -35,6 +39,21 @@ LOG_LEVEL=info
 ```env
 VITE_API_BASE_URL=http://localhost:3000
 ```
+
+### Convencion operativa v1
+- `ENGINE_PATH`: ruta absoluta al binario `maxflow_engine`.
+- `ENGINE_TIMEOUT_MS`: timeout duro del proceso hijo en milisegundos.
+- `MAX_REQUEST_BYTES`: tamano maximo del payload HTTP aceptado por API.
+- `MAX_DAYS`: limite semantico de `days`.
+- `MAX_MEDICS`: limite semantico de `medics`.
+- `MAX_PERIODS`: limite semantico de `periods`.
+- `MAX_AVAILABILITY_PAIRS`: limite semantico de `availability`.
+- `LOG_LEVEL`: `debug`, `info`, `warn` o `error`.
+- `VITE_API_BASE_URL`: base URL consumida por la UI web.
+
+### Regla de precedencia
+- Si una env var no existe, la API usa el default documentado en `docs/50-operations/RuntimeConfig.md`.
+- El contrato v1 de nombres de env vars es estable; no debe cambiarse sin actualizar runbook, CI y configuracion de apps.
 
 ## 6. Ejecutar en local
 ```bash
@@ -64,4 +83,3 @@ pnpm build
 - Si falla `ENGINE_PATH`: verificar que el binario exista y tenga permisos.
 - Si falla timeout: subir `ENGINE_TIMEOUT_MS` temporalmente y revisar logs.
 - Si falla contrato: validar payload contra `packages/contracts/v1/schemas`.
-

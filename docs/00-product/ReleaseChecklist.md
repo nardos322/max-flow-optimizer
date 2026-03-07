@@ -4,7 +4,9 @@
 - [ ] `GET /health` responde `200`.
 - [ ] `POST /v1/solve` resuelve caso factible.
 - [ ] `POST /v1/solve` reporta caso infactible correctamente.
-- [ ] UI muestra resultado y metricas.
+- [ ] UI expone `Periodos`, `Medicos` y `Planificador`.
+- [ ] La UI conserva el estado al navegar entre secciones.
+- [ ] `Planificador` muestra resultado y metricas.
 - [ ] Export JSON/CSV funciona.
 
 ## 2. Correctitud del modelo
@@ -33,4 +35,3 @@
 
 ## 6. Criterio de salida
 Se publica v1 solo si todos los checks anteriores estan completos.
-

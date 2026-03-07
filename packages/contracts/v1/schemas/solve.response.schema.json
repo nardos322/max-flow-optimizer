@@ -89,9 +89,20 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
+        "summaryCode",
+        "message",
         "uncoveredDays"
       ],
       "properties": {
+        "summaryCode": {
+          "type": "string",
+          "const": "INSUFFICIENT_COVERAGE"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
         "uncoveredDays": {
           "type": "array",
           "uniqueItems": true,
@@ -103,6 +114,36 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "feasible": {
+            "const": false
+          }
+        },
+        "required": [
+          "feasible"
+        ]
+      },
+      "then": {
+        "required": [
+          "diagnostics"
+        ],
+        "properties": {
+          "assignments": {
+            "maxItems": 0
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "diagnostics"
+          ]
+        }
+      }
+    }
+  ]
 }
-

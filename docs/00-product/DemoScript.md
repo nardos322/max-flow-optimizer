@@ -16,25 +16,33 @@ Mostrar de punta a punta que el sistema:
 ### Paso 1 - Contexto rapido (30s)
 - Explicar el problema: asignar 1 medico por dia con restricciones de disponibilidad, limite `C` y maximo 1 dia por periodo.
 - Mencionar que se modela como red de flujo.
+- Mostrar que la UI esta separada en `Periodos`, `Medicos` y `Planificador`.
 
-### Paso 2 - Caso factible (90s)
-- Cargar `tiny-feasible.json` en la UI.
-- Ejecutar `POST /v1/solve`.
+### Paso 2 - Armado del caso factible (90s)
+- Cargar `tiny-feasible.json` usando la accion de fixture base o poblar manualmente la UI.
+- En `Periodos`, mostrar periodos y dias.
+- En `Medicos`, mostrar medicos y disponibilidad.
+- En `Planificador`, verificar el resumen consolidado de la instancia.
+
+### Paso 3 - Resolver caso factible (60s)
+- Ejecutar `POST /v1/solve` desde `Planificador`.
 - Mostrar:
   - `feasible=true`,
   - tabla `dayId -> medicId`,
   - metricas (`maxFlow`, `runtimeMs`, `nodes`, `edges`).
 - Validar visualmente 1 restriccion (ej: nadie supera `C`).
+- Mostrar export JSON/CSV.
 
-### Paso 3 - Caso infactible (90s)
+### Paso 4 - Caso infactible (90s)
 - Cargar `tiny-infeasible-availability.json`.
-- Ejecutar solucion.
+- Recorrer rapido `Periodos` y `Medicos` para mostrar que la entrada cambio.
+- Ejecutar solucion desde `Planificador`.
 - Mostrar:
   - `feasible=false`,
   - `maxFlow < requiredFlow`,
   - `diagnostics.uncoveredDays`.
 
-### Paso 4 - Cierre tecnico (60s)
+### Paso 5 - Cierre tecnico (60s)
 - Mostrar estructura monorepo y separacion de responsabilidades:
   - `services/engine-cpp`
   - `apps/api`
@@ -46,4 +54,3 @@ Mostrar de punta a punta que el sistema:
 - "El modelo matematico esta formalizado y probado."
 - "El motor C++ es reusable e independiente de la API."
 - "La demo es reproducible con casos factible/infactible."
-

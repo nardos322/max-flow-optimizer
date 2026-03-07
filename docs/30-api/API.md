@@ -4,6 +4,8 @@
 - OpenAPI 3.1: `packages/contracts/v1/openapi.yaml`
 - Schemas JSON: `packages/contracts/v1/schemas/*`
 - Guía de versionado: `docs/30-api/OpenAPI.md`
+- `packages/contracts` define el contrato HTTP estructural publico.
+- `packages/domain` define las validaciones semanticas/cross-field que no conviene expresar solo con schema.
 
 ## 1. Catalogo de endpoints v1
 ### Obligatorios MVP
@@ -49,11 +51,20 @@
 ```
 
 ## 3. `POST /v1/solve` - Validaciones
+### 3.1 Capa estructural (`packages/contracts`)
+- Forma base del payload JSON.
+- Tipos primitivos, campos requeridos y `additionalProperties=false`.
+
+### 3.2 Capa semantica (`packages/domain`)
 - `maxDaysPerMedic >= 0`.
 - IDs unicos en `periods`, `days`, `medics`.
+- `days[*].date` debe ser unica.
 - Todo `dayId` de `periods[*].dayIds` existe en `days`.
 - Cada dia pertenece a exactamente un periodo.
 - Toda tupla de `availability` referencia medico y dia existentes.
+- Un periodo puede contener dias no contiguos; no se valida continuidad de fechas en v1.
+- Se permiten medicos sin disponibilidad.
+- El orden de entrada de arrays no afecta el resultado; la implementacion normaliza internamente para lograr determinismo.
 
 ## 4. `POST /v1/solve` - Response (factible)
 ```json
@@ -89,10 +100,36 @@
     "runtimeMs": 1
   },
   "diagnostics": {
+    "summaryCode": "INSUFFICIENT_COVERAGE",
+    "message": "Unable to cover all days under current constraints.",
     "uncoveredDays": ["d3"]
   }
 }
 ```
+
+## 5.1 `diagnostics` - Contrato exacto v1
+- `diagnostics` aparece si y solo si `feasible=false`.
+- `summaryCode` es fijo en v1: `INSUFFICIENT_COVERAGE`.
+- `message` es un resumen legible y estable a nivel funcional.
+- `uncoveredDays` lista los `dayId` no cubiertos en la solucion de max-flow.
+- `uncoveredDays` debe venir sin duplicados y ordenado ascendentemente por `dayId`.
+- En `feasible=true`, `diagnostics` no debe estar presente.
+
+## 5.2 Determinismo del resultado
+- La API debe devolver `assignments` ordenado ascendentemente por `dayId`.
+- `diagnostics.uncoveredDays` debe devolverse ordenado ascendentemente por `dayId`.
+- `stats.edges` cuenta aristas dirigidas del grafo de trabajo del motor antes de expandir residual.
+- `stats.runtimeMs` mide solo el tiempo del motor, no el tiempo total HTTP.
+
+## 5.3 Exportacion UI derivada del contrato
+- Export JSON: serializa exactamente la respuesta de `POST /v1/solve`.
+- Export CSV: solo disponible si `feasible=true`.
+- Export CSV: se deriva de `solveResponse.assignments` unido con el `instanceDraft` actual del frontend.
+- Columnas CSV v1: `dayId,date,periodId,medicId,medicName`.
+- Filas CSV ordenadas por `dayId`.
+- `dayId`, `periodId`, `medicId`: salen de `assignments`.
+- `date`: se resuelve desde `days`.
+- `medicName`: se resuelve desde `medics`.
 
 ## 6. Codigos de estado
 - `200`: ejecucion correcta (factible o infactible) y `GET /health`.

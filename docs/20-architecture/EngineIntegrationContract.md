@@ -8,12 +8,39 @@ Definir limites y comportamiento exacto entre `apps/api` y `services/engine-cpp`
 - Transporte: stdin/stdout en JSON UTF-8.
 - stderr reservado para errores estructurados.
 
+## 2.1 Regla de contrato interno v1
+- El contrato API <-> engine no coincide 1:1 con el request HTTP publico.
+- La API envuelve el `SolveRequestV1` publico en un payload interno para agregar contexto operacional.
+- El engine no expone HTTP y no conoce headers ni request context de Express.
+
+Payload API -> engine (`stdin`) v1:
+```json
+{
+  "requestId": "8e950b8f-f8c3-49fc-835b-4015f4963ca1",
+  "input": {
+    "instanceId": "demo-001",
+    "maxDaysPerMedic": 2,
+    "periods": [],
+    "days": [],
+    "medics": [],
+    "availability": []
+  }
+}
+```
+
+Reglas:
+- `requestId` es obligatorio en el contrato interno.
+- `input` contiene exactamente el payload HTTP publico validado.
+- `requestId` se usa para observabilidad y correlacion; no afecta el algoritmo ni la salida funcional.
+
 ## 3. Parametros operativos v1
 - `enginePath`: configurable por variable de entorno.
 - `engineTimeoutMs`: `2000` ms (default).
 - `maxRequestBytes`: `1_000_000` bytes (default).
 - `maxDays`: `500` dias.
 - `maxMedics`: `500` medicos.
+- `maxPeriods`: `100` periodos.
+- `maxAvailabilityPairs`: `100000` pares.
 
 ## 4. Exit codes del motor
 - `0`: exito.
@@ -26,12 +53,22 @@ Definir limites y comportamiento exacto entre `apps/api` y `services/engine-cpp`
 - stdout invalido/JSON roto -> `500` con `code=ENGINE_INVALID_OUTPUT`.
 - exit `3` o no clasificado -> `500` con `code=ENGINE_INTERNAL_ERROR`.
 
+## 5.1 Semantica de stdout exitoso
+- El engine responde el mismo shape base de `SolveResponseV1`.
+- Si `feasible=false`, `diagnostics` es obligatorio.
+- `diagnostics.summaryCode` es `INSUFFICIENT_COVERAGE`.
+- `diagnostics.message` es estable y legible.
+- `diagnostics.uncoveredDays` viene ordenado por `dayId`.
+- `stats.edges` cuenta aristas dirigidas del grafo antes de expandir residual.
+- `stats.runtimeMs` mide solo tiempo del motor.
+
 ## 6. Reglas de robustez
 - Siempre drenar stdout y stderr para evitar deadlocks.
 - Fallar en forma segura si `enginePath` no existe.
 - Registrar `runtimeMs`, `exitCode` y tamano de payload por corrida.
+- Propagar `requestId` al engine en el wrapper interno de stdin.
+- La API no debe reenviar al engine payload HTTP sin envolver.
 
 ## 7. Compatibilidad futura
 - Cualquier cambio en formato de I/O del motor requiere nueva version de contrato (`v2`).
 - No introducir dependencia directa del motor a HTTP/DB.
-

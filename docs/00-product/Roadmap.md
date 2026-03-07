@@ -27,7 +27,7 @@
 - Manejo de errores y validaciones de entrada.
 
 ### Dia 9
-- Implementar UI web minima (input + resultado).
+- Implementar UI web minima con `Periodos`, `Medicos` y `Planificador`.
 - Export JSON/CSV del resultado.
 
 ### Dia 10
@@ -38,4 +38,3 @@
 - Demo funcional end-to-end.
 - Documentacion tecnica completa.
 - Repositorio listo para revision en portafolio.
-

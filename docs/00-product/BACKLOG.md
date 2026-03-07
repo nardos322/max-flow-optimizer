@@ -12,7 +12,7 @@
 4. Implementar motor C++ Edmonds-Karp.
 5. Extraer asignaciones desde residual.
 6. Integrar API con engine CLI.
-7. Armar UI minima (input JSON + resultado + metricas).
+7. Armar UI minima con secciones `Periodos`, `Medicos` y `Planificador`, resultado y metricas.
 8. Crear fixtures base factible/infactible.
 9. Tests unitarios motor + integracion API.
 10. README de demo end-to-end.
@@ -39,4 +39,3 @@ Cada item debe incluir:
 - criterio de aceptacion medible,
 - impacto en contratos,
 - estrategia de test.
-

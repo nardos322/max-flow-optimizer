@@ -10,7 +10,27 @@ Implementar un ejecutable C++ que reciba una instancia del problema y retorne fa
   - `maxflow_engine --stdin` (lee JSON desde stdin)
 
 ## 3. Entrada esperada
-Mismo contrato estructural definido en `docs/30-api/API.md` para el cuerpo del request.
+El engine consume el contrato interno definido en `docs/20-architecture/EngineIntegrationContract.md`.
+
+Shape de entrada (`stdin`) v1:
+```json
+{
+  "requestId": "8e950b8f-f8c3-49fc-835b-4015f4963ca1",
+  "input": {
+    "instanceId": "demo-001",
+    "maxDaysPerMedic": 2,
+    "periods": [],
+    "days": [],
+    "medics": [],
+    "availability": []
+  }
+}
+```
+
+Reglas:
+- `requestId` es obligatorio para correlacion de logs.
+- `input` corresponde al request HTTP publico ya validado por API.
+- En v1, el engine puede revalidar consistencia por defensa, pero la validacion primaria ocurre antes en API/domain.
 
 ## 4. Salida estandar (stdout)
 JSON con esta forma:
@@ -50,6 +70,12 @@ Formato de error JSON en stderr:
 - Mapeo estable de IDs a indices internos.
 - Reconstruccion de asignaciones desde arcos `(m,p)->d` con flujo 1.
 - Ordenamiento determinista de output por `dayId`.
+- La normalizacion interna debe ignorar el orden de entrada de arrays.
+- Los IDs de `medics`, `periods` y `days` deben indexarse en orden lexicografico ascendente para construir el grafo.
+- BFS debe recorrer adyacencias en el orden estable en que fueron construidas para preservar reproducibilidad.
+- `diagnostics`, cuando exista, debe incluir `summaryCode=INSUFFICIENT_COVERAGE`, `message` estable y `uncoveredDays` ordenado por `dayId`.
+- `stats.edges` cuenta aristas dirigidas del grafo antes de agregar la estructura residual.
+- `stats.runtimeMs` mide solo el tiempo de ejecucion del motor.
 
 ## 7. Complejidad esperada
 - Construccion de red: `O(E)`.

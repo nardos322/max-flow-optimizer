@@ -32,9 +32,8 @@ Campos recomendados por corrida:
 
 ## 5. Correlacion
 - API genera `requestId`.
-- Si invoca engine, propaga `requestId` para correlacion en logs.
+- Si invoca engine, propaga `requestId` en el wrapper interno de stdin para correlacion en logs.
 
 ## 6. Politica de datos sensibles
 - No loggear payload completo en producción.
 - En v1 local de demo, permitir payload parcial truncado para debugging.
-

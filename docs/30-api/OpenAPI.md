@@ -17,8 +17,19 @@ Tener contrato formal validable (no solo ejemplos) para web, API y tests.
 
 ## 4. Regla de implementacion
 - API debe validar request contra schema.
+- API debe aplicar despues validaciones semanticas/cross-field desde `packages/domain`.
 - Tests de integracion deben validar response contra schema.
 - Web debe basarse en este contrato y no en objetos ad-hoc.
+
+## 4.1 Alcance del schema vs dominio
+- `packages/contracts` cubre validacion estructural y tipos serializados.
+- `packages/domain` cubre reglas de negocio que cruzan colecciones o requieren contexto.
+- Ejemplos de validacion de dominio en v1:
+  - `days[*].date` unica,
+  - cada dia en exactamente un periodo,
+  - referencias existentes en `periods` y `availability`,
+  - limites operativos (`maxDays`, `maxMedics`, payload, etc.).
+- No forzar toda regla semantica en JSON Schema si eso complica innecesariamente el MVP.
 
 ## 5. Regla de cambio
 Si se edita un schema de `v1`, se debe actualizar en el mismo PR:

@@ -6,7 +6,8 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 ## 2. Decisiones v1 (cerradas)
 - Core algoritmo: `C++20` + `CMake` + `GoogleTest`.
 - API: `Node.js` + `TypeScript` + `Express` + `Zod`.
-- Frontend: `React` + `Vite` + `Tailwind CSS`.
+- Frontend: `React` + `Vite` + `Tailwind CSS` + `React Hook Form` + `Zod`.
+- Estado frontend: `React Context` + `useReducer`.
 - Monorepo: `pnpm workspaces`.
 - Persistencia: **sin base de datos en v1** (modo stateless).
 
@@ -25,6 +26,9 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 - Setup rapido para demo funcional.
 - Vite reduce tiempos de desarrollo.
 - Tailwind acelera UI MVP sin invertir en sistema de diseno.
+- `React Hook Form` reduce boilerplate de formularios y mejora performance en inputs controlados y no controlados.
+- `Zod` permite reutilizar reglas de validacion entre cliente y API con bajo costo conceptual.
+- `React Context` + `useReducer` alcanza para el estado global del MVP sin introducir una store externa.
 
 ### Sin DB en v1
 - El problema principal es resolver instancias, no gestionar datos historicos.
@@ -57,4 +61,3 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 Este stack solo se cambia si:
 1. Bloquea directamente un criterio de aceptacion del MVP, o
 2. Introduce un riesgo tecnico severo probado con evidencia.
-

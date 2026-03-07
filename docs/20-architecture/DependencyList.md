@@ -40,14 +40,16 @@ pnpm --filter @maxflow/api add -D vitest supertest @types/supertest @types/expre
 - `react@18.2.0` + `react-dom@18.2.0`: UI.
 - `vite@5.2.0`: bundler/dev server.
 - `tailwindcss@3.4.3`: estilos del MVP.
-- `zod@3.22.4`: validacion del JSON en cliente (opcional recomendada).
+- `react-hook-form@7.51.5`: manejo de formularios y estado de input.
+- `@hookform/resolvers@3.6.0`: puente entre `react-hook-form` y `zod`.
+- `zod@3.22.4`: validacion de formularios y contratos en cliente.
 - `typescript@5.4.5`: compilacion TypeScript.
 - `@types/react@18.2.66` y `@types/react-dom@18.2.22`: tipos.
 - `postcss@8.4.38` y `autoprefixer@10.4.19`: pipeline CSS.
 
 ### Comando orientativo
 ```bash
-pnpm --filter @maxflow/web add react react-dom zod
+pnpm --filter @maxflow/web add react react-dom react-hook-form @hookform/resolvers zod
 pnpm --filter @maxflow/web add -D vite typescript tailwindcss postcss autoprefixer @types/react @types/react-dom
 ```
 

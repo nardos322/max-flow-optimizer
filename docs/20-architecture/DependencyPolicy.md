@@ -30,6 +30,8 @@ Usar librerias para problemas commodity y concentrar implementacion propia en el
 - C++ tests: `GoogleTest`.
 - API validacion: `Zod`.
 - API server: `Express`.
+- Web forms: `react-hook-form` + `@hookform/resolvers`.
+- Web validacion: `Zod`.
 
 ## 7. Riesgos y mitigaciones
 - Riesgo: lock-in a libreria.
@@ -38,4 +40,3 @@ Usar librerias para problemas commodity y concentrar implementacion propia en el
   - Mitigacion: actualizar dependencias en ventanas controladas.
 - Riesgo: sobreuso de paquetes.
   - Mitigacion: toda dependencia nueva debe justificar valor claro.
-

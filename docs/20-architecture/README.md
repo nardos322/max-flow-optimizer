@@ -10,5 +10,4 @@ Decisiones tecnicas y contratos internos del sistema.
 - `EngineIntegrationContract.md`: integracion API <-> engine.
 - `DependencyPolicy.md`: criterio para usar librerias vs implementar desde cero.
 - `DependencyList.md`: listado de dependencias recomendadas para MVP.
-- `RuntimeConfig.md`: variables de entorno y defaults.
 - `WorkspaceScripts.md`: nombres de paquetes y scripts canonicos.

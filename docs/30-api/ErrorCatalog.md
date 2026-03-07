@@ -23,6 +23,8 @@ Definir errores estables para facilitar debugging y evitar ambiguedad entre web,
   - Payload no cumple schema base.
 - `DUPLICATE_ID`
   - IDs repetidos en `days`, `periods` o `medics`.
+- `DUPLICATE_DAY_DATE`
+  - Dos o mas elementos de `days` comparten la misma fecha.
 - `UNKNOWN_REFERENCE`
   - `dayId` o `medicId` inexistente en disponibilidad o periodos.
 - `DAY_WITHOUT_PERIOD`
@@ -31,6 +33,71 @@ Definir errores estables para facilitar debugging y evitar ambiguedad entre web,
   - Dia asignado a mas de un periodo.
 - `INVALID_CAPACITY`
   - `maxDaysPerMedic < 0`.
+
+## 3.1 Contrato de `details` por codigo
+### `INVALID_INPUT`
+- Uso: error estructural de schema o limite operativo violado.
+- `details` minimo esperado:
+  - Para schema: `{ "path": "days[0].date" }`
+  - Para limites: `{ "limit": "maxDays", "max": 500, "actual": 734 }`
+
+### `DUPLICATE_ID`
+- Uso: un mismo `id` aparece repetido dentro de `days`, `periods` o `medics`.
+- `details` minimo esperado:
+  ```json
+  {
+    "entity": "days",
+    "id": "d2"
+  }
+  ```
+
+### `DUPLICATE_DAY_DATE`
+- Uso: dos o mas `days` comparten la misma fecha.
+- `details` minimo esperado:
+  ```json
+  {
+    "date": "2026-04-18"
+  }
+  ```
+
+### `UNKNOWN_REFERENCE`
+- Uso: una referencia a `dayId` o `medicId` no existe.
+- `details` minimo esperado:
+  ```json
+  {
+    "entity": "availability",
+    "field": "dayId",
+    "value": "d99"
+  }
+  ```
+
+### `DAY_WITHOUT_PERIOD`
+- Uso: un dia no pertenece a ningun periodo.
+- `details` minimo esperado:
+  ```json
+  {
+    "dayId": "d2"
+  }
+  ```
+
+### `DAY_IN_MULTIPLE_PERIODS`
+- Uso: un dia aparece en mas de un periodo.
+- `details` minimo esperado:
+  ```json
+  {
+    "dayId": "d2"
+  }
+  ```
+
+### `INVALID_CAPACITY`
+- Uso: `maxDaysPerMedic` invalido.
+- `details` minimo esperado:
+  ```json
+  {
+    "field": "maxDaysPerMedic",
+    "value": -1
+  }
+  ```
 
 ## 4. Errores de motor (`HTTP 500`)
 - `ENGINE_EXECUTION_FAILED`
@@ -55,4 +122,5 @@ Definir errores estables para facilitar debugging y evitar ambiguedad entre web,
 - `code` es estable y se usa para logica cliente.
 - `message` puede mejorar redaccion sin cambiar `code`.
 - `details` es opcional y debe incluir campos accionables.
+- Si `details` existe, debe respetar la forma minima definida para el `code` correspondiente.
 - `requestId` permite correlacionar con logs de API y engine.

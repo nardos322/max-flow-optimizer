@@ -48,5 +48,4 @@ pnpm --filter @maxflow/web dev
 Si se cambia un nombre de paquete o script canonico:
 1. actualizar este documento,
 2. actualizar `docs/00-product/ImplementationRoute.md`,
-3. actualizar `docs/00-product/LocalRunbook.md`.
-
+3. actualizar `docs/50-operations/LocalRunbook.md`.
