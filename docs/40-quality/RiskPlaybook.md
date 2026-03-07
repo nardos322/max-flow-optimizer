@@ -17,12 +17,12 @@ Respuesta:
 
 ## 3. Riesgo: timeout del engine
 Senales:
-- tiempo > `engineTimeoutMs`,
+- tiempo > `ENGINE_TIMEOUT_MS`,
 - requests canceladas.
 
 Respuesta:
 1. Devolver `ENGINE_TIMEOUT`.
-2. Guardar metricas (`nodes`, `edges`, `availabilityCount`).
+2. Guardar `requestId`, `instanceId`, `daysCount`, `medicsCount`, `periodsCount` y `availabilityPairs`.
 3. Reproducir con fixture de performance.
 4. Evaluar optimizacion o ajuste de limites.
 

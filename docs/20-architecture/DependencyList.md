@@ -21,7 +21,8 @@ Definir un set minimo de dependencias para construir el MVP sin sobrecargar el s
 ## 4. API (`apps/api`)
 ### Dependencias
 - `express@4.18.2`: servidor HTTP.
-- `zod@3.22.4`: validacion de payload y mapeo de errores.
+- `ajv@8.17.1`: validacion estructural contra JSON Schema.
+- `ajv-formats@3.0.1`: soporte de formatos JSON Schema como `date` y `date-time`.
 - `pino@8.17.2`: logging estructurado.
 - `vitest@1.6.0`: test runner.
 - `supertest@6.3.4`: pruebas de endpoints.
@@ -31,7 +32,7 @@ Definir un set minimo de dependencias para construir el MVP sin sobrecargar el s
 
 ### Comando orientativo
 ```bash
-pnpm --filter @maxflow/api add express zod pino
+pnpm --filter @maxflow/api add express ajv ajv-formats pino
 pnpm --filter @maxflow/api add -D vitest supertest @types/supertest @types/express typescript
 ```
 

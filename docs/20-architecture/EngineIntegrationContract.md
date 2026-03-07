@@ -34,13 +34,15 @@ Reglas:
 - `requestId` se usa para observabilidad y correlacion; no afecta el algoritmo ni la salida funcional.
 
 ## 3. Parametros operativos v1
-- `enginePath`: configurable por variable de entorno.
-- `engineTimeoutMs`: `2000` ms (default).
-- `maxRequestBytes`: `1_000_000` bytes (default).
-- `maxDays`: `500` dias.
-- `maxMedics`: `500` medicos.
-- `maxPeriods`: `100` periodos.
-- `maxAvailabilityPairs`: `100000` pares.
+- Los nombres oficiales y defaults de runtime viven en `docs/50-operations/RuntimeConfig.md`.
+- Variables operativas estables v1:
+  - `ENGINE_PATH`
+  - `ENGINE_TIMEOUT_MS`
+  - `MAX_REQUEST_BYTES`
+  - `MAX_DAYS`
+  - `MAX_MEDICS`
+  - `MAX_PERIODS`
+  - `MAX_AVAILABILITY_PAIRS`
 
 ## 4. Exit codes del motor
 - `0`: exito.
@@ -54,7 +56,7 @@ Reglas:
 - exit `3` o no clasificado -> `500` con `code=ENGINE_INTERNAL_ERROR`.
 
 ## 5.1 Semantica de stdout exitoso
-- El engine responde el mismo shape base de `SolveResponseV1`.
+- El engine responde el mismo shape base de `SolveResponseV1`, incluido `instanceId`.
 - Si `feasible=false`, `diagnostics` es obligatorio.
 - `diagnostics.summaryCode` es `INSUFFICIENT_COVERAGE`.
 - `diagnostics.message` es estable y legible.

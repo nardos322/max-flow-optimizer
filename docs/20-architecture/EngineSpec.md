@@ -36,6 +36,7 @@ Reglas:
 JSON con esta forma:
 ```json
 {
+  "instanceId": "demo-001",
   "feasible": true,
   "requiredFlow": 3,
   "maxFlow": 3,

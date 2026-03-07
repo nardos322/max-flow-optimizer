@@ -105,7 +105,7 @@ No se requiere boton global de guardar porque no hay persistencia remota.
 - `SolveStatusBanner`
   - Estado factible/infactible/error.
 - `AssignmentsTable`
-  - Tabla de `dayId/date/periodId/medicId`.
+  - Tabla derivada de `assignments` enriquecida con `date` desde `instanceDraft.days`.
 - `StatsPanel`
   - `requiredFlow`, `maxFlow`, `nodes`, `edges`, `runtimeMs`.
 - `DiagnosticsPanel`
@@ -147,7 +147,8 @@ No se requiere boton global de guardar porque no hay persistencia remota.
 ### 6.4 Componentes de resultado
 - `SolveActions`, `SolveStatusBanner`, `AssignmentsTable`, `StatsPanel`, `DiagnosticsPanel`, `ExportActions`
   - Consumen el ultimo resultado de solve almacenado en estado UI.
-  - No recalculan el resultado localmente.
+  - No recalculan factibilidad ni asignaciones localmente.
+  - `AssignmentsTable` solo enriquece filas con datos de `instanceDraft` ya presentes en memoria.
   - `ExportActions` solo transforma datos ya presentes en memoria.
 
 ## 7. Contrato de estado frontend

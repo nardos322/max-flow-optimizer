@@ -28,7 +28,7 @@ Usar librerias para problemas commodity y concentrar implementacion propia en el
 ## 6. Recomendaciones concretas v1
 - C++ JSON: `nlohmann/json`.
 - C++ tests: `GoogleTest`.
-- API validacion: `Zod`.
+- API validacion estructural: `AJV`.
 - API server: `Express`.
 - Web forms: `react-hook-form` + `@hookform/resolvers`.
 - Web validacion: `Zod`.

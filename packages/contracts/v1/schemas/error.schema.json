@@ -29,8 +29,20 @@
         },
         "code": {
           "type": "string",
-          "minLength": 1,
-          "maxLength": 64
+          "enum": [
+            "INVALID_INPUT",
+            "DUPLICATE_ID",
+            "DUPLICATE_DAY_DATE",
+            "UNKNOWN_REFERENCE",
+            "DAY_WITHOUT_PERIOD",
+            "DAY_IN_MULTIPLE_PERIODS",
+            "INVALID_CAPACITY",
+            "ENGINE_EXECUTION_FAILED",
+            "ENGINE_TIMEOUT",
+            "ENGINE_INVALID_OUTPUT",
+            "ENGINE_INTERNAL_ERROR",
+            "INTERNAL_ERROR"
+          ]
         },
         "message": {
           "type": "string",

@@ -5,7 +5,7 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 
 ## 2. Decisiones v1 (cerradas)
 - Core algoritmo: `C++20` + `CMake` + `GoogleTest`.
-- API: `Node.js` + `TypeScript` + `Express` + `Zod`.
+- API: `Node.js` + `TypeScript` + `Express` + `AJV`.
 - Frontend: `React` + `Vite` + `Tailwind CSS` + `React Hook Form` + `Zod`.
 - Estado frontend: `React Context` + `useReducer`.
 - Monorepo: `pnpm workspaces`.
@@ -17,17 +17,17 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 - CMake permite build reproducible y portable.
 - GoogleTest da confianza en correctitud del motor.
 
-### API TS + Express
+### API TS + Express + AJV
 - Integracion simple con un binario CLI.
-- Baja friccion para validacion y manejo de errores.
-- Zod reduce errores de contrato en runtime.
+- `AJV` alinea la validacion estructural con `packages/contracts` como fuente de verdad en JSON Schema.
+- `packages/domain` mantiene aparte las reglas semanticas y cross-field.
 
 ### Front React + Vite + Tailwind
 - Setup rapido para demo funcional.
 - Vite reduce tiempos de desarrollo.
 - Tailwind acelera UI MVP sin invertir en sistema de diseno.
 - `React Hook Form` reduce boilerplate de formularios y mejora performance en inputs controlados y no controlados.
-- `Zod` permite reutilizar reglas de validacion entre cliente y API con bajo costo conceptual.
+- `Zod` cubre validacion local de formularios en cliente con bajo costo conceptual.
 - `React Context` + `useReducer` alcanza para el estado global del MVP sin introducir una store externa.
 
 ### Sin DB en v1

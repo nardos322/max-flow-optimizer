@@ -1,6 +1,6 @@
 # packages/contracts
 
-Contratos compartidos (`v1`) entre frontend, API y motor.
+Contratos HTTP publicos (`v1`) consumidos por frontend, API y tests.
 
 ## Contenido esperado
 - OpenAPI 3.1.
