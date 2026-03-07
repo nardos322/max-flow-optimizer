@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+.npm/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Build outputs / caches (JS/TS)
+dist/
+build/
+coverage/
+.vite/
+*.tsbuildinfo
+.eslintcache
+.turbo/
+test-results/
+playwright-report/
+
+# C++ / CMake build artifacts
+**/build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+compile_commands.json
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.pdb
+
+# Local data files
+*.sqlite
+*.sqlite3
+apps/api/.data/*
+!apps/api/.data/.gitkeep
+
+# Python cache (for local scripts/tools)
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+
+# Editor / IDE
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
