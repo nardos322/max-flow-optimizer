@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://max-flow-optimizer.local/contracts/v1/health.response.schema.json",
+  "title": "HealthResponseV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "const": "ok"
+    }
+  }
+}
+

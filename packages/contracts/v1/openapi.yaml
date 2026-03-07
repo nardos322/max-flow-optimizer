@@ -1,0 +1,49 @@
+openapi: 3.1.0
+info:
+  title: Max Flow Optimizer API
+  version: 1.0.0
+  description: API MVP para resolver asignacion de feriados por flujo maximo.
+servers:
+  - url: http://localhost:3000
+paths:
+  /health:
+    get:
+      summary: Healthcheck
+      operationId: getHealth
+      responses:
+        "200":
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/health.response.schema.json"
+  /v1/solve:
+    post:
+      summary: Resolve one assignment instance
+      operationId: solveInstance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./schemas/solve.request.schema.json"
+      responses:
+        "200":
+          description: Solved (feasible or infeasible)
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/solve.response.schema.json"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/error.schema.json"
+        "500":
+          description: Internal error
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/error.schema.json"
+

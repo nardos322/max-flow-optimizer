@@ -1,0 +1,8 @@
+{
+  "instanceId": "tiny-infeasible-availability",
+  "feasible": false,
+  "requiredFlow": 3,
+  "maxFlow": 2,
+  "assignments": []
+}
+

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://max-flow-optimizer.local/contracts/v1/solve.response.schema.json",
+  "title": "SolveResponseV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "instanceId",
+    "feasible",
+    "requiredFlow",
+    "maxFlow",
+    "assignments",
+    "stats"
+  ],
+  "properties": {
+    "instanceId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "feasible": {
+      "type": "boolean"
+    },
+    "requiredFlow": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "maxFlow": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "assignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dayId",
+          "medicId",
+          "periodId"
+        ],
+        "properties": {
+          "dayId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "medicId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "periodId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodes",
+        "edges",
+        "runtimeMs"
+      ],
+      "properties": {
+        "nodes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "edges": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "runtimeMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "augmentingPaths": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uncoveredDays"
+      ],
+      "properties": {
+        "uncoveredDays": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    }
+  }
+}
+

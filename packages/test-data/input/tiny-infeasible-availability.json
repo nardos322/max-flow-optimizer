@@ -1,0 +1,22 @@
+{
+  "instanceId": "tiny-infeasible-availability",
+  "maxDaysPerMedic": 2,
+  "periods": [
+    { "id": "p1", "dayIds": ["d1", "d2"] },
+    { "id": "p2", "dayIds": ["d3"] }
+  ],
+  "days": [
+    { "id": "d1", "date": "2026-04-17" },
+    { "id": "d2", "date": "2026-04-18" },
+    { "id": "d3", "date": "2026-04-20" }
+  ],
+  "medics": [
+    { "id": "m1", "name": "Ana" },
+    { "id": "m2", "name": "Luis" }
+  ],
+  "availability": [
+    { "medicId": "m1", "dayId": "d1" },
+    { "medicId": "m2", "dayId": "d2" }
+  ]
+}
+

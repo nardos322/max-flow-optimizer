@@ -1,0 +1,40 @@
+{
+  "version": "v1",
+  "fixtures": [
+    {
+      "id": "tiny-feasible",
+      "input": "input/tiny-feasible.json",
+      "expected": "expected/tiny-feasible.output.json",
+      "expectedFeasible": true,
+      "matchMode": "subset"
+    },
+    {
+      "id": "tiny-infeasible-availability",
+      "input": "input/tiny-infeasible-availability.json",
+      "expected": "expected/tiny-infeasible-availability.output.json",
+      "expectedFeasible": false,
+      "matchMode": "subset"
+    },
+    {
+      "id": "tiny-infeasible-capacity",
+      "input": "input/tiny-infeasible-capacity.json",
+      "expected": "expected/tiny-infeasible-capacity.output.json",
+      "expectedFeasible": false,
+      "matchMode": "subset"
+    },
+    {
+      "id": "tiny-infeasible-per-period",
+      "input": "input/tiny-infeasible-per-period.json",
+      "expected": "expected/tiny-infeasible-per-period.output.json",
+      "expectedFeasible": false,
+      "matchMode": "subset"
+    },
+    {
+      "id": "medium-random-50x50",
+      "input": "input/medium-random-50x50.json",
+      "expected": null,
+      "expectedFeasible": null,
+      "performanceOnly": true
+    }
+  ]
+}
