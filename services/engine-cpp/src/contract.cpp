@@ -1,6 +1,5 @@
 #include "engine/contract.hpp"
 
-#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <string_view>
