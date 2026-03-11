@@ -4,8 +4,6 @@
 
 #include <fstream>
 #include <iterator>
-#include <sstream>
-#include <utility>
 
 #include "engine/contract.hpp"
 #include "engine/error.hpp"
