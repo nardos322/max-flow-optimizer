@@ -12,12 +12,16 @@ Pasar de repositorio clonado a demo funcional local con comandos concretos.
 ## 3. Setup inicial
 ```bash
 pnpm install
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
 ```
 
 Nota:
 - La primera configuracion/build del motor C++ descarga dependencias fijadas (`nlohmann/json`, `CLI11`, `GoogleTest`) mediante `FetchContent`.
 - Esa descarga ocurre durante `cmake -S ... -B ...`.
 - En entornos sin salida a internet, se debe usar un cache previo de CMake o vendorizar esas dependencias antes del build.
+- `ENGINE_PATH` no es obligatorio si el binario queda en la ruta estandar del monorepo.
+- Definir `ENGINE_PATH` solo cuando se quiera usar un binario fuera de `services/engine-cpp/build/maxflow_engine`.
 
 ## 4. Build del motor C++
 ```bash
@@ -30,7 +34,7 @@ cmake --build services/engine-cpp/build -j
 ```env
 NODE_ENV=development
 PORT=3000
-ENGINE_PATH=/home/nardos322/projects/max-flow-optimizer/services/engine-cpp/build/maxflow_engine
+# ENGINE_PATH=/absolute/path/to/maxflow_engine
 ENGINE_TIMEOUT_MS=2000
 MAX_REQUEST_BYTES=1000000
 MAX_DAYS=500
@@ -46,7 +50,7 @@ VITE_API_BASE_URL=http://localhost:3000
 ```
 
 ### Convencion operativa v1
-- `ENGINE_PATH`: ruta absoluta al binario `maxflow_engine`.
+- `ENGINE_PATH`: override opcional para un binario `maxflow_engine` fuera de la ruta estandar del repo.
 - `ENGINE_TIMEOUT_MS`: timeout duro del proceso hijo en milisegundos.
 - `MAX_REQUEST_BYTES`: tamano maximo del payload HTTP aceptado por API.
 - `MAX_DAYS`: limite semantico de `days`.
@@ -57,6 +61,9 @@ VITE_API_BASE_URL=http://localhost:3000
 - `VITE_API_BASE_URL`: base URL consumida por la UI web.
 
 ### Regla de precedencia
+- Si `ENGINE_PATH` esta definida, la API usa esa ruta.
+- Si `ENGINE_PATH` no esta definida, la API usa `<repo-root>/services/engine-cpp/build/maxflow_engine`.
+- Si ninguna ruta existe, la API falla al iniciar con error claro.
 - Si una env var no existe, la API usa el default documentado en `docs/50-operations/RuntimeConfig.md`.
 - El contrato v1 de nombres de env vars es estable; no debe cambiarse sin actualizar runbook, CI y configuracion de apps.
 
@@ -64,6 +71,16 @@ VITE_API_BASE_URL=http://localhost:3000
 ```bash
 pnpm dev
 ```
+
+Bootstrap rapido alternativo:
+```bash
+pnpm run dev:full
+```
+
+Regla operativa:
+- `pnpm dev` es el comando canonico para desarrollo diario y no compila el engine implicitamente.
+- `pnpm run dev:full` existe para bootstrap en una maquina nueva o cuando se necesita recompilar el engine antes de arrancar.
+- Si el engine se compila en la ruta estandar del repo, no hace falta configurar `ENGINE_PATH`.
 
 ## 7. Verificacion rapida
 1. API health:
@@ -85,6 +102,6 @@ pnpm build
 ```
 
 ## 9. Troubleshooting rapido
-- Si falla `ENGINE_PATH`: verificar que el binario exista y tenga permisos.
+- Si falla la deteccion del engine: verificar que exista `services/engine-cpp/build/maxflow_engine` o definir `ENGINE_PATH`.
 - Si falla timeout: subir `ENGINE_TIMEOUT_MS` temporalmente y revisar logs.
 - Si falla contrato: validar payload contra `packages/contracts/v1/schemas`.

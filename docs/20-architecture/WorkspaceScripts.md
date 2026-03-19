@@ -16,6 +16,10 @@ Fijar nombres de paquetes y scripts para desarrollo consistente en todo el monor
 - `lint`: lint/format checks.
 - `typecheck`: chequeo de tipos TS.
 
+### Helpers operativos no canonicos
+- `build:engine`: configura y compila `services/engine-cpp` con CMake.
+- `dev:full`: ejecuta `build:engine` y luego `dev`.
+
 ## 4. Scripts por paquete
 ### `@maxflow/api`
 - `dev`: servidor con recarga.
@@ -42,6 +46,12 @@ pnpm build
 pnpm lint
 pnpm --filter @maxflow/api test
 pnpm --filter @maxflow/web dev
+```
+
+Helpers utiles:
+```bash
+pnpm run build:engine
+pnpm run dev:full
 ```
 
 ## 6. Regla de cambios

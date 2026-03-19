@@ -23,6 +23,20 @@ pnpm build
 pnpm lint
 ```
 
+## Bootstrap rapido local
+```bash
+pnpm install
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+pnpm run dev:full
+```
+
+Notas:
+- `pnpm dev` es el comando canonico para desarrollo diario y levanta API + web.
+- `pnpm run dev:full` primero compila el motor C++ y luego ejecuta `pnpm dev`.
+- `ENGINE_PATH` es opcional si el engine esta en `services/engine-cpp/build/maxflow_engine`.
+- Definir `ENGINE_PATH` solo si queres usar un binario en otra ubicacion.
+
 ## Siguiente lectura
 1. `docs/README.md`
 2. `docs/00-product/ImplementationRoute.md`
