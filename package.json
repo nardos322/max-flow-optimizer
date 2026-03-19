@@ -3,7 +3,7 @@
   "private": true,
   "packageManager": "pnpm@9.12.2",
   "scripts": {
-    "build:engine": "cmake -S services/engine-cpp -B services/engine-cpp/build && cmake --build services/engine-cpp/build -j",
+    "build:engine": "cmake -S services/engine-cpp -B services/engine-cpp/build -G Ninja && cmake --build services/engine-cpp/build -j",
     "dev": "pnpm --parallel --filter @maxflow/api --filter @maxflow/web run dev",
     "dev:full": "pnpm run build:engine && pnpm run dev",
     "build": "pnpm -r --if-present run build && pnpm run build:engine",

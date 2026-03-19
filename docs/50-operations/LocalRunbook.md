@@ -7,6 +7,7 @@ Pasar de repositorio clonado a demo funcional local con comandos concretos.
 - Node.js `20.12.2`
 - pnpm `9.12.2`
 - CMake `3.28.3` o superior
+- Ninja `1.11.1` o superior
 - Compilador C++20 (g++/clang++)
 
 ## 3. Setup inicial
@@ -18,16 +19,19 @@ cp apps/web/.env.example apps/web/.env
 
 Nota:
 - La primera configuracion/build del motor C++ descarga dependencias fijadas (`nlohmann/json`, `CLI11`, `GoogleTest`) mediante `FetchContent`.
-- Esa descarga ocurre durante `cmake -S ... -B ...`.
+- Esa descarga ocurre durante `cmake -S ... -B ... -G Ninja`.
 - En entornos sin salida a internet, se debe usar un cache previo de CMake o vendorizar esas dependencias antes del build.
 - `ENGINE_PATH` no es obligatorio si el binario queda en la ruta estandar del monorepo.
 - Definir `ENGINE_PATH` solo cuando se quiera usar un binario fuera de `services/engine-cpp/build/maxflow_engine`.
 
 ## 4. Build del motor C++
 ```bash
-cmake -S services/engine-cpp -B services/engine-cpp/build
+cmake -S services/engine-cpp -B services/engine-cpp/build -G Ninja
 cmake --build services/engine-cpp/build -j
 ```
+
+Nota:
+- Si `services/engine-cpp/build` fue generado antes con otro backend, borrar ese directorio y volver a configurar.
 
 ## 5. Variables de entorno
 ### API (`apps/api/.env`)
@@ -80,6 +84,7 @@ pnpm run dev:full
 Regla operativa:
 - `pnpm dev` es el comando canonico para desarrollo diario y no compila el engine implicitamente.
 - `pnpm run dev:full` existe para bootstrap en una maquina nueva o cuando se necesita recompilar el engine antes de arrancar.
+- `pnpm run build:engine` usa `Ninja` como generador de CMake.
 - Si el engine se compila en la ruta estandar del repo, no hace falta configurar `ENGINE_PATH`.
 
 ## 7. Verificacion rapida

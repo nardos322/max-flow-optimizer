@@ -17,7 +17,7 @@ Fijar nombres de paquetes y scripts para desarrollo consistente en todo el monor
 - `typecheck`: chequeo de tipos TS.
 
 ### Helpers operativos no canonicos
-- `build:engine`: configura y compila `services/engine-cpp` con CMake.
+- `build:engine`: configura y compila `services/engine-cpp` con CMake usando `Ninja`.
 - `dev:full`: ejecuta `build:engine` y luego `dev`.
 
 ## 4. Scripts por paquete
@@ -34,7 +34,7 @@ Fijar nombres de paquetes y scripts para desarrollo consistente en todo el monor
 - `lint`: lint de web.
 
 ### `services/engine-cpp`
-- `build`: compilacion CMake.
+- `build`: compilacion CMake con salida en `build/`.
 - `test`: suite GoogleTest.
 - `run`: ejecucion manual del binario.
 
