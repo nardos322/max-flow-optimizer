@@ -3,9 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "types": "./src/index.d.ts",
   "exports": {
-    ".": "./src/index.js",
-    "./v1": "./src/v1/index.js"
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.js"
+    },
+    "./v1": {
+      "types": "./src/v1/index.d.ts",
+      "import": "./src/v1/index.js"
+    }
   },
   "scripts": {
     "build": "node ./scripts/build.mjs",

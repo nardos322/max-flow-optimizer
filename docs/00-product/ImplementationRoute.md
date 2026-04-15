@@ -10,7 +10,7 @@
 - [x] Bloque 0 - Bootstrap Monorepo
 - [x] Bloque 1 - Contratos y Fixtures
 - [x] Bloque 2 - Motor C++
-- [ ] Bloque 3 - API
+- [x] Bloque 3 - API
 - [ ] Bloque 4 - Web MVP
 - [ ] Bloque 5 - Calidad y cierre
 
@@ -65,16 +65,16 @@
 - DoD: cumple `docs/20-architecture/EngineSpec.md` y codigos de salida.
 
 ## Bloque 3 - API (Dia 5)
-### [ ] T3.1 Endpoints v1
+### [x] T3.1 Endpoints v1
 - Implementar `GET /health` y `POST /v1/solve`.
 - DoD: contrato de `docs/30-api/API.md` cumplido.
 
-### [ ] T3.2 Integracion con engine
+### [x] T3.2 Integracion con engine
 - Ejecutar binario C++ desde API y parsear salida.
 - Enviar wrapper interno `{ requestId, input }` por stdin al engine.
 - DoD: errores del motor mapeados a `ENGINE_*` y correlacion por `requestId` disponible en logs.
 
-### [ ] T3.3 Tests API/integracion
+### [x] T3.3 Tests API/integracion
 - Supertest para validaciones y casos factible/infactible.
 - DoD: tests con fixtures canonicos en verde.
 

@@ -67,4 +67,5 @@ __pycache__/
 # OS files
 .DS_Store
 Thumbs.db
+.codex
 

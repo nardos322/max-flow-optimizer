@@ -5,7 +5,7 @@ Contratos HTTP publicos (`v1`) consumidos por frontend, API y tests.
 ## Contenido esperado
 - OpenAPI 3.1.
 - JSON Schemas.
-- Tipos TypeScript derivados.
+- Tipos TypeScript formales alineados al contrato v1.
 - Ejemplos de request/response canonicamente validos.
 
 ## Estructura v1
@@ -18,3 +18,7 @@ packages/contracts/v1/
     ├── error.schema.json
     └── health.response.schema.json
 ```
+
+Los tipos consumibles por TypeScript se exportan desde:
+- `@maxflow/contracts`
+- `@maxflow/contracts/v1`
