@@ -4,11 +4,14 @@ import { fileURLToPath } from 'node:url';
 
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
+import type { Logger } from 'pino';
 
 import { createValidatorSet } from '@maxflow/contracts';
 
 import { createApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
+import type { EngineClient } from '../src/engineClient.js';
+import { ApiHttpError } from '../src/errors.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
@@ -28,8 +31,28 @@ const app = createApp({
   })
 });
 
+type CapturedLog = {
+  level: 'info' | 'error';
+  payload: Record<string, unknown>;
+  message: string;
+};
+
 function readJson<T extends string | object = Record<string, unknown>>(relativePath: string): T {
   return JSON.parse(fs.readFileSync(path.join(testDataRoot, relativePath), 'utf8')) as T;
+}
+
+function createCapturingLogger(): { logger: Logger; logs: CapturedLog[] } {
+  const logs: CapturedLog[] = [];
+  const logger = {
+    info(payload: Record<string, unknown>, message: string) {
+      logs.push({ level: 'info', payload, message });
+    },
+    error(payload: Record<string, unknown>, message: string) {
+      logs.push({ level: 'error', payload, message });
+    }
+  } as unknown as Logger;
+
+  return { logger, logs };
 }
 
 function normalizeRuntimeMs(payload: unknown): unknown {
@@ -123,6 +146,88 @@ describe('API v1', () => {
     expect(validators.validateApiError(response.body)).toBe(true);
     expect(response.body.error.code).toBe('INVALID_INPUT');
     expect(response.body.error.details.path).toBe('days.0.date');
+  });
+
+  it('reuses the same requestId across API errors and engine calls', async () => {
+    let engineRequestId: string | undefined;
+    const engineClient: EngineClient = {
+      async solve(requestId) {
+        engineRequestId = requestId;
+        throw new ApiHttpError(500, 'ENGINE_TIMEOUT', 'Engine execution timed out.');
+      }
+    };
+    const correlatedApp = createApp({
+      config: loadConfig({
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          ENGINE_PATH: enginePath,
+          LOG_LEVEL: 'silent'
+        }
+      }),
+      engineClient
+    });
+
+    const response = await request(correlatedApp).post('/v1/solve').send(readJson('input/tiny-feasible.json')).expect(500);
+
+    expect(response.body.error.requestId).toEqual(engineRequestId);
+    expect(response.body.error.code).toBe('ENGINE_TIMEOUT');
+  });
+
+  it('logs request completion metadata with requestId', async () => {
+    const { logger, logs } = createCapturingLogger();
+    const loggingApp = createApp({
+      config: loadConfig({
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          ENGINE_PATH: enginePath,
+          LOG_LEVEL: 'info'
+        }
+      }),
+      logger
+    });
+
+    await request(loggingApp).get('/health').expect(200);
+
+    const completedLog = logs.find((log) => log.level === 'info' && log.message === 'request completed');
+    expect(completedLog?.payload).toMatchObject({
+      method: 'GET',
+      route: '/health',
+      statusCode: 200
+    });
+    expect(completedLog?.payload.requestId).toEqual(expect.any(String));
+    expect(completedLog?.payload.durationMs).toEqual(expect.any(Number));
+  });
+
+  it('adds errorCode to failed request completion logs', async () => {
+    const { logger, logs } = createCapturingLogger();
+    const loggingApp = createApp({
+      config: loadConfig({
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          ENGINE_PATH: enginePath,
+          LOG_LEVEL: 'info'
+        }
+      }),
+      logger
+    });
+
+    await request(loggingApp).post('/v1/solve').send(readJson('input/invalid-duplicate-id.json')).expect(400);
+
+    const completedLog = logs.find((log) => log.level === 'info' && log.message === 'request completed');
+    expect(completedLog?.payload).toMatchObject({
+      method: 'POST',
+      route: '/v1/solve',
+      statusCode: 400,
+      errorCode: 'DUPLICATE_ID'
+    });
+    expect(completedLog?.payload.requestId).toEqual(expect.any(String));
+    expect(completedLog?.payload.instanceId).toBe('invalid-duplicate-id');
   });
 
   it('maps engine failures to ENGINE_* errors', async () => {

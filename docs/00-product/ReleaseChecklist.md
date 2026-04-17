@@ -16,10 +16,10 @@
 - [ ] `maxFlow == requiredFlow` en casos factibles.
 
 ## 3. Calidad tecnica
-- [ ] Lint en verde.
-- [ ] Tests de motor en verde.
-- [ ] Tests de API/integracion en verde.
-- [ ] Build completo en verde.
+- [x] Lint en verde.
+- [x] Tests de motor en verde.
+- [x] Tests de API/integracion en verde.
+- [x] Build completo en verde.
 
 ## 4. Documentacion
 - [ ] README principal con instrucciones de run local.

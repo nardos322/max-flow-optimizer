@@ -8,6 +8,7 @@ import { createHealthController } from './controllers/healthController.js';
 import { createSolveController } from './controllers/solveController.js';
 import { CliEngineClient, type EngineClient } from './engineClient.js';
 import { createErrorMiddleware } from './middleware/errorMiddleware.js';
+import { createRequestContextMiddleware } from './middleware/requestContextMiddleware.js';
 import { createHealthRoutes } from './routes/healthRoutes.js';
 import { createV1Routes } from './routes/v1Routes.js';
 import { createSolveService } from './services/solveService.js';
@@ -28,6 +29,7 @@ export function createApp(options: CreateAppOptions = {}) {
   const app = express();
 
   app.disable('x-powered-by');
+  app.use(createRequestContextMiddleware(logger));
   app.use(express.json({ limit: config.maxRequestBytes }));
 
   app.use(createHealthRoutes({ healthController: createHealthController() }));
@@ -35,8 +37,7 @@ export function createApp(options: CreateAppOptions = {}) {
     '/v1',
     createV1Routes({
       solveController: createSolveController({
-        solveService,
-        logger
+        solveService
       })
     })
   );

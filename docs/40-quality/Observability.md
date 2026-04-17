@@ -14,6 +14,12 @@ Campos obligatorios por request:
 - `engineExitCode` (si aplica)
 - `errorCode` (si aplica)
 
+Reglas de implementacion API:
+- Generar exactamente un `requestId` al inicio del request HTTP, antes del parseo JSON.
+- Reusar el mismo `requestId` en controller, service, cliente del engine, middleware de errores y respuesta HTTP de error.
+- Emitir un log estructurado al finalizar cada request con `requestId`, `method`, `route`, `statusCode`, `durationMs`, `instanceId` si existe y `errorCode` si aplica.
+- No registrar payload completo; usar metadata operacional y detalles truncados cuando sea necesario para debugging.
+
 ## 3. Logging minimo (engine)
 Campos recomendados por corrida:
 - `instanceId`

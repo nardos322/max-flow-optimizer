@@ -18,7 +18,7 @@ Vincular cada tarea de implementacion con evidencia de prueba para evitar huecos
 | `T2.4` Extraccion asignaciones | Unit tests C++ | asignaciones deterministas por `dayId` |
 | `T2.5` CLI I/O | Integration tests engine | stdout/stderr + exit code correctos |
 | `T3.1` Endpoints API | API tests | `GET /health` y `POST /v1/solve` |
-| `T3.2` Integracion engine | API integration | manejo de timeout, exit code, parse errors |
+| `T3.2` Integracion engine | API integration | manejo de timeout, exit code, parse errors, correlacion `requestId` y logs de request |
 | `T3.3` Tests API | API integration | casos tiny factible/infactibles en verde |
 | `T4.1` Navegacion y estado compartido | E2E smoke | navegar entre `Periodos`, `Medicos` y `Planificador` sin perder datos |
 | `T4.2` Captura de datos por seccion | UI tests/smoke | carga valida de periodos, dias, medicos y disponibilidad sin JSON crudo |
