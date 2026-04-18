@@ -57,7 +57,14 @@ importers:
         specifier: 5.4.5
         version: 5.4.5
 
-  packages/domain: {}
+  packages/domain:
+    devDependencies:
+      '@types/node':
+        specifier: 20.12.2
+        version: 20.12.2
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
 
 packages:
 
