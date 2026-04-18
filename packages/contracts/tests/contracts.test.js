@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createValidatorSet, loadOpenApiDocument } from '../src/index.js';
+import { createValidatorSet, loadOpenApiDocument, SolveRequestSchema } from '../src/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
@@ -35,6 +35,11 @@ test('request schema accepts all canonical input fixtures', () => {
     const valid = validators.validateSolveRequest(payload);
     assert.equal(valid, true, `${fixture.id}: ${JSON.stringify(validators.formatErrors(validators.validateSolveRequest.errors))}`);
   }
+});
+
+test('zod request schema is exported for direct consumers', () => {
+  const payload = readJson('input/tiny-feasible.json');
+  assert.equal(SolveRequestSchema.safeParse(payload).success, true);
 });
 
 test('response and error schemas accept canonical expected fixtures', () => {

@@ -1,8 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Ajv2020 from 'ajv/dist/2020.js';
-import addFormats from 'ajv-formats';
+import {
+  ApiErrorSchema,
+  HealthResponseSchema,
+  SolveRequestSchema,
+  SolveResponseSchema
+} from './schemas.js';
+
+export * from './schemas.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PACKAGE_ROOT = path.resolve(__dirname, '..', '..');
@@ -39,46 +45,75 @@ export function loadOpenApiDocument() {
   return fs.readFileSync(OPENAPI_PATH, 'utf8');
 }
 
-function createAjv() {
-  const ajv = new Ajv2020({
-    allErrors: true,
-    strict: false
-  });
-  addFormats(ajv);
-
-  for (const schemaName of Object.keys(SCHEMA_FILENAMES)) {
-    ajv.addSchema(loadSchema(schemaName));
-  }
-
-  return ajv;
+function formatPath(pathSegments = []) {
+  return pathSegments.length > 0 ? pathSegments.join('.') : '$';
 }
 
-export function formatAjvErrors(errors = []) {
-  const normalizedErrors = Array.isArray(errors) ? errors : [];
-  return normalizedErrors.map((error) => {
-    const basePath = error.instancePath ? error.instancePath.slice(1).replace(/\//g, '.') : '$';
-    const missingProperty = error.keyword === 'required' ? error.params.missingProperty : null;
-    const pathLabel = missingProperty
-      ? basePath === '$'
-        ? missingProperty
-        : `${basePath}.${missingProperty}`
-      : basePath;
+function getIssueKeyword(issue) {
+  if (issue.params?.keyword) {
+    return issue.params.keyword;
+  }
 
-    return {
-      keyword: error.keyword,
-      path: pathLabel,
-      message: error.message ?? 'Validation error.'
-    };
-  });
+  if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+    return 'required';
+  }
+
+  if (issue.code === 'unrecognized_keys') {
+    return 'additionalProperties';
+  }
+
+  if (issue.code === 'too_small') {
+    return issue.type === 'array' ? 'minItems' : 'minimum';
+  }
+
+  if (issue.code === 'too_big') {
+    return issue.type === 'array' ? 'maxItems' : 'maximum';
+  }
+
+  if (issue.code === 'invalid_literal') {
+    return 'const';
+  }
+
+  if (issue.code === 'invalid_enum_value') {
+    return 'enum';
+  }
+
+  return issue.code ?? 'custom';
+}
+
+function getIssueMessage(issue) {
+  if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+    const missingProperty = issue.path.at(-1);
+    return `must have required property '${missingProperty}'`;
+  }
+
+  return issue.message ?? 'Validation error.';
+}
+
+export function formatZodErrors(errors = []) {
+  const normalizedErrors = Array.isArray(errors) ? errors : [];
+  return normalizedErrors.map((issue) => ({
+    keyword: getIssueKeyword(issue),
+    path: formatPath(issue.path),
+    message: getIssueMessage(issue)
+  }));
+}
+
+function createZodValidator(schema) {
+  const validate = (data) => {
+    const result = schema.safeParse(data);
+    validate.errors = result.success ? null : result.error.issues;
+    return result.success;
+  };
+  validate.errors = null;
+  return validate;
 }
 
 export function createValidatorSet() {
-  const ajv = createAjv();
-
-  const validateSolveRequest = ajv.getSchema(loadSchema('solveRequest').$id);
-  const validateSolveResponse = ajv.getSchema(loadSchema('solveResponse').$id);
-  const validateApiError = ajv.getSchema(loadSchema('apiError').$id);
-  const validateHealthResponse = ajv.getSchema(loadSchema('healthResponse').$id);
+  const validateSolveRequest = createZodValidator(SolveRequestSchema);
+  const validateSolveResponse = createZodValidator(SolveResponseSchema);
+  const validateApiError = createZodValidator(ApiErrorSchema);
+  const validateHealthResponse = createZodValidator(HealthResponseSchema);
 
   return {
     validateSolveRequest,
@@ -86,7 +121,7 @@ export function createValidatorSet() {
     validateApiError,
     validateHealthResponse,
     formatErrors(errors) {
-      return formatAjvErrors(errors);
+      return formatZodErrors(errors);
     }
   };
 }

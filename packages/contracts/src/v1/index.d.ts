@@ -1,3 +1,5 @@
+import type { z } from 'zod';
+
 export type SolveRequestV1 = {
   instanceId: string;
   maxDaysPerMedic: number;
@@ -98,12 +100,7 @@ export type ApiErrorV1 = {
 
 export type SchemaNameV1 = 'solveRequest' | 'solveResponse' | 'apiError' | 'healthResponse';
 
-export type AjvValidationError = {
-  keyword: string;
-  instancePath?: string;
-  message?: string;
-  params?: Record<string, unknown>;
-};
+export type ZodValidationIssue = z.ZodIssue;
 
 export type FormattedValidationError = {
   keyword: string;
@@ -112,7 +109,7 @@ export type FormattedValidationError = {
 };
 
 export type ValidateFunction<T> = ((data: unknown) => data is T) & {
-  errors?: AjvValidationError[] | null;
+  errors?: ZodValidationIssue[] | null;
 };
 
 export type ValidatorSet = {
@@ -120,8 +117,21 @@ export type ValidatorSet = {
   validateSolveResponse: ValidateFunction<SolveResponseV1>;
   validateApiError: ValidateFunction<ApiErrorV1>;
   validateHealthResponse: ValidateFunction<HealthResponseV1>;
-  formatErrors(errors?: AjvValidationError[] | null): FormattedValidationError[];
+  formatErrors(errors?: ZodValidationIssue[] | null): FormattedValidationError[];
 };
+
+export const API_ERROR_CODES_V1: ApiErrorCodeV1[];
+export const PeriodSchema: z.ZodType<PeriodV1>;
+export const DaySchema: z.ZodType<DayV1>;
+export const MedicSchema: z.ZodType<MedicV1>;
+export const AvailabilitySchema: z.ZodType<AvailabilityV1>;
+export const SolveRequestSchema: z.ZodType<SolveRequestV1>;
+export const AssignmentSchema: z.ZodType<AssignmentV1>;
+export const SolveStatsSchema: z.ZodType<SolveStatsV1>;
+export const SolveDiagnosticsSchema: z.ZodType<SolveDiagnosticsV1>;
+export const SolveResponseSchema: z.ZodType<SolveResponseV1>;
+export const HealthResponseSchema: z.ZodType<HealthResponseV1>;
+export const ApiErrorSchema: z.ZodType<ApiErrorV1>;
 
 export const SCHEMA_FILENAMES: Record<SchemaNameV1, string>;
 
@@ -129,6 +139,6 @@ export function loadSchema(schemaName: SchemaNameV1): Record<string, unknown>;
 
 export function loadOpenApiDocument(): string;
 
-export function formatAjvErrors(errors?: AjvValidationError[] | null): FormattedValidationError[];
+export function formatZodErrors(errors?: ZodValidationIssue[] | null): FormattedValidationError[];
 
 export function createValidatorSet(): ValidatorSet;
