@@ -49,6 +49,13 @@ importers:
       zod:
         specifier: 3.22.4
         version: 3.22.4
+    devDependencies:
+      '@types/node':
+        specifier: 20.12.2
+        version: 20.12.2
+      typescript:
+        specifier: 5.4.5
+        version: 5.4.5
 
   packages/domain: {}
 

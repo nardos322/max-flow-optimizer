@@ -13,12 +13,12 @@ export const API_ERROR_CODES_V1 = [
   'ENGINE_INVALID_OUTPUT',
   'ENGINE_INTERNAL_ERROR',
   'INTERNAL_ERROR'
-];
+] as const;
 
 const idSchema = z.string().min(1).max(128);
 const nonNegativeIntegerSchema = z.number().int().min(0);
 
-function isIsoDate(value) {
+function isIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false;
   }
@@ -28,7 +28,7 @@ function isIsoDate(value) {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
-function hasUniqueItems(values) {
+function hasUniqueItems(values: string[]): boolean {
   return new Set(values).size === values.length;
 }
 
@@ -96,48 +96,34 @@ export const SolveDiagnosticsSchema = z
   })
   .strict();
 
-export const SolveResponseSchema = z
+export const FeasibleSolveResponseSchema = z
   .object({
     instanceId: idSchema,
-    feasible: z.boolean(),
+    feasible: z.literal(true),
     requiredFlow: nonNegativeIntegerSchema,
     maxFlow: nonNegativeIntegerSchema,
     assignments: z.array(AssignmentSchema),
     stats: SolveStatsSchema,
-    diagnostics: SolveDiagnosticsSchema.optional()
+    diagnostics: z.never().optional()
   })
-  .strict()
-  .superRefine((value, context) => {
-    if (value.feasible) {
-      if (value.diagnostics !== undefined) {
-        context.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['diagnostics'],
-          message: 'must NOT be valid',
-          params: { keyword: 'not' }
-        });
-      }
-      return;
-    }
+  .strict();
 
-    if (value.diagnostics === undefined) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['diagnostics'],
-        message: "must have required property 'diagnostics'",
-        params: { keyword: 'required' }
-      });
-    }
+export const InfeasibleSolveResponseSchema = z
+  .object({
+    instanceId: idSchema,
+    feasible: z.literal(false),
+    requiredFlow: nonNegativeIntegerSchema,
+    maxFlow: nonNegativeIntegerSchema,
+    assignments: z.array(AssignmentSchema).max(0),
+    stats: SolveStatsSchema,
+    diagnostics: SolveDiagnosticsSchema
+  })
+  .strict();
 
-    if (value.assignments.length > 0) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['assignments'],
-        message: 'must NOT have more than 0 items',
-        params: { keyword: 'maxItems' }
-      });
-    }
-  });
+export const SolveResponseSchema = z.discriminatedUnion('feasible', [
+  FeasibleSolveResponseSchema,
+  InfeasibleSolveResponseSchema
+]);
 
 export const HealthResponseSchema = z
   .object({
@@ -158,3 +144,18 @@ export const ApiErrorSchema = z
       .strict()
   })
   .strict();
+
+export type ApiErrorCodeV1 = (typeof API_ERROR_CODES_V1)[number];
+export type PeriodV1 = z.infer<typeof PeriodSchema>;
+export type DayV1 = z.infer<typeof DaySchema>;
+export type MedicV1 = z.infer<typeof MedicSchema>;
+export type AvailabilityV1 = z.infer<typeof AvailabilitySchema>;
+export type SolveRequestV1 = z.infer<typeof SolveRequestSchema>;
+export type AssignmentV1 = z.infer<typeof AssignmentSchema>;
+export type SolveStatsV1 = z.infer<typeof SolveStatsSchema>;
+export type SolveDiagnosticsV1 = z.infer<typeof SolveDiagnosticsSchema>;
+export type FeasibleSolveResponseV1 = z.infer<typeof FeasibleSolveResponseSchema>;
+export type InfeasibleSolveResponseV1 = z.infer<typeof InfeasibleSolveResponseSchema>;
+export type SolveResponseV1 = z.infer<typeof SolveResponseSchema>;
+export type HealthResponseV1 = z.infer<typeof HealthResponseSchema>;
+export type ApiErrorV1 = z.infer<typeof ApiErrorSchema>;

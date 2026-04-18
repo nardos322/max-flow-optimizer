@@ -55,7 +55,7 @@ No usar `.superRefine()` para absorber toda la logica de dominio salvo que una r
 
 ## 5. Plan de migracion
 1. Agregar `zod` a `packages/contracts`.
-2. Crear schemas Zod en `packages/contracts/src/v1`.
+2. Crear `packages/contracts/src/v1/schemas.ts` con schemas Zod.
 3. Crear/exportar tipos con `z.infer`.
 4. Reemplazar `createValidatorSet` para que use Zod internamente o exponer una API equivalente durante la transicion.
 5. Cambiar `apps/api` para validar request/response con los helpers de `@maxflow/contracts`.

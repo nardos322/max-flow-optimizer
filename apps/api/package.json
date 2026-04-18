@@ -7,7 +7,7 @@
     "dev": "pnpm run build && node dist/server.js",
     "start": "node dist/server.js",
     "build": "tsc -p tsconfig.build.json",
-    "test": "pnpm --dir ../.. run build:engine && vitest run",
+    "test": "pnpm --filter @maxflow/contracts build && pnpm --dir ../.. run build:engine && vitest run",
     "lint": "tsc --noEmit -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },

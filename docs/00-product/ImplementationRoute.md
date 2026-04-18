@@ -83,7 +83,7 @@
 ### [x] T3.5.1 Schemas Zod en contracts
 - Agregar `zod` a `packages/contracts`.
 - Definir schemas Zod para request, response, error y health en `packages/contracts/src/v1`.
-- Exportar schemas Zod y tipos TypeScript alineados desde `@maxflow/contracts`.
+- Exportar schemas Zod y tipos derivados con `z.infer` desde `@maxflow/contracts`.
 - DoD: tests de `packages/contracts` cubren payloads validos e invalidos sin AJV.
 
 ### [x] T3.5.2 API consume contracts Zod

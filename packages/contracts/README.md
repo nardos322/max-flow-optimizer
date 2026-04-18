@@ -11,9 +11,8 @@ Contratos HTTP publicos (`v1`) consumidos por frontend, API y tests.
 ## Estructura objetivo v1
 ```text
 packages/contracts/src/v1/
-├── schemas.js
-├── index.js
-└── index.d.ts
+├── schemas.ts
+└── index.ts
 ```
 
 Los tipos consumibles por TypeScript se exportan desde:
