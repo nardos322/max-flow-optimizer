@@ -28,10 +28,10 @@ Usar librerias para problemas commodity y concentrar implementacion propia en el
 ## 6. Recomendaciones concretas v1
 - C++ JSON: `nlohmann/json`.
 - C++ tests: `GoogleTest`.
-- API validacion estructural: `AJV`.
+- Contrato estructural API/web: `Zod` en `packages/contracts`.
 - API server: `Express`.
 - Web forms: `react-hook-form` + `@hookform/resolvers`.
-- Web validacion: `Zod`.
+- Web validacion: schemas compartidos desde `@maxflow/contracts`.
 
 ## 7. Riesgos y mitigaciones
 - Riesgo: lock-in a libreria.

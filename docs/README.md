@@ -55,6 +55,7 @@ docs/
 - `30-api/API.md`: contrato HTTP.
 - `30-api/ErrorCatalog.md`: catalogo de errores.
 - `30-api/OpenAPI.md`: reglas de contrato formal.
+- `30-api/ValidationStrategy.md`: estrategia de validacion compartida API/web.
 
 ### `40-quality`
 - `40-quality/TestPlan.md`: estrategia de pruebas.
@@ -88,13 +89,14 @@ docs/
 15. `20-architecture/WorkspaceScripts.md`
 16. `50-operations/RuntimeConfig.md`
 17. `30-api/OpenAPI.md`
-18. `20-architecture/EngineIntegrationContract.md`
-19. `40-quality/NonFunctionalLimits.md`
-20. `40-quality/BenchmarkProtocol.md`
-21. `40-quality/Observability.md`
-22. `40-quality/WorkflowConventions.md`
-23. `40-quality/TraceabilityMatrix.md`
-24. `40-quality/RiskPlaybook.md`
-25. `50-operations/LocalRunbook.md`
-26. `00-product/ReleaseChecklist.md`
-27. `00-product/DemoScript.md`
+18. `30-api/ValidationStrategy.md`
+19. `20-architecture/EngineIntegrationContract.md`
+20. `40-quality/NonFunctionalLimits.md`
+21. `40-quality/BenchmarkProtocol.md`
+22. `40-quality/Observability.md`
+23. `40-quality/WorkflowConventions.md`
+24. `40-quality/TraceabilityMatrix.md`
+25. `40-quality/RiskPlaybook.md`
+26. `50-operations/LocalRunbook.md`
+27. `00-product/ReleaseChecklist.md`
+28. `00-product/DemoScript.md`

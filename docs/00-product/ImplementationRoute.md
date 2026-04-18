@@ -11,6 +11,7 @@
 - [x] Bloque 1 - Contratos y Fixtures
 - [x] Bloque 2 - Motor C++
 - [x] Bloque 3 - API
+- [ ] Bloque 3.5 - Migracion contracts a Zod
 - [ ] Bloque 4 - Web MVP
 - [ ] Bloque 5 - Calidad y cierre
 
@@ -78,6 +79,25 @@
 - Supertest para validaciones y casos factible/infactible.
 - DoD: tests con fixtures canonicos en verde.
 
+## Bloque 3.5 - Migracion contracts a Zod
+### [ ] T3.5.1 Schemas Zod en contracts
+- Agregar `zod` a `packages/contracts`.
+- Definir schemas Zod para request, response, error y health en `packages/contracts/src/v1`.
+- Exportar tipos derivados con `z.infer`.
+- DoD: tests de `packages/contracts` cubren payloads validos e invalidos sin AJV.
+
+### [ ] T3.5.2 API consume contracts Zod
+- Reemplazar validacion estructural AJV por helpers basados en Zod.
+- Mantener la capa `packages/domain` despues de la validacion estructural.
+- Normalizar errores Zod al formato de error v1.
+- DoD: tests de API siguen cubriendo schema invalido, dominio invalido, factible e infactible.
+
+### [ ] T3.5.3 Limpieza y artefactos formales
+- Eliminar `ajv` y `ajv-formats` si ya no hay uso.
+- Decidir si OpenAPI/JSON Schema queda generado desde Zod o como artefacto estatico temporal.
+- Actualizar README de `packages/contracts`.
+- DoD: `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm build` pasan.
+
 ## Bloque 4 - Web MVP (Dia 6)
 ### [ ] T4.1 Navegacion y estado compartido
 - Implementar navegacion simple entre `Periodos`, `Medicos` y `Planificador`.
@@ -88,7 +108,7 @@
 
 ### [ ] T4.2 Captura de datos por seccion
 - Implementar formularios/tablas para crear `periods`, `days`, `medics` y `availability`.
-- Basar formularios en `react-hook-form` con validacion `zod` en cliente.
+- Basar formularios en `react-hook-form` con schemas importados desde `@maxflow/contracts`.
 - Implementar `availability` con UI por medico, dias agrupados por periodo y seleccion por checkbox.
 - Mostrar errores locales de campos requeridos y referencias obvias antes de resolver.
 - DoD: un usuario puede armar una instancia valida sin editar JSON crudo y los componentes siguen el contrato de `docs/00-product/FrontendSpec.md`.
@@ -119,8 +139,9 @@
 2. Bloque 1
 3. Bloque 2
 4. Bloque 3
-5. Bloque 4
-6. Bloque 5
+5. Bloque 3.5
+6. Bloque 4
+7. Bloque 5
 
 ## Criterio de avance
 - Un bloque solo se marca completado cuando todas sus tareas cumplen DoD.

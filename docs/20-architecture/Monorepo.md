@@ -13,7 +13,7 @@ Separar claramente dominio, motor de optimizacion y capas de interfaz para facil
 │   └── engine-cpp/       # Motor C++ de flujo maximo
 ├── packages/
 │   ├── domain/           # Tipos, validaciones y casos de uso
-│   ├── contracts/        # Schemas y tipos del contrato HTTP publico
+│   ├── contracts/        # Schemas Zod y tipos del contrato HTTP publico
 │   └── test-data/        # Datasets JSON y expected outputs
 ├── infra/
 │   └── ci/               # Pipelines y scripts de calidad
@@ -32,7 +32,7 @@ Separar claramente dominio, motor de optimizacion y capas de interfaz para facil
 - `apps/web`: experiencia de demo y visualizacion de asignaciones.
 - `services/engine-cpp`: algoritmo de flujo maximo y extraccion de solucion.
 - `packages/domain`: invariantes de negocio y utilidades de mapeo.
-- `packages/contracts`: fuente unica de verdad para request/response HTTP estructurales.
+- `packages/contracts`: fuente unica de verdad para request/response HTTP estructurales, con schemas Zod y tipos TypeScript compartidos.
 - `packages/test-data`: fixtures usados por unit/integration/e2e.
 - `docs/00-product`: define que se construye y como se demoa.
 - `docs/10-model`: define el modelo de flujo y sus propiedades.

@@ -6,6 +6,7 @@ Permitir evolucionar el proyecto (auth, persistencia, multi-hospital, analitica)
 ## 2. Principios obligatorios
 ### 2.1 Contract-first
 - `packages/contracts` es la fuente unica de verdad para request/response HTTP estructurales.
+- En TypeScript, esos contratos se definen como schemas Zod y tipos derivados.
 - `packages/domain` es la fuente de verdad para validaciones semanticas y reglas cross-field.
 - Todo cambio de contrato debe ser versionado (`v1`, `v1.1`, `v2`).
 - Evitar breaking changes en la misma version.

@@ -5,7 +5,7 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 
 ## 2. Decisiones v1 (cerradas)
 - Core algoritmo: `C++20` + `CMake` + `GoogleTest`.
-- API: `Node.js` + `TypeScript` + `Express` + `AJV`.
+- API: `Node.js` + `TypeScript` + `Express` + `Zod`.
 - Frontend: `React` + `Vite` + `Tailwind CSS` + `React Hook Form` + `Zod`.
 - Estado frontend: `React Context` + `useReducer`.
 - Monorepo: `pnpm workspaces`.
@@ -17,9 +17,10 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 - CMake permite build reproducible y portable.
 - GoogleTest da confianza en correctitud del motor.
 
-### API TS + Express + AJV
+### API TS + Express + Zod
 - Integracion simple con un binario CLI.
-- `AJV` alinea la validacion estructural con `packages/contracts` como fuente de verdad en JSON Schema.
+- `Zod` permite compartir schemas ejecutables y tipos TypeScript entre API y frontend.
+- `packages/contracts` mantiene la fuente de verdad del contrato estructural.
 - `packages/domain` mantiene aparte las reglas semanticas y cross-field.
 
 ### Front React + Vite + Tailwind
@@ -27,7 +28,7 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 - Vite reduce tiempos de desarrollo.
 - Tailwind acelera UI MVP sin invertir en sistema de diseno.
 - `React Hook Form` reduce boilerplate de formularios y mejora performance en inputs controlados y no controlados.
-- `Zod` cubre validacion local de formularios en cliente con bajo costo conceptual.
+- `Zod` cubre validacion local de formularios en cliente y reutiliza el contrato de `packages/contracts`.
 - `React Context` + `useReducer` alcanza para el estado global del MVP sin introducir una store externa.
 
 ### Sin DB en v1
@@ -36,6 +37,7 @@ Congelar el stack tecnico del MVP para evitar scope creep y acelerar entrega de 
 
 ## 4. Alternativas consideradas
 - `Fastify` en lugar de Express: mejor performance, pero menor familiaridad y sin necesidad real para MVP.
+- `AJV` + JSON Schema como fuente primaria: interoperable y solido, pero menos conveniente cuando API y web comparten TypeScript.
 - `PostgreSQL`: descartado en v1 por sobrecosto operacional.
 - `SQLite`: opcional para v1.1 si se quiere guardar historial de corridas.
 

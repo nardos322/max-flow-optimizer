@@ -1,9 +1,10 @@
 # API Contract - MVP
 
 ## 0. Fuente de verdad del contrato
-- OpenAPI 3.1: `packages/contracts/v1/openapi.yaml`
-- Schemas JSON: `packages/contracts/v1/schemas/*`
-- Guía de versionado: `docs/30-api/OpenAPI.md`
+- Schemas Zod: `packages/contracts/src/v1`
+- Tipos TypeScript: `@maxflow/contracts` y `@maxflow/contracts/v1`
+- Guia de versionado: `docs/30-api/OpenAPI.md`
+- Estrategia de validacion: `docs/30-api/ValidationStrategy.md`
 - `packages/contracts` define el contrato HTTP estructural publico.
 - `packages/domain` define las validaciones semanticas/cross-field que no conviene expresar solo con schema.
 
@@ -54,6 +55,7 @@
 ### 3.1 Capa estructural (`packages/contracts`)
 - Forma base del payload JSON.
 - Tipos primitivos, campos requeridos y `additionalProperties=false`.
+- La implementacion objetivo usa Zod como fuente primaria compartida por API y web.
 
 ### 3.2 Capa semantica (`packages/domain`)
 - `maxDaysPerMedic >= 0`.

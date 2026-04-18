@@ -109,4 +109,4 @@ pnpm build
 ## 9. Troubleshooting rapido
 - Si falla la deteccion del engine: verificar que exista `services/engine-cpp/build/maxflow_engine` o definir `ENGINE_PATH`.
 - Si falla timeout: subir `ENGINE_TIMEOUT_MS` temporalmente y revisar logs.
-- Si falla contrato: validar payload contra `packages/contracts/v1/schemas`.
+- Si falla contrato: validar payload contra los schemas exportados por `@maxflow/contracts`.
