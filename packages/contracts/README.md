@@ -12,7 +12,6 @@ Contratos HTTP publicos (`v1`) consumidos por frontend, API y tests.
 ```text
 packages/contracts/src/v1/
 ├── schemas.ts
-├── types.ts
 └── index.ts
 ```
 

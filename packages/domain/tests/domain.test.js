@@ -8,7 +8,7 @@ import {
   findPrimaryDomainError,
   toApiErrorEnvelope,
   validateSolveRequestDomain
-} from '../src/index.js';
+} from '../dist/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');

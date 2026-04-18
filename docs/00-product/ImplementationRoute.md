@@ -11,7 +11,7 @@
 - [x] Bloque 1 - Contratos y Fixtures
 - [x] Bloque 2 - Motor C++
 - [x] Bloque 3 - API
-- [ ] Bloque 3.5 - Migracion contracts a Zod
+- [x] Bloque 3.5 - Migracion contracts a Zod
 - [ ] Bloque 4 - Web MVP
 - [ ] Bloque 5 - Calidad y cierre
 
@@ -80,21 +80,21 @@
 - DoD: tests con fixtures canonicos en verde.
 
 ## Bloque 3.5 - Migracion contracts a Zod
-### [ ] T3.5.1 Schemas Zod en contracts
+### [x] T3.5.1 Schemas Zod en contracts
 - Agregar `zod` a `packages/contracts`.
 - Definir schemas Zod para request, response, error y health en `packages/contracts/src/v1`.
-- Exportar tipos derivados con `z.infer`.
+- Exportar schemas Zod y tipos derivados con `z.infer` desde `@maxflow/contracts`.
 - DoD: tests de `packages/contracts` cubren payloads validos e invalidos sin AJV.
 
-### [ ] T3.5.2 API consume contracts Zod
+### [x] T3.5.2 API consume contracts Zod
 - Reemplazar validacion estructural AJV por helpers basados en Zod.
 - Mantener la capa `packages/domain` despues de la validacion estructural.
 - Normalizar errores Zod al formato de error v1.
 - DoD: tests de API siguen cubriendo schema invalido, dominio invalido, factible e infactible.
 
-### [ ] T3.5.3 Limpieza y artefactos formales
+### [x] T3.5.3 Limpieza y artefactos formales
 - Eliminar `ajv` y `ajv-formats` si ya no hay uso.
-- Decidir si OpenAPI/JSON Schema queda generado desde Zod o como artefacto estatico temporal.
+- Mantener OpenAPI/JSON Schema como artefacto estatico temporal hasta incorporar generacion desde Zod.
 - Actualizar README de `packages/contracts`.
 - DoD: `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm build` pasan.
 
