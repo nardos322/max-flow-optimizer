@@ -18,6 +18,10 @@ function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.resolve(testDataRoot, relativePath), 'utf8'));
 }
 
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
 test('openapi document exposes v1 endpoints', () => {
   const openapi = loadOpenApiDocument();
   assert.match(openapi, /\/health:/);
@@ -86,6 +90,66 @@ test('request schema rejects malformed payloads', () => {
   ]);
 });
 
+test('request schema rejects representative structural violations', () => {
+  const baseRequest = readJson('input/tiny-feasible.json');
+  const cases = [
+    {
+      name: 'additional root property',
+      mutate(payload) {
+        payload.unexpected = true;
+      },
+      expected: { keyword: 'additionalProperties', path: '$' }
+    },
+    {
+      name: 'empty instance id',
+      mutate(payload) {
+        payload.instanceId = '';
+      },
+      expected: { keyword: 'minimum', path: 'instanceId' }
+    },
+    {
+      name: 'decimal maxDaysPerMedic',
+      mutate(payload) {
+        payload.maxDaysPerMedic = 1.5;
+      },
+      expected: { keyword: 'invalid_type', path: 'maxDaysPerMedic' }
+    },
+    {
+      name: 'invalid date',
+      mutate(payload) {
+        payload.days[0].date = '2026-02-30';
+      },
+      expected: { keyword: 'custom', path: 'days.0.date' }
+    },
+    {
+      name: 'empty periods',
+      mutate(payload) {
+        payload.periods = [];
+      },
+      expected: { keyword: 'minItems', path: 'periods' }
+    },
+    {
+      name: 'additional nested property',
+      mutate(payload) {
+        payload.medics[0].role = 'backup';
+      },
+      expected: { keyword: 'additionalProperties', path: 'medics.0' }
+    }
+  ];
+
+  for (const { name, mutate, expected } of cases) {
+    const payload = cloneJson(baseRequest);
+    mutate(payload);
+
+    assert.equal(validators.validateSolveRequest(payload), false, name);
+    assert.match(
+      JSON.stringify(validators.formatErrors(validators.validateSolveRequest.errors)),
+      new RegExp(`"keyword":"${expected.keyword}".*"path":"${expected.path.replace(/\$/g, '\\$')}"`),
+      name
+    );
+  }
+});
+
 test('response schema rejects inconsistent feasible payloads', () => {
   const invalidResponse = {
     instanceId: 'broken',
@@ -108,4 +172,95 @@ test('response schema rejects inconsistent feasible payloads', () => {
   assert.equal(validators.validateSolveResponse(invalidResponse), false);
   const paths = validators.formatErrors(validators.validateSolveResponse.errors).map((error) => error.keyword);
   assert.ok(paths.includes('not'));
+});
+
+test('response schema rejects representative structural violations', () => {
+  const feasibleResponse = readJson('expected/tiny-feasible.response.json');
+  const infeasibleResponse = readJson('expected/tiny-infeasible-availability.response.json');
+  const cases = [
+    {
+      name: 'infeasible response without diagnostics',
+      payload: (() => {
+        const payload = cloneJson(infeasibleResponse);
+        delete payload.diagnostics;
+        return payload;
+      })(),
+      expected: { keyword: 'required', path: 'diagnostics' }
+    },
+    {
+      name: 'infeasible response with assignments',
+      payload: (() => {
+        const payload = cloneJson(infeasibleResponse);
+        payload.assignments = [{ dayId: 'd1', medicId: 'm1', periodId: 'p1' }];
+        return payload;
+      })(),
+      expected: { keyword: 'maxItems', path: 'assignments' }
+    },
+    {
+      name: 'duplicate uncovered days',
+      payload: (() => {
+        const payload = cloneJson(infeasibleResponse);
+        payload.diagnostics.uncoveredDays = ['d1', 'd1'];
+        return payload;
+      })(),
+      expected: { keyword: 'custom', path: 'diagnostics.uncoveredDays' }
+    },
+    {
+      name: 'additional stats property',
+      payload: (() => {
+        const payload = cloneJson(feasibleResponse);
+        payload.stats.extra = 1;
+        return payload;
+      })(),
+      expected: { keyword: 'additionalProperties', path: 'stats' }
+    }
+  ];
+
+  for (const { name, payload, expected } of cases) {
+    assert.equal(validators.validateSolveResponse(payload), false, name);
+    assert.match(
+      JSON.stringify(validators.formatErrors(validators.validateSolveResponse.errors)),
+      new RegExp(`"keyword":"${expected.keyword}".*"path":"${expected.path}"`),
+      name
+    );
+  }
+});
+
+test('error schema rejects invalid error envelopes', () => {
+  const baseError = readJson('expected/invalid-duplicate-id.error.json');
+  const cases = [
+    {
+      name: 'invalid error code',
+      mutate(payload) {
+        payload.error.code = 'NOT_A_CODE';
+      },
+      expected: { keyword: 'enum', path: 'error.code' }
+    },
+    {
+      name: 'invalid timestamp',
+      mutate(payload) {
+        payload.error.timestamp = 'not-a-date';
+      },
+      expected: { keyword: 'invalid_string', path: 'error.timestamp' }
+    },
+    {
+      name: 'additional envelope property',
+      mutate(payload) {
+        payload.extra = true;
+      },
+      expected: { keyword: 'additionalProperties', path: '$' }
+    }
+  ];
+
+  for (const { name, mutate, expected } of cases) {
+    const payload = cloneJson(baseError);
+    mutate(payload);
+
+    assert.equal(validators.validateApiError(payload), false, name);
+    assert.match(
+      JSON.stringify(validators.formatErrors(validators.validateApiError.errors)),
+      new RegExp(`"keyword":"${expected.keyword}".*"path":"${expected.path.replace(/\$/g, '\\$')}"`),
+      name
+    );
+  }
 });
