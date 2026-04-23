@@ -4,10 +4,30 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "node -e \"console.log('web scaffold dev')\"",
-    "build": "node -e \"console.log('web scaffold build')\"",
-    "test": "node -e \"console.log('web scaffold test')\"",
-    "lint": "node -e \"console.log('web scaffold lint')\"",
-    "typecheck": "node -e \"console.log('web scaffold typecheck')\""
+    "dev": "vite --host 127.0.0.1 --port 4173",
+    "build": "vite build",
+    "test": "vitest run",
+    "lint": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "3.9.0",
+    "@maxflow/contracts": "workspace:*",
+    "@maxflow/domain": "workspace:*",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-hook-form": "7.53.0",
+    "zod": "3.22.4"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "@vitejs/plugin-react": "4.3.1",
+    "autoprefixer": "10.4.20",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.14",
+    "typescript": "5.4.5",
+    "vite": "5.4.10",
+    "vitest": "1.6.0"
   }
 }

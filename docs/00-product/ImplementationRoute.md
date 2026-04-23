@@ -12,7 +12,7 @@
 - [x] Bloque 2 - Motor C++
 - [x] Bloque 3 - API
 - [x] Bloque 3.5 - Migracion contracts a Zod
-- [ ] Bloque 4 - Web MVP
+- [x] Bloque 4 - Web MVP
 - [ ] Bloque 5 - Calidad y cierre
 
 ## Bloque 0 - Bootstrap Monorepo (Dia 1)
@@ -99,21 +99,21 @@
 - DoD: `pnpm lint`, `pnpm typecheck`, `pnpm test` y `pnpm build` pasan.
 
 ## Bloque 4 - Web MVP (Dia 6)
-### [ ] T4.1 Navegacion y estado compartido
+### [x] T4.1 Navegacion y estado compartido
 - Implementar navegacion simple entre `Periodos`, `Medicos` y `Planificador`.
 - Centralizar en frontend un unico estado de instancia editable por las tres vistas.
 - Implementar ese estado global con `React Context` + `useReducer`.
 - Agregar accion de carga de fixture base para poblar la UI rapidamente.
 - DoD: cambiar de seccion no pierde datos y el fixture factible queda visible en las 3 vistas segun `docs/00-product/FrontendSpec.md`.
 
-### [ ] T4.2 Captura de datos por seccion
+### [x] T4.2 Captura de datos por seccion
 - Implementar formularios/tablas para crear `periods`, `days`, `medics` y `availability`.
 - Basar formularios en `react-hook-form` con schemas importados desde `@maxflow/contracts`.
 - Implementar `availability` con UI por medico, dias agrupados por periodo y seleccion por checkbox.
 - Mostrar errores locales de campos requeridos y referencias obvias antes de resolver.
 - DoD: un usuario puede armar una instancia valida sin editar JSON crudo y los componentes siguen el contrato de `docs/00-product/FrontendSpec.md`.
 
-### [ ] T4.3 Planificador, resultado y exportacion
+### [x] T4.3 Planificador, resultado y exportacion
 - Mostrar resumen de la instancia, boton resolver, estado `feasible`, tabla de asignaciones y metricas.
 - Mostrar diagnostico minimo en infactible.
 - Export JSON/CSV del resultado.
