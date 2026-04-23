@@ -49,7 +49,7 @@ export function appStateReducer(state: AppState, action: AppAction): AppState {
         ...action.patch
       });
     case 'upsertPeriod': {
-      const periods = upsertById(state.instanceDraft.periods, action.period);
+      const periods = assignDaysToPeriod(state.instanceDraft.periods, action.period);
       return resetSolveState(state, {
         ...state.instanceDraft,
         periods
@@ -194,4 +194,26 @@ function assignDayToPeriod(periods: InstanceDraft['periods'], dayId: string, per
     const dayIds = period.dayIds.filter((entry) => entry !== dayId);
     return period.id === periodId ? { ...period, dayIds: [...dayIds, dayId] } : { ...period, dayIds };
   });
+}
+
+function assignDaysToPeriod(
+  periods: InstanceDraft['periods'],
+  targetPeriod: InstanceDraft['periods'][number]
+): InstanceDraft['periods'] {
+  const normalizedTarget = {
+    ...targetPeriod,
+    dayIds: [...new Set(targetPeriod.dayIds)]
+  };
+
+  const nextPeriods = periods.map((period) => ({
+    ...period,
+    dayIds:
+      period.id === normalizedTarget.id
+        ? normalizedTarget.dayIds
+        : period.dayIds.filter((dayId) => !normalizedTarget.dayIds.includes(dayId))
+  }));
+
+  return nextPeriods.some((period) => period.id === normalizedTarget.id)
+    ? nextPeriods
+    : [...nextPeriods, normalizedTarget];
 }

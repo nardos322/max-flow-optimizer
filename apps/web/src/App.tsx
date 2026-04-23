@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
 
-import { parseDraftFile } from './lib/fixture.js';
+import { createEmptyDraft, parseDraftFile } from './lib/fixture.js';
 import { AppStateProvider, useAppDispatch, useAppState } from './state/appState.js';
 import { MedicsPage } from './components/MedicsPage.js';
 import { PlannerPage } from './components/PlannerPage.js';
 import { PeriodsPage } from './components/PeriodsPage.js';
 import { Badge, PrimaryButton } from './components/ui.js';
-import type { AppSection } from './types.js';
+import type { AppSection, InstanceDraft } from './types.js';
 
 const sections: { id: AppSection; label: string }[] = [
   { id: 'periods', label: 'Periodos' },
@@ -24,6 +24,11 @@ function AppLayout() {
     fileInputRef.current?.click();
   };
 
+  const replaceDraft = (draft: InstanceDraft) => {
+    dispatch({ type: 'replaceDraft', draft });
+    setImportError(null);
+  };
+
   const handleImportChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -34,8 +39,7 @@ function AppLayout() {
 
     try {
       const draft = await parseDraftFile(file);
-      dispatch({ type: 'replaceDraft', draft });
-      setImportError(null);
+      replaceDraft(draft);
     } catch (error) {
       setImportError(error instanceof Error ? error.message : 'Unable to import the selected file.');
     }
@@ -52,13 +56,27 @@ function AppLayout() {
 
           <div className="flex flex-wrap items-center gap-3">
             <Badge tone="draft">{state.instanceDraft.instanceId || 'sin-instanceId'}</Badge>
-            <PrimaryButton tone="neutral" type="button" onClick={() => dispatch({ type: 'replaceDraft', draft: { instanceId: 'draft-001', maxDaysPerMedic: 1, periods: [], days: [], medics: [], availability: [] } })}>
+            <PrimaryButton tone="neutral" type="button" onClick={() => replaceDraft(createEmptyDraft())}>
               Nuevo
             </PrimaryButton>
-            <PrimaryButton tone="neutral" type="button" onClick={() => dispatch({ type: 'loadFixture', variant: 'feasible' })}>
+            <PrimaryButton
+              tone="neutral"
+              type="button"
+              onClick={() => {
+                dispatch({ type: 'loadFixture', variant: 'feasible' });
+                setImportError(null);
+              }}
+            >
               Fixture OK
             </PrimaryButton>
-            <PrimaryButton tone="neutral" type="button" onClick={() => dispatch({ type: 'loadFixture', variant: 'infeasible' })}>
+            <PrimaryButton
+              tone="neutral"
+              type="button"
+              onClick={() => {
+                dispatch({ type: 'loadFixture', variant: 'infeasible' });
+                setImportError(null);
+              }}
+            >
               Fixture KO
             </PrimaryButton>
             <PrimaryButton tone="neutral" type="button" onClick={handleImportClick}>

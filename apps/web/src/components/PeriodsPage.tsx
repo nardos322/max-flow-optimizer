@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState } from 'react';
-import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DaySchema, PeriodSchema } from '@maxflow/contracts/v1/schemas';
+import { z } from 'zod';
+import { DaySchema } from '@maxflow/contracts/v1/schemas';
 
 import { getPeriodIdForDay } from '../lib/planner.js';
 import { useAppDispatch, useAppState } from '../state/appState.js';
 import { EmptyState, Field, PageSection, Panel, PrimaryButton, SelectInput, TextInput } from './ui.js';
 
-const periodFormSchema = PeriodSchema.omit({ dayIds: true }).extend({
-  dayIds: z.array(z.string())
-});
-
 const dayFormSchema = DaySchema.extend({
   periodId: z.string().min(1, 'Select a period.')
 });
 
-type PeriodFormValues = z.infer<typeof periodFormSchema>;
+type PeriodFormValues = {
+  id: string;
+};
 type DayFormValues = z.infer<typeof dayFormSchema>;
 
 export function PeriodsPage() {
@@ -24,6 +22,7 @@ export function PeriodsPage() {
   const dispatch = useAppDispatch();
   const [editingPeriodId, setEditingPeriodId] = useState<string | null>(null);
   const [editingDayId, setEditingDayId] = useState<string | null>(null);
+  const [selectedDayIds, setSelectedDayIds] = useState<string[]>([]);
 
   const editingPeriod = useMemo(
     () => instanceDraft.periods.find((period) => period.id === editingPeriodId) ?? null,
@@ -33,12 +32,16 @@ export function PeriodsPage() {
     () => instanceDraft.days.find((day) => day.id === editingDayId) ?? null,
     [editingDayId, instanceDraft.days]
   );
+  const assignableDays = useMemo(() => {
+    return instanceDraft.days.filter((day) => {
+      const assignedPeriodId = getPeriodIdForDay(instanceDraft.periods, day.id);
+      return assignedPeriodId === null || assignedPeriodId === editingPeriodId;
+    });
+  }, [editingPeriodId, instanceDraft.days, instanceDraft.periods]);
 
   const periodForm = useForm<PeriodFormValues>({
-    resolver: zodResolver(periodFormSchema),
     defaultValues: {
-      id: '',
-      dayIds: []
+      id: ''
     }
   });
 
@@ -53,14 +56,15 @@ export function PeriodsPage() {
 
   useEffect(() => {
     if (!editingPeriod) {
-      periodForm.reset({ id: '', dayIds: [] });
+      periodForm.reset({ id: '' });
+      setSelectedDayIds([]);
       return;
     }
 
     periodForm.reset({
-      id: editingPeriod.id,
-      dayIds: editingPeriod.dayIds
+      id: editingPeriod.id
     });
+    setSelectedDayIds(editingPeriod.dayIds);
   }, [editingPeriod, periodForm]);
 
   useEffect(() => {
@@ -88,7 +92,11 @@ export function PeriodsPage() {
       <div className="grid gap-5 xl:grid-cols-2">
         <Panel
           title={editingPeriod ? `Editar periodo ${editingPeriod.id}` : 'Nuevo periodo'}
-          subtitle="Los dias pueden reasignarse desde aqui o desde el formulario de dias."
+          subtitle={
+            editingPeriod
+              ? 'Los dias pueden reasignarse desde aqui o desde el formulario de dias.'
+              : 'Primero crea el periodo. Luego podras asignarle dias desde el formulario de dias.'
+          }
           actions={
             editingPeriod ? (
               <PrimaryButton
@@ -96,7 +104,8 @@ export function PeriodsPage() {
                 type="button"
                 onClick={() => {
                   setEditingPeriodId(null);
-                  periodForm.reset({ id: '', dayIds: [] });
+                  periodForm.reset({ id: '' });
+                  setSelectedDayIds([]);
                 }}
               >
                 Cancelar
@@ -111,51 +120,71 @@ export function PeriodsPage() {
                 type: 'upsertPeriod',
                 period: {
                   id: values.id,
-                  dayIds: values.dayIds
+                  dayIds: selectedDayIds
                 }
               });
               setEditingPeriodId(null);
-              periodForm.reset({ id: '', dayIds: [] });
+              periodForm.reset({ id: '' });
+              setSelectedDayIds([]);
             })}
           >
             <Field label="Period ID" error={periodForm.formState.errors.id?.message}>
-              <TextInput placeholder="p1" disabled={Boolean(editingPeriod)} {...periodForm.register('id')} />
+              <TextInput
+                placeholder="p1"
+                disabled={Boolean(editingPeriod)}
+                {...periodForm.register('id', {
+                  required: 'Period ID is required.',
+                  validate: (value) => value.trim().length > 0 || 'Period ID is required.'
+                })}
+              />
             </Field>
 
-            <div className="space-y-2">
-              <span className="text-sm font-medium text-slate-700">Dias del periodo</span>
-              {instanceDraft.days.length === 0 ? (
-                <EmptyState title="Sin dias cargados" message="Crea el primer dia para poder asociarlo a un periodo." />
-              ) : (
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {instanceDraft.days.map((day) => (
-                    <label
-                      key={day.id}
-                      className="flex min-h-12 items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    >
-                      <span>
-                        <span className="block font-medium text-slate-900">{day.id}</span>
-                        <span className="block text-slate-500">{day.date}</span>
-                      </span>
-                      <input
-                        type="checkbox"
-                        value={day.id}
-                        checked={periodForm.watch('dayIds').includes(day.id)}
-                        onChange={(event) => {
-                          const current = new Set(periodForm.getValues('dayIds'));
-                          if (event.target.checked) {
-                            current.add(day.id);
-                          } else {
-                            current.delete(day.id);
-                          }
-                          periodForm.setValue('dayIds', [...current], { shouldDirty: true });
-                        }}
-                      />
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
+            {editingPeriod ? (
+              <div className="space-y-2">
+                <span className="text-sm font-medium text-slate-700">Dias asignados o disponibles para este periodo</span>
+                {instanceDraft.days.length === 0 ? (
+                  <EmptyState title="Sin dias cargados" message="Crea el primer dia para poder asociarlo a un periodo." />
+                ) : assignableDays.length === 0 ? (
+                  <EmptyState
+                    title="Sin dias disponibles"
+                    message="Todos los dias existentes ya estan asociados a otros periodos."
+                  />
+                ) : (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {assignableDays.map((day) => (
+                      <label
+                        key={day.id}
+                        className="flex min-h-12 items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                      >
+                        <span>
+                          <span className="block font-medium text-slate-900">{day.id}</span>
+                          <span className="block text-slate-500">{day.date}</span>
+                        </span>
+                        <input
+                          type="checkbox"
+                          value={day.id}
+                          checked={selectedDayIds.includes(day.id)}
+                          onChange={(event) => {
+                            const current = new Set(selectedDayIds);
+                            if (event.target.checked) {
+                              current.add(day.id);
+                            } else {
+                              current.delete(day.id);
+                            }
+                            setSelectedDayIds([...current]);
+                          }}
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <EmptyState
+                title="Asignacion de dias despues"
+                message="Crea el periodo primero. Luego asigna o mueve dias desde el formulario de dias."
+              />
+            )}
 
             <PrimaryButton type="submit">{editingPeriod ? 'Guardar periodo' : 'Crear periodo'}</PrimaryButton>
           </form>

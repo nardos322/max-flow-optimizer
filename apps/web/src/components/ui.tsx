@@ -1,4 +1,4 @@
-import type { PropsWithChildren, ReactNode } from 'react';
+import { forwardRef, type PropsWithChildren, type ReactNode } from 'react';
 
 export function PageSection({
   title,
@@ -54,31 +54,42 @@ export function Field({
   );
 }
 
-export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+export const TextInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function TextInput(
+  props,
+  ref
+) {
   return (
     <input
+      ref={ref}
       {...props}
       className={`h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 ${
         props.className ?? ''
       }`}
     />
   );
-}
+});
 
-export function SelectInput(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+export const SelectInput = forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(function SelectInput(
+  props,
+  ref
+) {
   return (
     <select
+      ref={ref}
       {...props}
       className={`h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 ${
         props.className ?? ''
       }`}
     />
   );
-}
+});
 
-export function NumberInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <TextInput {...props} type="number" inputMode="numeric" />;
-}
+export const NumberInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(function NumberInput(
+  props,
+  ref
+) {
+  return <TextInput ref={ref} {...props} type="number" inputMode="numeric" />;
+});
 
 export function PrimaryButton({
   tone = 'primary',

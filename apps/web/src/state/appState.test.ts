@@ -53,4 +53,19 @@ describe('appStateReducer', () => {
       { medicId: 'm2', dayId: 'd2' }
     ]);
   });
+
+  it('reassigns days to a single target period when saving a period', () => {
+    const seededState = appStateReducer(initialAppState, { type: 'loadFixture' });
+
+    const nextState = appStateReducer(seededState, {
+      type: 'upsertPeriod',
+      period: {
+        id: 'p2',
+        dayIds: ['d2', 'd3']
+      }
+    });
+
+    expect(nextState.instanceDraft.periods.find((period) => period.id === 'p1')?.dayIds).toEqual(['d1']);
+    expect(nextState.instanceDraft.periods.find((period) => period.id === 'p2')?.dayIds).toEqual(['d2', 'd3']);
+  });
 });
