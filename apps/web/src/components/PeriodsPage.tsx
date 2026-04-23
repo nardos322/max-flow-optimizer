@@ -91,6 +91,7 @@ export function PeriodsPage() {
     >
       <div className="grid gap-5 xl:grid-cols-2">
         <Panel
+          className="flex h-full flex-col"
           title={editingPeriod ? `Editar periodo ${editingPeriod.id}` : 'Nuevo periodo'}
           subtitle={
             editingPeriod
@@ -114,7 +115,7 @@ export function PeriodsPage() {
           }
         >
           <form
-            className="space-y-4"
+            className="flex flex-1 flex-col gap-4"
             onSubmit={periodForm.handleSubmit((values) => {
               dispatch({
                 type: 'upsertPeriod',
@@ -139,58 +140,62 @@ export function PeriodsPage() {
               />
             </Field>
 
-            {editingPeriod ? (
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-slate-700">Dias asignados o disponibles para este periodo</span>
-                {instanceDraft.days.length === 0 ? (
-                  <EmptyState title="Sin dias cargados" message="Crea el primer dia para poder asociarlo a un periodo." />
-                ) : assignableDays.length === 0 ? (
-                  <EmptyState
-                    title="Sin dias disponibles"
-                    message="Todos los dias existentes ya estan asociados a otros periodos."
-                  />
-                ) : (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {assignableDays.map((day) => (
-                      <label
-                        key={day.id}
-                        className="flex min-h-12 items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                      >
-                        <span>
-                          <span className="block font-medium text-slate-900">{day.id}</span>
-                          <span className="block text-slate-500">{day.date}</span>
-                        </span>
-                        <input
-                          type="checkbox"
-                          value={day.id}
-                          checked={selectedDayIds.includes(day.id)}
-                          onChange={(event) => {
-                            const current = new Set(selectedDayIds);
-                            if (event.target.checked) {
-                              current.add(day.id);
-                            } else {
-                              current.delete(day.id);
-                            }
-                            setSelectedDayIds([...current]);
-                          }}
-                        />
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <EmptyState
-                title="Asignacion de dias despues"
-                message="Crea el periodo primero. Luego asigna o mueve dias desde el formulario de dias."
-              />
-            )}
-
-            <PrimaryButton type="submit">{editingPeriod ? 'Guardar periodo' : 'Crear periodo'}</PrimaryButton>
+            <div className="flex-1">
+              {editingPeriod ? (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Dias asignados o disponibles para este periodo</span>
+                  {instanceDraft.days.length === 0 ? (
+                    <EmptyState title="Sin dias cargados" message="Crea el primer dia para poder asociarlo a un periodo." />
+                  ) : assignableDays.length === 0 ? (
+                    <EmptyState
+                      title="Sin dias disponibles"
+                      message="Todos los dias existentes ya estan asociados a otros periodos."
+                    />
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {assignableDays.map((day) => (
+                        <label
+                          key={day.id}
+                          className="flex min-h-12 items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                        >
+                          <span>
+                            <span className="block font-medium text-slate-900">{day.id}</span>
+                            <span className="block text-slate-500">{day.date}</span>
+                          </span>
+                          <input
+                            type="checkbox"
+                            value={day.id}
+                            checked={selectedDayIds.includes(day.id)}
+                            onChange={(event) => {
+                              const current = new Set(selectedDayIds);
+                              if (event.target.checked) {
+                                current.add(day.id);
+                              } else {
+                                current.delete(day.id);
+                              }
+                              setSelectedDayIds([...current]);
+                            }}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <EmptyState
+                  title="Asignacion de dias despues"
+                  message="Crea el periodo primero. Luego asigna o mueve dias desde el formulario de dias."
+                />
+              )}
+            </div>
+            <PrimaryButton className="mt-auto self-start" type="submit">
+              {editingPeriod ? 'Guardar periodo' : 'Crear periodo'}
+            </PrimaryButton>
           </form>
         </Panel>
 
         <Panel
+          className="flex h-full flex-col"
           title={editingDay ? `Editar dia ${editingDay.id}` : 'Nuevo dia'}
           subtitle="Cada dia debe terminar asociado a exactamente un periodo."
           actions={
@@ -209,7 +214,7 @@ export function PeriodsPage() {
           }
         >
           <form
-            className="space-y-4"
+            className="flex flex-1 flex-col gap-4"
             onSubmit={dayForm.handleSubmit((values) => {
               dispatch({
                 type: 'upsertDay',
@@ -242,14 +247,14 @@ export function PeriodsPage() {
               </SelectInput>
             </Field>
 
-            <PrimaryButton type="submit" disabled={instanceDraft.periods.length === 0}>
+            <PrimaryButton className="mt-auto self-start" type="submit" disabled={instanceDraft.periods.length === 0}>
               {editingDay ? 'Guardar dia' : 'Crear dia'}
             </PrimaryButton>
           </form>
         </Panel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
+      <div className="grid gap-5 xl:grid-cols-2">
         <Panel title="Periodos cargados" subtitle="Un periodo sin dias queda visible como incompleto.">
           {instanceDraft.periods.length === 0 ? (
             <EmptyState title="Sin periodos" message="Crea el primer periodo para empezar a estructurar la instancia." />
@@ -263,11 +268,11 @@ export function PeriodsPage() {
                       <p className="mt-1 text-sm text-slate-600">
                         {period.dayIds.length > 0
                           ? period.dayIds
-                              .map((dayId) => {
-                                const day = instanceDraft.days.find((entry) => entry.id === dayId);
-                                return `${dayId}${day ? ` (${day.date})` : ''}`;
-                              })
-                              .join(', ')
+                            .map((dayId) => {
+                              const day = instanceDraft.days.find((entry) => entry.id === dayId);
+                              return `${dayId}${day ? ` (${day.date})` : ''}`;
+                            })
+                            .join(', ')
                           : 'Periodo incompleto: sin dias asociados.'}
                       </p>
                     </div>

@@ -24,10 +24,11 @@ export function Panel({
   title,
   subtitle,
   actions,
-  children
-}: PropsWithChildren<{ title: string; subtitle?: string; actions?: ReactNode }>) {
+  children,
+  className
+}: PropsWithChildren<{ title: string; subtitle?: string; actions?: ReactNode; className?: string }>) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-panel">
+    <div className={`rounded-lg border border-slate-200 bg-white p-5 shadow-panel ${className ?? ''}`}>
       <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="space-y-1">
           <h3 className="text-base font-semibold text-slate-900">{title}</h3>
