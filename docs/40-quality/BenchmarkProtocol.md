@@ -25,6 +25,7 @@ Reglas:
 - Medir en maquina local de desarrollo, sin otras tareas pesadas en paralelo.
 - Ejecutar API y engine compilados en modo de desarrollo normal del proyecto.
 - Usar la misma configuracion de env vars documentada para v1.
+- Verificar que `MAX_REQUEST_BYTES` cubra el tamano real del fixture `large-random-200x200.json` antes de medir.
 - Si se reportan resultados publicamente, incluir CPU, RAM y sistema operativo.
 
 ## 5. Procedimiento

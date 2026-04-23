@@ -19,7 +19,7 @@ Mostrar de punta a punta que el sistema:
 - Mostrar que la UI esta separada en `Periodos`, `Medicos` y `Planificador`.
 
 ### Paso 2 - Armado del caso factible (90s)
-- Cargar `tiny-feasible.json` usando la accion de fixture base o poblar manualmente la UI.
+- Cargar `tiny-feasible.json` usando `Fixture OK`, importando JSON o poblando manualmente la UI.
 - En `Periodos`, mostrar periodos y dias.
 - En `Medicos`, mostrar medicos y disponibilidad.
 - En `Planificador`, verificar el resumen consolidado de la instancia.
@@ -34,7 +34,7 @@ Mostrar de punta a punta que el sistema:
 - Mostrar export JSON/CSV.
 
 ### Paso 4 - Caso infactible (90s)
-- Cargar `tiny-infeasible-availability.json`.
+- Cargar `tiny-infeasible-availability.json` usando `Fixture KO` o importando JSON.
 - Recorrer rapido `Periodos` y `Medicos` para mostrar que la entrada cambio.
 - Ejecutar solucion desde `Planificador`.
 - Mostrar:
@@ -48,7 +48,7 @@ Mostrar de punta a punta que el sistema:
   - `apps/api`
   - `apps/web`
   - `packages/contracts`
-- Mencionar pruebas y quality gates de CI.
+- Mencionar pruebas, smoke local y quality gates de CI.
 
 ## 4. Mensajes clave para portfolio
 - "El modelo matematico esta formalizado y probado."

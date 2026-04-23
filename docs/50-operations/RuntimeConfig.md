@@ -10,7 +10,7 @@ Definir variables de entorno y defaults para ejecutar localmente sin ambiguedad.
 | `PORT` | No | `3000` | Puerto HTTP de la API. |
 | `ENGINE_PATH` | No | `<repo-root>/services/engine-cpp/build/maxflow_engine` | Override opcional de la ruta del binario `maxflow_engine`. |
 | `ENGINE_TIMEOUT_MS` | No | `2000` | Timeout de ejecucion del motor en ms. |
-| `MAX_REQUEST_BYTES` | No | `1000000` | Tamano maximo de body permitido por request. |
+| `MAX_REQUEST_BYTES` | No | `2500000` | Tamano maximo de body permitido por request. |
 | `MAX_DAYS` | No | `500` | Limite semantico maximo de elementos en `days`. |
 | `MAX_MEDICS` | No | `500` | Limite semantico maximo de elementos en `medics`. |
 | `MAX_PERIODS` | No | `100` | Limite semantico maximo de elementos en `periods`. |
@@ -20,7 +20,7 @@ Definir variables de entorno y defaults para ejecutar localmente sin ambiguedad.
 ## 3. Web (`apps/web`)
 | Variable | Requerida | Default | Descripcion |
 |---|---|---|---|
-| `VITE_API_BASE_URL` | No | `http://localhost:3000` | Base URL de la API. |
+| `VITE_API_BASE_URL` | No | `/api` | Base URL de la API. |
 
 ## 4. Convenciones
 - Variables numericas se parsean y validan al iniciar.

@@ -121,7 +121,7 @@
 - DoD: flujo completo manual `Periodos` -> `Medicos` -> `Planificador` funciona con caso factible e infactible y las descargas contienen contenido correcto segun `docs/00-product/FrontendSpec.md`.
 
 ## Bloque 5 - Calidad y cierre (Dia 7)
-### [ ] T5.1 CI minima
+### [x] T5.1 CI minima
 - Pipeline `lint -> test -> build`.
 - DoD: bloquea merge en fallo.
 

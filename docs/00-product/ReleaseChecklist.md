@@ -1,19 +1,19 @@
 # Release Checklist - MVP v1
 
 ## 1. Funcionalidad
-- [ ] `GET /health` responde `200`.
-- [ ] `POST /v1/solve` resuelve caso factible.
-- [ ] `POST /v1/solve` reporta caso infactible correctamente.
-- [ ] UI expone `Periodos`, `Medicos` y `Planificador`.
-- [ ] La UI conserva el estado al navegar entre secciones.
-- [ ] `Planificador` muestra resultado y metricas.
-- [ ] Export JSON/CSV funciona.
+- [x] `GET /health` responde `200`.
+- [x] `POST /v1/solve` resuelve caso factible.
+- [x] `POST /v1/solve` reporta caso infactible correctamente.
+- [x] UI expone `Periodos`, `Medicos` y `Planificador`.
+- [x] La UI conserva el estado al navegar entre secciones.
+- [x] `Planificador` muestra resultado y metricas.
+- [x] Export JSON/CSV funciona.
 
 ## 2. Correctitud del modelo
-- [ ] Restriccion `C` validada en salidas factibles.
-- [ ] Restriccion maximo 1 dia por periodo por medico validada.
-- [ ] Ningun medico asignado fuera de disponibilidad.
-- [ ] `maxFlow == requiredFlow` en casos factibles.
+- [x] Restriccion `C` validada en salidas factibles.
+- [x] Restriccion maximo 1 dia por periodo por medico validada.
+- [x] Ningun medico asignado fuera de disponibilidad.
+- [x] `maxFlow == requiredFlow` en casos factibles.
 
 ## 3. Calidad tecnica
 - [x] Lint en verde.
@@ -22,16 +22,16 @@
 - [x] Build completo en verde.
 
 ## 4. Documentacion
-- [ ] README principal con instrucciones de run local.
-- [ ] Demo script actualizado.
-- [ ] API contract actualizado.
-- [ ] Error catalog actualizado.
+- [x] README principal con instrucciones de run local.
+- [x] Demo script actualizado.
+- [x] API contract actualizado.
+- [x] Error catalog actualizado.
 
 ## 5. Portfolio readiness
 - [ ] Capturas o GIF del flujo completo.
-- [ ] Descripcion corta del problema y solucion en repo.
-- [ ] Seccion "arquitectura" con diagrama simple.
-- [ ] Seccion "tradeoffs y mejoras futuras" (v1.1/v2).
+- [x] Descripcion corta del problema y solucion en repo.
+- [x] Seccion "arquitectura" con diagrama simple.
+- [x] Seccion "tradeoffs y mejoras futuras" (v1.1/v2).
 
 ## 6. Criterio de salida
 Se publica v1 solo si todos los checks anteriores estan completos.

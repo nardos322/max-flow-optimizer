@@ -14,7 +14,7 @@ Definir umbrales concretos de rendimiento y capacidad para acotar el MVP.
 - `maxMedics` <= `500`
 - `maxPeriods` <= `100`
 - `availability` <= `100000` pares
-- payload <= `1 MB`
+- payload <= `2.5 MB`
 
 ## 4. Estabilidad y calidad
 - Mismo input produce mismo output (orden por `dayId`).

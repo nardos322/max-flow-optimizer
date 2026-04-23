@@ -40,6 +40,7 @@ Definir errores estables para facilitar debugging y evitar ambiguedad entre web,
 - `details` minimo esperado:
   - Para schema: `{ "path": "days[0].date" }`
   - Para limites: `{ "limit": "maxDays", "max": 500, "actual": 734 }`
+  - Para payload demasiado grande: `{ "limit": 2500000 }`
 
 ### `DUPLICATE_ID`
 - Uso: un mismo `id` aparece repetido dentro de `days`, `periods` o `medics`.

@@ -148,6 +148,28 @@ describe('API v1', () => {
     expect(response.body.error.details.path).toBe('days.0.date');
   });
 
+  it('returns a clear error for oversized request bodies', async () => {
+    const oversizedApp = createApp({
+      config: loadConfig({
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          ENGINE_PATH: enginePath,
+          LOG_LEVEL: 'silent',
+          MAX_REQUEST_BYTES: '100'
+        }
+      })
+    });
+
+    const response = await request(oversizedApp).post('/v1/solve').send(readJson('input/tiny-feasible.json')).expect(400);
+
+    expect(validators.validateApiError(response.body)).toBe(true);
+    expect(response.body.error.code).toBe('INVALID_INPUT');
+    expect(response.body.error.message).toBe('Request body exceeds MAX_REQUEST_BYTES.');
+    expect(response.body.error.details.limit).toBe(100);
+  });
+
   it('reuses the same requestId across API errors and engine calls', async () => {
     let engineRequestId: string | undefined;
     const engineClient: EngineClient = {

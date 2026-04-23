@@ -65,7 +65,7 @@ export function loadConfig(options: LoadConfigOptions = {}): ApiConfig {
     repoRoot,
     enginePath: env.ENGINE_PATH && env.ENGINE_PATH.length > 0 ? env.ENGINE_PATH : defaultEnginePath,
     engineTimeoutMs: parseIntegerEnv(env, 'ENGINE_TIMEOUT_MS', 2000),
-    maxRequestBytes: parseIntegerEnv(env, 'MAX_REQUEST_BYTES', 1000000),
+    maxRequestBytes: parseIntegerEnv(env, 'MAX_REQUEST_BYTES', 2500000),
     logLevel: env.LOG_LEVEL ?? 'info',
     limits: {
       maxDays: parseIntegerEnv(env, 'MAX_DAYS', DEFAULT_DOMAIN_LIMITS.maxDays),

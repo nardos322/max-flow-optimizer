@@ -40,7 +40,7 @@ NODE_ENV=development
 PORT=3000
 # ENGINE_PATH=/absolute/path/to/maxflow_engine
 ENGINE_TIMEOUT_MS=2000
-MAX_REQUEST_BYTES=1000000
+MAX_REQUEST_BYTES=2500000
 MAX_DAYS=500
 MAX_MEDICS=500
 MAX_PERIODS=100
@@ -50,7 +50,7 @@ LOG_LEVEL=info
 
 ### Web (`apps/web/.env`)
 ```env
-VITE_API_BASE_URL=http://localhost:3000
+VITE_API_BASE_URL=/api
 ```
 
 ### Convencion operativa v1

@@ -15,6 +15,18 @@ export function createErrorMiddleware(logger: Logger): ErrorRequestHandler {
       return;
     }
 
+    if (isBodyTooLargeError(error)) {
+      setRequestErrorCode(response, 'INVALID_INPUT');
+      response
+        .status(400)
+        .json(
+          makeApiErrorBody(requestId, 'INVALID_INPUT', 'Request body exceeds MAX_REQUEST_BYTES.', {
+            limit: getBodyParserLimit(error)
+          })
+        );
+      return;
+    }
+
     if (error instanceof SyntaxError || hasBodyParserErrorType(error)) {
       setRequestErrorCode(response, 'INVALID_INPUT');
       response.status(400).json(makeApiErrorBody(requestId, 'INVALID_INPUT', 'Request body must be valid JSON.'));
@@ -27,12 +39,37 @@ export function createErrorMiddleware(logger: Logger): ErrorRequestHandler {
   };
 }
 
+function isBodyTooLargeError(error: unknown): boolean {
+  return getBodyParserErrorType(error) === 'entity.too.large';
+}
+
 function hasBodyParserErrorType(error: unknown): boolean {
-  return (
+  const type = getBodyParserErrorType(error);
+  return typeof type === 'string' && type.startsWith('entity.');
+}
+
+function getBodyParserErrorType(error: unknown): string | null {
+  if (
     typeof error === 'object' &&
     error !== null &&
     'type' in error &&
-    typeof (error as { type?: unknown }).type === 'string' &&
-    (error as { type: string }).type.startsWith('entity.')
-  );
+    typeof (error as { type?: unknown }).type === 'string'
+  ) {
+    return (error as { type: string }).type;
+  }
+
+  return null;
+}
+
+function getBodyParserLimit(error: unknown): number | null {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'limit' in error &&
+    typeof (error as { limit?: unknown }).limit === 'number'
+  ) {
+    return (error as { limit: number }).limit;
+  }
+
+  return null;
 }

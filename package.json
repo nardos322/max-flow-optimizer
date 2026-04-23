@@ -7,6 +7,8 @@
     "dev": "pnpm --parallel --filter @maxflow/api --filter @maxflow/web run dev",
     "dev:full": "pnpm run build:engine && pnpm run dev",
     "build": "pnpm -r --if-present run build && pnpm run build:engine",
+    "smoke:api": "node ./scripts/smoke-api.mjs",
+    "benchmark:api": "node ./scripts/benchmark-api.mjs",
     "test:engine": "pnpm run build:engine && ctest --test-dir services/engine-cpp/build --output-on-failure",
     "test": "pnpm -r --if-present run test && pnpm run build:engine && ctest --test-dir services/engine-cpp/build --output-on-failure",
     "lint": "pnpm -r --if-present run lint",
