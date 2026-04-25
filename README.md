@@ -13,12 +13,12 @@ La UI permite cargar la instancia, resolverla y exportar el resultado en JSON o 
 ## Arquitectura
 ```mermaid
 flowchart LR
-  UI[apps/web\nReact + Vite] -->|POST /v1/solve| API[apps/api\nExpress + TypeScript]
-  API -->|stdin JSON wrapper\n{ requestId, input }| ENGINE[services/engine-cpp\nEdmonds-Karp]
-  API --> CONTRACTS[packages/contracts\nSchemas Zod + tipos]
-  API --> DOMAIN[packages/domain\nValidaciones semanticas]
+  UI["apps/web<br/>React + Vite"] -->|"POST /v1/solve"| API["apps/api<br/>Express + TypeScript"]
+  API -->|"stdin JSON wrapper<br/>requestId + input"| ENGINE["services/engine-cpp<br/>Edmonds-Karp"]
+  API --> CONTRACTS["packages/contracts<br/>Schemas Zod + tipos"]
+  API --> DOMAIN["packages/domain<br/>Validaciones semanticas"]
   UI --> CONTRACTS
-  ENGINE --> FIXTURES[packages/test-data\nFixtures canonicos]
+  ENGINE --> FIXTURES["packages/test-data<br/>Fixtures canonicos"]
   API --> FIXTURES
 ```
 
