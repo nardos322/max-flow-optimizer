@@ -28,7 +28,7 @@ flowchart LR
 - Existe pipeline minima `lint -> test -> build` en `.github/workflows/ci.yml`.
 - Hay scripts locales de smoke y benchmark para la API.
 
-La ruta de trabajo canonica sigue en [ImplementationRoute.md](/home/nardos322/max-flow-optimizer/docs/00-product/ImplementationRoute.md).
+La ruta de trabajo canonica sigue en [ImplementationRoute.md](docs/00-product/ImplementationRoute.md).
 
 ## Estructura
 - `apps/api`: API HTTP y adaptador al engine.
@@ -67,11 +67,11 @@ pnpm benchmark:api
 4. Exportar JSON/CSV.
 5. Cargar `Fixture KO` para mostrar el diagnostico infactible.
 
-El guion completo esta en [DemoScript.md](/home/nardos322/max-flow-optimizer/docs/00-product/DemoScript.md).
+El guion completo esta en [DemoScript.md](docs/00-product/DemoScript.md).
 
 ## Calidad
 - Smoke local actual: `tiny-feasible`, `tiny-infeasible-availability` y `medium-random-50x50`.
-- Benchmark local documentado en [BenchmarkReport.md](/home/nardos322/max-flow-optimizer/docs/40-quality/BenchmarkReport.md).
+- Benchmark local documentado en [BenchmarkReport.md](docs/40-quality/BenchmarkReport.md).
 - Observacion actual: `medium-random-50x50` cumple holgadamente; `large-random-200x200` corre sin `5xx`, pero todavia queda por encima del objetivo `p95 <= 1000 ms`.
 
 ## Tradeoffs y siguientes pasos
@@ -80,8 +80,8 @@ El guion completo esta en [DemoScript.md](/home/nardos322/max-flow-optimizer/doc
 - La principal deuda abierta de cierre es performance de `large-random-200x200` y artefactos visuales de portfolio (capturas/GIF).
 
 ## Documentacion clave
-1. [docs/README.md](/home/nardos322/max-flow-optimizer/docs/README.md)
-2. [PRD.md](/home/nardos322/max-flow-optimizer/docs/00-product/PRD.md)
-3. [API.md](/home/nardos322/max-flow-optimizer/docs/30-api/API.md)
-4. [LocalRunbook.md](/home/nardos322/max-flow-optimizer/docs/50-operations/LocalRunbook.md)
-5. [ReleaseChecklist.md](/home/nardos322/max-flow-optimizer/docs/00-product/ReleaseChecklist.md)
+1. [docs/README.md](docs/README.md)
+2. [PRD.md](docs/00-product/PRD.md)
+3. [API.md](docs/30-api/API.md)
+4. [LocalRunbook.md](docs/50-operations/LocalRunbook.md)
+5. [ReleaseChecklist.md](docs/00-product/ReleaseChecklist.md)
