@@ -2,7 +2,7 @@ import type { ApiErrorCodeV1, SolveResponseV1 } from '@maxflow/contracts/v1';
 import { ApiErrorSchema, SolveResponseSchema } from '@maxflow/contracts/v1/schemas';
 
 import type { ApiErrorDetails, InstanceDraft } from '../types.js';
-import { sortDraft } from './planner.js';
+import { sortDraft } from '../features/draft/index.js';
 
 export async function solveDraft(instanceDraft: InstanceDraft): Promise<SolveResponseV1> {
   const response = await fetch(`${resolveApiBaseUrl()}/v1/solve`, {

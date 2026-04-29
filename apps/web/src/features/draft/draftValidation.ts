@@ -1,10 +1,8 @@
 import type { z } from 'zod';
-import { findPrimaryDomainError } from '@maxflow/domain';
 import { validateSolveRequestDomain } from '@maxflow/domain';
 import { SolveRequestSchema } from '@maxflow/contracts/v1/schemas';
-import type { SolveResponseV1 } from '@maxflow/contracts/v1';
 
-import type { DayAssignmentRow, InstanceDraft } from '../types.js';
+import type { InstanceDraft } from '../../types.js';
 
 export type DraftIssue = {
   code: string;
@@ -12,24 +10,6 @@ export type DraftIssue = {
   path?: string;
   source: 'schema' | 'domain';
 };
-
-export function sortDraft(draft: InstanceDraft): InstanceDraft {
-  return {
-    ...draft,
-    periods: [...draft.periods]
-      .map((period) => ({
-        ...period,
-        dayIds: [...period.dayIds].sort((left, right) => left.localeCompare(right))
-      }))
-      .sort((left, right) => left.id.localeCompare(right.id)),
-    days: [...draft.days].sort((left, right) => left.id.localeCompare(right.id)),
-    medics: [...draft.medics].sort((left, right) => left.id.localeCompare(right.id)),
-    availability: [...draft.availability].sort((left, right) => {
-      const byMedicId = left.medicId.localeCompare(right.medicId);
-      return byMedicId !== 0 ? byMedicId : left.dayId.localeCompare(right.dayId);
-    })
-  };
-}
 
 export function getDraftIssue(draft: InstanceDraft): DraftIssue | null {
   return getDraftIssues(draft)[0] ?? null;
@@ -87,60 +67,6 @@ export function formatValidationIssue(issue?: FormattedValidationError): string 
   }
 
   return issue.path === '$' ? issue.message : `${issue.message} (${issue.path})`;
-}
-
-export function getPeriodIdForDay(periods: InstanceDraft['periods'], dayId: string): string | null {
-  const period = periods.find((entry) => entry.dayIds.includes(dayId));
-  return period?.id ?? null;
-}
-
-export function buildAssignmentRows(draft: InstanceDraft, result: SolveResponseV1 | null): DayAssignmentRow[] {
-  if (!result?.feasible) {
-    return [];
-  }
-
-  const dayById = new Map(draft.days.map((day) => [day.id, day]));
-  const medicById = new Map(draft.medics.map((medic) => [medic.id, medic]));
-
-  return [...result.assignments]
-    .sort((left, right) => left.dayId.localeCompare(right.dayId))
-    .map((assignment) => ({
-      dayId: assignment.dayId,
-      date: dayById.get(assignment.dayId)?.date ?? '',
-      periodId: assignment.periodId,
-      medicId: assignment.medicId,
-      medicName: medicById.get(assignment.medicId)?.name ?? ''
-    }));
-}
-
-export function buildCsvContent(draft: InstanceDraft, result: SolveResponseV1 | null): string | null {
-  const rows = buildAssignmentRows(draft, result);
-  if (rows.length === 0) {
-    return null;
-  }
-
-  const header = ['dayId', 'date', 'periodId', 'medicId', 'medicName'];
-  const body = rows.map((row) => [row.dayId, row.date, row.periodId, row.medicId, row.medicName].map(escapeCsv).join(','));
-
-  return [header.join(','), ...body].join('\n');
-}
-
-export function downloadTextFile(filename: string, content: string, mimeType: string): void {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function escapeCsv(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.split('"').join('""')}"`;
-  }
-
-  return value;
 }
 
 type FormattedValidationError = {

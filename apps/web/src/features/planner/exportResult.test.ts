@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { FIXTURE_DRAFT, parseDraftFile } from './fixture.js';
-import { buildAssignmentRows, buildCsvContent, getDraftIssue } from './planner.js';
+import { FIXTURE_DRAFT } from '../../lib/fixture.js';
+import { buildAssignmentRows } from './assignmentRows.js';
+import { buildCsvContent } from './exportResult.js';
 
-describe('planner helpers', () => {
+describe('planner result helpers', () => {
   it('builds CSV rows enriched with dates and medic names', () => {
     const csv = buildCsvContent(FIXTURE_DRAFT, {
       instanceId: 'tiny-feasible',
@@ -32,17 +33,6 @@ describe('planner helpers', () => {
     );
   });
 
-  it('returns the first draft issue for incomplete input', () => {
-    const issue = getDraftIssue({
-      ...FIXTURE_DRAFT,
-      medics: []
-    });
-
-    expect(issue).toMatchObject({
-      source: 'schema'
-    });
-  });
-
   it('returns no assignment rows for infeasible results', () => {
     expect(
       buildAssignmentRows(FIXTURE_DRAFT, {
@@ -63,13 +53,5 @@ describe('planner helpers', () => {
         }
       })
     ).toEqual([]);
-  });
-
-  it('parses a valid draft file for import', async () => {
-    const file = new File([JSON.stringify(FIXTURE_DRAFT)], 'fixture.json', {
-      type: 'application/json'
-    });
-
-    await expect(parseDraftFile(file)).resolves.toEqual(FIXTURE_DRAFT);
   });
 });
