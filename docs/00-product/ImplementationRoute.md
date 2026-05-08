@@ -13,7 +13,7 @@
 - [x] Bloque 3 - API
 - [x] Bloque 3.5 - Migracion contracts a Zod
 - [x] Bloque 4 - Web MVP
-- [ ] Bloque 5 - Calidad y cierre
+- [x] Bloque 5 - Calidad y cierre
 
 ## Bloque 0 - Bootstrap Monorepo (Dia 1)
 ### [x] T0.1 Workspace y scripts base
@@ -49,8 +49,8 @@
 - Estructuras para nodos, aristas y residual.
 - DoD: tests unitarios de construccion de red en verde.
 
-### [x] T2.2 Edmonds-Karp
-- BFS de caminos aumentantes + actualizacion de flujo.
+### [x] T2.2 Max-flow
+- Resolver flujo maximo con algoritmo determinista sobre red residual.
 - DoD: test de maxflow sobre grafos pequenos conocidos.
 
 ### [x] T2.3 Adaptador problema -> red
@@ -125,12 +125,12 @@
 - Pipeline `lint -> test -> build`.
 - DoD: bloquea merge en fallo.
 
-### [ ] T5.2 Hardening
+### [x] T5.2 Hardening
 - Manejo de edge cases y mensajes claros de error.
 - Ejecutar smoke con fixtures canonicos y benchmark local segun `docs/40-quality/BenchmarkProtocol.md`.
 - DoD: smoke completo con `tiny` + `medium`, y benchmark local documentado sin violar limites de `docs/40-quality/NonFunctionalLimits.md`.
 
-### [ ] T5.3 Portfolio pack
+### [x] T5.3 Portfolio pack
 - README final, diagrama, capturas/gif y guion de demo.
 - DoD: checklist `docs/00-product/ReleaseChecklist.md` completo.
 

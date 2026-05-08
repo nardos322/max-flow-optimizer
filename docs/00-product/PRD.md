@@ -21,7 +21,7 @@ Permitir cargar una instancia del problema, ejecutar el motor de flujo maximo y 
 
 ## 5. Alcance del MVP
 - Ingreso de datos principalmente via formularios web, con soporte de carga de fixtures JSON para demo y testing.
-- Resolucion mediante motor C++ (Edmonds-Karp).
+- Resolucion mediante motor C++ de flujo maximo.
 - API HTTP para orquestar validacion y resolucion.
 - UI web minima separada en `Periodos`, `Medicos` y `Planificador`.
 - Exportacion de respuesta en JSON y CSV.

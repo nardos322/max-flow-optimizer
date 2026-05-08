@@ -31,7 +31,7 @@ FetchContent_MakeAvailable(nlohmann_json googletest cli11)
 add_library(engine_core
   src/cli.cpp
   src/contract.cpp
-  src/edmonds_karp.cpp
+  src/max_flow.cpp
   src/error.cpp
   src/graph.cpp
   src/json.cpp

@@ -13,7 +13,7 @@ Vincular cada tarea de implementacion con evidencia de prueba para evitar huecos
 | `T1.2` Validaciones dominio | Unit tests | casos invalidos mapean `code` correcto |
 | `T1.3` Fixtures canonicos | Golden tests | `fixtures.manifest.json` coherente + snapshots exactos para casos canonicos `feasible`, `infeasible` e `invalid` |
 | `T2.1` Grafo interno | Unit tests C++ | conteo de nodos/aristas y capacidades esperadas |
-| `T2.2` Edmonds-Karp | Unit tests C++ | maxflow correcto en grafos conocidos |
+| `T2.2` Max-flow | Unit tests C++ | maxflow correcto en grafos conocidos |
 | `T2.3` Adaptador problema->red | Unit tests C++ | restricciones `C`, disponibilidad y periodo cubiertas |
 | `T2.4` Extraccion asignaciones | Unit tests C++ | asignaciones deterministas por `dayId` |
 | `T2.5` CLI I/O | Integration tests engine | stdout/stderr + exit code correctos |

@@ -44,8 +44,12 @@ async function main() {
       overall: summarizeRuns(allRuns)
     }
   };
+  report.pass = evaluateReport(report);
 
   console.log(JSON.stringify(report, null, 2));
+  if (!report.pass.ok) {
+    process.exitCode = 1;
+  }
 }
 
 async function readFixture(relativePath) {
@@ -108,6 +112,32 @@ function percentile(values, ratio) {
 
   const index = Math.min(values.length - 1, Math.max(0, Math.ceil(values.length * ratio) - 1));
   return values[index];
+}
+
+function evaluateReport(report) {
+  const failures = [];
+  for (const [name, summary] of Object.entries(report.datasets)) {
+    if (name === 'overall') {
+      continue;
+    }
+    if (summary.p50Ms > report.criteria.p50TargetMs) {
+      failures.push(`${name} p50 ${summary.p50Ms}ms exceeded ${report.criteria.p50TargetMs}ms`);
+    }
+    if (summary.p95Ms > report.criteria.p95TargetMs) {
+      failures.push(`${name} p95 ${summary.p95Ms}ms exceeded ${report.criteria.p95TargetMs}ms`);
+    }
+    if (summary.maxMs > report.criteria.timeoutMs) {
+      failures.push(`${name} max ${summary.maxMs}ms exceeded ${report.criteria.timeoutMs}ms`);
+    }
+    if (summary.errors5xx > 0) {
+      failures.push(`${name} returned ${summary.errors5xx} 5xx responses`);
+    }
+  }
+
+  return {
+    ok: failures.length === 0,
+    failures
+  };
 }
 
 async function repeat(count, callback) {

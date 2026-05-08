@@ -54,3 +54,6 @@ Mostrar de punta a punta que el sistema:
 - "El modelo matematico esta formalizado y probado."
 - "El motor C++ es reusable e independiente de la API."
 - "La demo es reproducible con casos factible/infactible."
+
+## 5. Artefacto visual
+- Imagen del flujo completo: `docs/00-product/assets/demo-flow.png`.

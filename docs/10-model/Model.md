@@ -55,15 +55,15 @@ Si `maxflow=|D|`:
 - Por integralidad del max-flow con capacidades enteras, las asignaciones son discretas.
 Por tanto, el flujo induce una asignacion valida.
 
-## 8. Complejidad con Edmonds-Karp
+## 8. Complejidad con Dinic
 Definiciones:
 - `V = 2 + |M| + |M||P| + |D|`.
 - `E = |M| + |M||P| + A + |D|`, donde `A` es el numero de arcos de disponibilidad `(m,p)->d`.
 
-Edmonds-Karp corre en `O(V * E^2)`.
+El motor implementa Dinic, con complejidad general `O(V^2 * E)` y mejor comportamiento practico que Edmonds-Karp en las redes bipartitas del MVP.
 Sustituyendo:
 
-`O((2 + |M| + |M||P| + |D|) * (|M| + |M||P| + A + |D|)^2)`.
+`O((2 + |M| + |M||P| + |D|)^2 * (|M| + |M||P| + A + |D|))`.
 
 Caso denso (`A` cercano a `|M||D|`): costo dominado por la densidad de disponibilidades.
 
@@ -71,7 +71,7 @@ Caso denso (`A` cercano a `|M||D|`): costo dominado por la densidad de disponibi
 Para garantizar que mismo input implique mismo output:
 - El orden de entrada de `periods`, `days`, `medics` y `availability` no se considera semantico.
 - La construccion del grafo debe normalizar IDs en orden lexicografico ascendente.
-- La exploracion BFS de Edmonds-Karp debe respetar ese orden estable de adyacencias.
+- La exploracion BFS/DFS del algoritmo de flujo debe respetar ese orden estable de adyacencias.
 - La salida final debe ordenarse por `dayId`.
 
-Con estas reglas, si existen multiples max-flows validos, v1 elige en forma determinista el inducido por el primer camino aumentante encontrado bajo ese orden estable.
+Con estas reglas, si existen multiples max-flows validos, v1 elige en forma deterministica una solucion inducida por el orden estable de la red residual.

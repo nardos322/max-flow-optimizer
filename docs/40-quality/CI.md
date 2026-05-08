@@ -15,7 +15,7 @@ Bloquear merges que rompan comportamiento, contratos o build del MVP.
 
 ### Test
 - Motor C++:
-  - unit tests (Edmonds-Karp, armado de red, extraccion de asignaciones).
+  - unit tests (max-flow, armado de red, extraccion de asignaciones).
 - API:
   - tests de validacion de input.
   - tests de integracion API <-> engine.
@@ -39,4 +39,3 @@ Bloquear merges que rompan comportamiento, contratos o build del MVP.
 - Matriz de builds por sistema operativo.
 - Cache de dependencias.
 - Publicacion automatica de artefactos de demo.
-

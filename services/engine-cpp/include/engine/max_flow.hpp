@@ -1,5 +1,5 @@
-#ifndef ENGINE_EDMONDS_KARP_HPP
-#define ENGINE_EDMONDS_KARP_HPP
+#ifndef ENGINE_MAX_FLOW_HPP
+#define ENGINE_MAX_FLOW_HPP
 
 #include "engine/graph.hpp"
 

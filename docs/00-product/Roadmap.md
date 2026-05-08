@@ -19,7 +19,7 @@
 
 ## Semana 2 - Implementacion MVP
 ### Dia 6-7
-- Implementar motor C++ con Edmonds-Karp.
+- Implementar motor C++ de flujo maximo.
 - Pruebas unitarias del motor.
 
 ### Dia 8

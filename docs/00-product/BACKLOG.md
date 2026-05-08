@@ -9,7 +9,7 @@
 1. Definir workspace monorepo y scripts base (`dev`, `test`, `build`).
 2. Implementar contrato `POST /v1/solve` y `GET /health`.
 3. Implementar parser/validador de instancia.
-4. Implementar motor C++ Edmonds-Karp.
+4. Implementar motor C++ de flujo maximo.
 5. Extraer asignaciones desde residual.
 6. Integrar API con engine CLI.
 7. Armar UI minima con secciones `Periodos`, `Medicos` y `Planificador`, resultado y metricas.

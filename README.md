@@ -10,11 +10,13 @@ Cada dia necesita exactamente un medico asignado. El sistema respeta:
 
 La UI permite cargar la instancia, resolverla y exportar el resultado en JSON o CSV.
 
+![Flujo de demo](docs/00-product/assets/demo-flow.png)
+
 ## Arquitectura
 ```mermaid
 flowchart LR
   UI["apps/web<br/>React + Vite"] -->|"POST /v1/solve"| API["apps/api<br/>Express + TypeScript"]
-  API -->|"stdin JSON wrapper<br/>requestId + input"| ENGINE["services/engine-cpp<br/>Edmonds-Karp"]
+  API -->|"stdin JSON wrapper<br/>requestId + input"| ENGINE["services/engine-cpp<br/>Dinic max-flow"]
   API --> CONTRACTS["packages/contracts<br/>Schemas Zod + tipos"]
   API --> DOMAIN["packages/domain<br/>Validaciones semanticas"]
   UI --> CONTRACTS
@@ -23,10 +25,11 @@ flowchart LR
 ```
 
 ## Estado actual
-- Bloques `0` a `4` implementados.
+- Bloques `0` a `5` implementados.
 - `apps/web` ya expone `Periodos`, `Medicos` y `Planificador`.
 - Existe pipeline minima `lint -> test -> build` en `.github/workflows/ci.yml`.
 - Hay scripts locales de smoke y benchmark para la API.
+- MVP v1 cerrado con smoke, benchmark y artefacto visual de portfolio.
 
 La ruta de trabajo canonica sigue en [ImplementationRoute.md](docs/00-product/ImplementationRoute.md).
 
@@ -72,12 +75,12 @@ El guion completo esta en [DemoScript.md](docs/00-product/DemoScript.md).
 ## Calidad
 - Smoke local actual: `tiny-feasible`, `tiny-infeasible-availability` y `medium-random-50x50`.
 - Benchmark local documentado en [BenchmarkReport.md](docs/40-quality/BenchmarkReport.md).
-- Observacion actual: `medium-random-50x50` cumple holgadamente; `large-random-200x200` corre sin `5xx`, pero todavia queda por encima del objetivo `p95 <= 1000 ms`.
+- Observacion actual: `medium-random-50x50` y `large-random-200x200` cumplen el objetivo v1 sin `5xx`.
 
 ## Tradeoffs y siguientes pasos
 - v1 prioriza factibilidad y trazabilidad sobre optimizacion avanzada.
 - No hay persistencia ni autenticacion.
-- La principal deuda abierta de cierre es performance de `large-random-200x200` y artefactos visuales de portfolio (capturas/GIF).
+- Siguientes mejoras naturales: persistencia de corridas, diagnosticos mas detallados y Docker compose para demo one-command.
 
 ## Documentacion clave
 1. [docs/README.md](docs/README.md)

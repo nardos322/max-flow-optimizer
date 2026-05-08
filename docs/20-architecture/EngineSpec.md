@@ -1,7 +1,7 @@
 # Especificacion del Motor C++ (CLI)
 
 ## 1. Objetivo
-Implementar un ejecutable C++ que reciba una instancia del problema y retorne factibilidad y asignaciones usando Edmonds-Karp.
+Implementar un ejecutable C++ que reciba una instancia del problema y retorne factibilidad y asignaciones usando un algoritmo determinista de flujo maximo.
 
 ## 2. Interfaz de linea de comandos
 - Binario: `maxflow_engine`
@@ -74,14 +74,14 @@ Formato de error JSON en stderr:
 - Ordenamiento determinista de output por `dayId`.
 - La normalizacion interna debe ignorar el orden de entrada de arrays.
 - Los IDs de `medics`, `periods` y `days` deben indexarse en orden lexicografico ascendente para construir el grafo.
-- BFS debe recorrer adyacencias en el orden estable en que fueron construidas para preservar reproducibilidad.
+- BFS/DFS deben recorrer adyacencias en el orden estable en que fueron construidas para preservar reproducibilidad.
 - `diagnostics`, cuando exista, debe incluir `summaryCode=INSUFFICIENT_COVERAGE`, `message` estable y `uncoveredDays` ordenado por `dayId`.
 - `stats.edges` cuenta aristas dirigidas del grafo antes de agregar la estructura residual.
 - `stats.runtimeMs` mide solo el tiempo de ejecucion del motor.
 
 ## 7. Complejidad esperada
 - Construccion de red: `O(E)`.
-- Resolucion Edmonds-Karp: `O(V * E^2)`.
+- Resolucion Dinic: `O(V^2 * E)` en complejidad general.
 - Memoria: `O(V + E)` para lista de adyacencia y residual.
 
 ## 8. Observabilidad minima

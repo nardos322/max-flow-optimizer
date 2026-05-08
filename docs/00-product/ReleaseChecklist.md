@@ -28,7 +28,7 @@
 - [x] Error catalog actualizado.
 
 ## 5. Portfolio readiness
-- [ ] Capturas o GIF del flujo completo.
+- [x] Capturas o GIF del flujo completo.
 - [x] Descripcion corta del problema y solucion en repo.
 - [x] Seccion "arquitectura" con diagrama simple.
 - [x] Seccion "tradeoffs y mejoras futuras" (v1.1/v2).

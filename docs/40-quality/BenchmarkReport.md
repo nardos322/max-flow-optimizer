@@ -1,7 +1,7 @@
-# Benchmark Report - 2026-04-23
+# Benchmark Report - 2026-05-08
 
 ## Entorno
-- Fecha: `2026-04-23`
+- Fecha: `2026-05-08`
 - Plataforma: `linux 5.15.146.1-microsoft-standard-WSL2`
 - CPU: `Intel(R) Core(TM) i5-4670K CPU @ 3.40GHz`
 - CPU count: `4`
@@ -10,37 +10,54 @@
 
 ## Configuracion usada
 - API con `MAX_REQUEST_BYTES=2500000`
-- Engine compilado en `services/engine-cpp/build/maxflow_engine`
+- Engine compilado en `Release` con `services/engine-cpp/build/maxflow_engine`
 - Script: `pnpm benchmark:api`
+- Algoritmo del motor: Dinic sobre la red residual del modelo
+
+## Criterio v1
+- `p50 <= 300 ms`
+- `p95 <= 1000 ms`
+- maximo por corrida `<= 2000 ms`
+- errores `5xx = 0`
 
 ## Resultados
 ### `medium-random-50x50`
 - runs: `30`
-- p50: `32.88 ms`
-- p95: `56.06 ms`
-- max: `58.68 ms`
-- engine p50: `8 ms`
-- engine p95: `16 ms`
+- p50: `11.79 ms`
+- p95: `18.59 ms`
+- max: `19.56 ms`
+- engine p50: `0 ms`
+- engine p95: `0 ms`
 - errores `5xx`: `0`
+- statuses: `200=30`
 
 ### `large-random-200x200`
 - runs: `10`
-- p50: `1210.32 ms`
-- p95: `1326.76 ms`
-- max: `1326.76 ms`
-- engine p50: `641 ms`
-- engine p95: `757 ms`
+- p50: `240.15 ms`
+- p95: `348.95 ms`
+- max: `348.95 ms`
+- engine p50: `16 ms`
+- engine p95: `23 ms`
+- errores `5xx`: `0`
+- statuses: `200=10`
+
+### Overall
+- runs: `40`
+- p50: `13.47 ms`
+- p95: `262.66 ms`
+- max: `348.95 ms`
 - errores `5xx`: `0`
 
 ## Lectura
 - `medium-random-50x50` cumple holgadamente el objetivo v1.
-- `large-random-200x200` ya no falla por limite de payload despues de subir `MAX_REQUEST_BYTES`, pero queda por encima del objetivo `p95 <= 1000 ms`.
+- `large-random-200x200` ahora cumple el objetivo `p95 <= 1000 ms`.
 - No se observaron `5xx` durante la corrida.
-- El gap principal en `large-random-200x200` parece venir del costo total de resolucion, no del body parser ni de fallos de integracion.
+- `pnpm benchmark:api` valida automaticamente p50, p95, timeout y errores `5xx`; la corrida falla con exit code distinto de cero si se viola el criterio.
 
 ## Comandos reproducibles
 ```bash
 pnpm run build:engine
-pnpm dev
+pnpm --filter @maxflow/api run dev
+pnpm smoke:api
 pnpm benchmark:api
 ```

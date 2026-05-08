@@ -2,7 +2,7 @@
 
 #include <chrono>
 
-#include "engine/edmonds_karp.hpp"
+#include "engine/max_flow.hpp"
 #include "engine/normalized_instance.hpp"
 #include "engine/problem_network.hpp"
 

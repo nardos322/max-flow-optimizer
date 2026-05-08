@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "engine/edmonds_karp.hpp"
+#include "engine/max_flow.hpp"
 #include "engine/graph.hpp"
 
 TEST(MaxFlowTest, ComputesKnownMaximumFlow) {

@@ -5,8 +5,10 @@
 - Tipos TypeScript: `@maxflow/contracts` y `@maxflow/contracts/v1`
 - Guia de versionado: `docs/30-api/OpenAPI.md`
 - Estrategia de validacion: `docs/30-api/ValidationStrategy.md`
+- OpenAPI estatico: `packages/contracts/v1/openapi.yaml`
 - `packages/contracts` define el contrato HTTP estructural publico.
 - `packages/domain` define las validaciones semanticas/cross-field que no conviene expresar solo con schema.
+- El OpenAPI y los JSON Schema publicados son artefactos formales estaticos; en este MVP no son la fuente primaria.
 
 ## 1. Catalogo de endpoints v1
 ### Obligatorios MVP
@@ -67,6 +69,16 @@
 - Un periodo puede contener dias no contiguos; no se valida continuidad de fechas en v1.
 - Se permiten medicos sin disponibilidad.
 - El orden de entrada de arrays no afecta el resultado; la implementacion normaliza internamente para lograr determinismo.
+
+### 3.3 Limites operativos v1
+Ademas del schema estructural y las reglas semanticas, la API aplica limites operativos para acotar el MVP:
+- `days.length <= 500`
+- `medics.length <= 500`
+- `periods.length <= 100`
+- `availability.length <= 100000`
+- payload HTTP <= `2.5 MB`
+
+Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `details` accionable. Los limites completos viven en `docs/40-quality/NonFunctionalLimits.md`.
 
 ## 4. `POST /v1/solve` - Response (factible)
 ```json
@@ -139,6 +151,8 @@
 - `500`: error interno en API o motor.
 
 ## 7. Error de validacion (ejemplo)
+El listado completo de `error.code` y la forma esperada de `details` por codigo vive en `docs/30-api/ErrorCatalog.md`.
+
 ```json
 {
   "error": {

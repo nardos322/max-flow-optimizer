@@ -4,7 +4,7 @@
 Validar correctitud del modelo, robustez del parser de entrada y estabilidad de integracion API-motor.
 
 ## 2. Estrategia
-- Unitarias del motor: construccion de red, BFS de Edmonds-Karp, extraccion de asignaciones.
+- Unitarias del motor: construccion de red, algoritmo de flujo maximo, extraccion de asignaciones.
 - Integracion API-motor: wrapper interno `{ requestId, input }`, request valido/invalido, factible/infactible.
 - End-to-end UI: carga de datos en `Periodos` y `Medicos`, navegacion sin perdida de estado, ejecucion en `Planificador` y visualizacion de resultado.
 
