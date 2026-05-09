@@ -8,6 +8,7 @@
     "dev:full": "pnpm run build:engine && pnpm run dev",
     "build": "pnpm -r --if-present run build && pnpm run build:engine",
     "analytics": "pnpm analytics:generate && pnpm analytics:run && pnpm analytics:aggregate && pnpm analytics:report",
+    "analytics:setup": "python3 -m venv .venv && .venv/bin/python -m pip install polars==1.14.0",
     "analytics:generate": "node ./scripts/analytics-generate.mjs",
     "analytics:run": "node ./scripts/analytics-run.mjs",
     "analytics:aggregate": "node ./scripts/analytics-aggregate.mjs",

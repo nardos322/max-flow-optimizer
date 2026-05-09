@@ -7,7 +7,7 @@ Scripts de desarrollo local y automatizaciones pequenas.
 - `benchmark-api.mjs`: ejecuta warmups + corridas medidas para `medium-random-50x50` y `large-random-200x200`, y reporta p50/p95/maximo.
 - `analytics-generate.mjs`: genera escenarios sinteticos reproducibles en `data/generated`.
 - `analytics-run.mjs`: ejecuta escenarios generados contra el engine C++ y escribe JSONL en `data/analytics`.
-- `analytics-aggregate.mjs`: calcula agregados por escenario desde `latest-runs.jsonl`.
+- `analytics-aggregate.mjs`: ejecuta `analytics/python/analyze_runs.py` para calcular agregados por escenario con Polars.
 - `analytics-report.mjs`: genera un reporte markdown local desde los agregados.
 
 ## Uso
@@ -29,9 +29,12 @@ API_BASE_URL=http://127.0.0.1:3100 pnpm benchmark:api
 Compilar engine y correr pipeline completo:
 
 ```bash
+pnpm analytics:setup
 pnpm run build:engine
 pnpm analytics
 ```
+
+`pnpm analytics:setup` crea `.venv` e instala `polars==1.14.0`. `analytics:aggregate` usa automaticamente `.venv/bin/python` si existe.
 
 Corrida pequena para desarrollo:
 

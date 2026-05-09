@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
+const reportTimeZone = 'America/Argentina/Buenos_Aires';
 
 async function main() {
   const summaryPath = path.join(repoRoot, 'data/analytics/latest-summary.json');
@@ -28,7 +29,7 @@ async function main() {
 
 function renderReport(summaries, runsPath) {
   const totalRuns = summaries.reduce((sum, row) => sum + row.runs, 0);
-  const generatedAt = new Date().toISOString();
+  const generatedAt = formatReportDate(new Date());
 
   return `# Analytics Report
 
@@ -68,6 +69,20 @@ pnpm analytics:report
 
 function renderSummaryRow(row) {
   return `| \`${row.scenarioName}\` | ${row.runs} | ${row.feasibilityRatePct} | ${row.p50RuntimeMs} ms | ${row.p95RuntimeMs} ms | ${row.maxRuntimeMs} ms | ${row.avgEdges} |`;
+}
+
+function formatReportDate(date) {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: reportTimeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    timeZoneName: 'short'
+  }).format(date);
 }
 
 main().catch((error) => {

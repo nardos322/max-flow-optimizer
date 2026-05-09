@@ -171,7 +171,15 @@ DoD:
 pnpm analytics:aggregate
 ```
 
-produce un CSV o JSON agregado por escenario.
+produce un CSV o JSON agregado por escenario usando Python/Polars.
+
+Nota operativa:
+
+```bash
+pnpm analytics:setup
+```
+
+crea `.venv` e instala las dependencias Python necesarias para el analisis.
 
 ## Bloque F - Reporte Analytics
 
