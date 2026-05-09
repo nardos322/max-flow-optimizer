@@ -18,7 +18,7 @@ Ruta ejecutable para implementar la capa analytics sin mezclarla con el MVP inte
 - [x] Bloque D - Batch runner contra engine
 - [x] Bloque E - Agregaciones
 - [x] Bloque F - Reporte analytics
-- [ ] Bloque G - Cierre y documentacion operativa
+- [x] Bloque G - Cierre y documentacion operativa
 
 ## Bloque A - Especificacion
 
@@ -213,7 +213,7 @@ pnpm analytics:report
 
 sin leer codigo fuente.
 
-### [ ] G2. Verificar aislamiento del MVP
+### [x] G2. Verificar aislamiento del MVP
 
 - Ejecutar quality gates relevantes del MVP.
 - Confirmar que analytics no rompe `pnpm build`, `pnpm test` ni `pnpm lint`.
@@ -222,6 +222,14 @@ DoD:
 
 - MVP sigue en verde,
 - analytics queda como extension offline.
+
+Verificacion ejecutada:
+
+```bash
+pnpm lint
+pnpm test
+pnpm build
+```
 
 ## Criterio De Salida
 
@@ -234,3 +242,5 @@ La primera entrega analytics queda cerrada cuando:
 - se genera un reporte local,
 - los datos pesados quedan fuera de git,
 - el MVP interactivo no depende de analytics.
+
+Estado: cumplido para la primera entrega offline.
