@@ -13,11 +13,11 @@ Ruta ejecutable para implementar la capa analytics sin mezclarla con el MVP inte
 ## Estado Por Bloque
 
 - [x] Bloque A - Especificacion
-- [ ] Bloque B - Politica de datos y estructura base
-- [ ] Bloque C - Generador de escenarios
-- [ ] Bloque D - Batch runner contra engine
-- [ ] Bloque E - Agregaciones
-- [ ] Bloque F - Reporte analytics
+- [x] Bloque B - Politica de datos y estructura base
+- [x] Bloque C - Generador de escenarios
+- [x] Bloque D - Batch runner contra engine
+- [x] Bloque E - Agregaciones
+- [x] Bloque F - Reporte analytics
 - [ ] Bloque G - Cierre y documentacion operativa
 
 ## Bloque A - Especificacion
@@ -42,7 +42,7 @@ Ruta ejecutable para implementar la capa analytics sin mezclarla con el MVP inte
 
 ## Bloque B - Politica De Datos Y Estructura Base
 
-### [ ] B1. Crear estructura analytics
+### [x] B1. Crear estructura analytics
 
 Crear:
 
@@ -63,7 +63,7 @@ DoD:
 - outputs pesados quedan ignorados,
 - si se versionan carpetas vacias, usar `.gitkeep`.
 
-### [ ] B2. Actualizar `.gitignore`
+### [x] B2. Actualizar `.gitignore`
 
 - Ignorar datasets generados y outputs grandes.
 - Permitir fixtures pequenos si se agregan explicitamente.
@@ -74,14 +74,14 @@ DoD:
 - `data/analytics/**` queda ignorado salvo `.gitkeep`,
 - no se agregan archivos pesados por accidente.
 
-### [ ] B3. Documentar politica de datos
+### [x] B3. Documentar politica de datos
 
 - Explicar que se versiona y que se regenera.
 - DoD: `analytics/README.md` incluye politica corta y comandos esperados.
 
 ## Bloque C - Generador De Escenarios
 
-### [ ] C1. Definir perfiles de escenario
+### [x] C1. Definir perfiles de escenario
 
 - Implementar o configurar perfiles:
   - `small-sparse`
@@ -94,7 +94,7 @@ DoD:
 
 - cada perfil define `daysCount`, `medicsCount`, `periodsCount`, `availabilityDensity`, `maxDaysPerMedic` y `seed`.
 
-### [ ] C2. Generar instancias reproducibles
+### [x] C2. Generar instancias reproducibles
 
 - Crear generador con seed deterministica.
 - Producir JSON compatible con `POST /v1/solve`.
@@ -105,7 +105,7 @@ DoD:
 - las instancias pasan validacion estructural y semantica,
 - los archivos se escriben en `data/generated`.
 
-### [ ] C3. Agregar comando `analytics:generate`
+### [x] C3. Agregar comando `analytics:generate`
 
 - Conectar el generador a `package.json`.
 
@@ -119,7 +119,7 @@ genera datasets locales sin tocar el MVP.
 
 ## Bloque D - Batch Runner Contra Engine
 
-### [ ] D1. Ejecutar engine por instancia
+### [x] D1. Ejecutar engine por instancia
 
 - Usar `services/engine-cpp/build/maxflow_engine --stdin` o `--input`.
 - Construir el wrapper interno con `requestId` e `input`.
@@ -128,7 +128,7 @@ DoD:
 
 - el runner puede resolver instancias generadas contra `solverTarget=engine`.
 
-### [ ] D2. Capturar metricas por corrida
+### [x] D2. Capturar metricas por corrida
 
 - Capturar respuesta del engine.
 - Medir `wallTimeMs`.
@@ -139,7 +139,7 @@ DoD:
 
 - cada corrida emite un record JSONL con el shape documentado.
 
-### [ ] D3. Agregar comando `analytics:run`
+### [x] D3. Agregar comando `analytics:run`
 
 DoD:
 
@@ -151,7 +151,7 @@ lee `data/generated` y escribe resultados en `data/analytics`.
 
 ## Bloque E - Agregaciones
 
-### [ ] E1. Crear queries base
+### [x] E1. Crear queries base
 
 Agregar queries para:
 
@@ -163,7 +163,7 @@ DoD:
 
 - existen al menos 3 queries reproducibles en `analytics/queries`.
 
-### [ ] E2. Agregar comando `analytics:aggregate`
+### [x] E2. Agregar comando `analytics:aggregate`
 
 DoD:
 
@@ -175,7 +175,7 @@ produce un CSV o JSON agregado por escenario.
 
 ## Bloque F - Reporte Analytics
 
-### [ ] F1. Generar reporte markdown
+### [x] F1. Generar reporte markdown
 
 - Crear reporte con tablas agregadas y lectura breve.
 - Incluir fecha, dataset usado, cantidad de corridas y limitaciones.
@@ -184,7 +184,7 @@ DoD:
 
 - existe un reporte en `analytics/reports`.
 
-### [ ] F2. Agregar comando `analytics:report`
+### [x] F2. Agregar comando `analytics:report`
 
 DoD:
 
@@ -196,7 +196,7 @@ regenera el reporte desde los outputs agregados.
 
 ## Bloque G - Cierre Y Documentacion Operativa
 
-### [ ] G1. Documentar flujo completo
+### [x] G1. Documentar flujo completo
 
 - Explicar comandos y prerequisitos en `analytics/README.md`.
 

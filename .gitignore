@@ -49,6 +49,12 @@ compile_commands.json
 *.sqlite3
 apps/api/.data/*
 !apps/api/.data/.gitkeep
+data/generated/**
+!data/generated/.gitkeep
+data/analytics/**
+!data/analytics/.gitkeep
+analytics/reports/**
+!analytics/reports/.gitkeep
 
 # Python cache (for local scripts/tools)
 __pycache__/
@@ -68,4 +74,3 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .codex
-

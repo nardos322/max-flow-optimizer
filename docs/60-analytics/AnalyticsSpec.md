@@ -133,8 +133,9 @@ Primera etapa:
 - Node.js/TypeScript o Node.js ESM para generacion y batch runner.
 - JSONL como formato inicial de resultados.
 - CSV para inspeccion manual simple.
-- DuckDB para consultas SQL locales sobre archivos.
-- Polars/Python para analisis programatico y transformaciones.
+- Agregador Node.js sin dependencias para la primera version ejecutable.
+- Queries DuckDB documentadas para analisis SQL local sobre archivos.
+- Polars/Python como evolucion opcional para transformaciones mas avanzadas.
 
 Segunda etapa opcional:
 
