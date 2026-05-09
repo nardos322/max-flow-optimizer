@@ -11,6 +11,7 @@ docs/
 ├── 30-api/
 ├── 40-quality/
 ├── 50-operations/
+├── 60-analytics/
 └── README.md
 ```
 
@@ -71,6 +72,10 @@ docs/
 - `50-operations/RuntimeConfig.md`: variables de entorno y defaults.
 - `50-operations/LocalRunbook.md`: arranque local paso a paso.
 
+### `60-analytics`
+- `60-analytics/AnalyticsSpec.md`: especificacion de batch simulation, datasets, metricas y ruta analytics.
+- `60-analytics/AnalyticsImplementationRoute.md`: ruta ejecutable para implementar analytics offline.
+
 ## Orden recomendado de lectura
 1. `00-product/PRD.md`
 2. `10-model/Model.md`
@@ -100,3 +105,5 @@ docs/
 26. `50-operations/LocalRunbook.md`
 27. `00-product/ReleaseChecklist.md`
 28. `00-product/DemoScript.md`
+29. `60-analytics/AnalyticsSpec.md`
+30. `60-analytics/AnalyticsImplementationRoute.md`
