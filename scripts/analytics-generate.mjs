@@ -26,6 +26,24 @@ const profiles = [
     seed: 1201
   },
   {
+    name: 'small-dense',
+    daysCount: 25,
+    medicsCount: 20,
+    periodsCount: 5,
+    availabilityDensity: 0.75,
+    maxDaysPerMedic: 3,
+    seed: 1301
+  },
+  {
+    name: 'medium-sparse',
+    daysCount: 100,
+    medicsCount: 60,
+    periodsCount: 10,
+    availabilityDensity: 0.15,
+    maxDaysPerMedic: 2,
+    seed: 2001
+  },
+  {
     name: 'medium-balanced',
     daysCount: 100,
     medicsCount: 80,
@@ -44,6 +62,15 @@ const profiles = [
     seed: 2201
   },
   {
+    name: 'large-sparse',
+    daysCount: 200,
+    medicsCount: 150,
+    periodsCount: 20,
+    availabilityDensity: 0.15,
+    maxDaysPerMedic: 2,
+    seed: 3001
+  },
+  {
     name: 'large-balanced',
     daysCount: 200,
     medicsCount: 200,
@@ -51,6 +78,24 @@ const profiles = [
     availabilityDensity: 0.3,
     maxDaysPerMedic: 2,
     seed: 3101
+  },
+  {
+    name: 'large-dense',
+    daysCount: 200,
+    medicsCount: 240,
+    periodsCount: 20,
+    availabilityDensity: 0.7,
+    maxDaysPerMedic: 2,
+    seed: 3201
+  },
+  {
+    name: 'xlarge-balanced',
+    daysCount: 260,
+    medicsCount: 260,
+    periodsCount: 26,
+    availabilityDensity: 0.3,
+    maxDaysPerMedic: 3,
+    seed: 4101
   }
 ];
 

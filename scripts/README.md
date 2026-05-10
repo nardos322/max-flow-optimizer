@@ -44,3 +44,9 @@ pnpm analytics:run
 pnpm analytics:aggregate
 pnpm analytics:report
 ```
+
+Corrida de 50k instancias con los 10 escenarios por defecto:
+
+```bash
+ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_CONCURRENCY=8 pnpm analytics
+```

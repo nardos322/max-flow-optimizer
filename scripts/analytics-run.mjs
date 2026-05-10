@@ -11,25 +11,23 @@ const outputRoot = path.join(repoRoot, 'data/analytics');
 async function main() {
   const enginePath = await resolveEnginePath();
   const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  const concurrency = readPositiveIntegerEnv('ANALYTICS_CONCURRENCY', 1);
+  const engineTimeoutMs = readPositiveIntegerEnv('ANALYTICS_ENGINE_TIMEOUT_MS', 30000);
   await fs.mkdir(outputRoot, { recursive: true });
 
   const timestamp = createTimestamp();
   const outputPath = path.join(outputRoot, `runs-${timestamp}.jsonl`);
-  const records = [];
+  const records = await runBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs);
 
-  for (const entry of manifest.scenarios) {
-    const input = JSON.parse(await fs.readFile(path.join(repoRoot, entry.inputPath), 'utf8'));
-    const record = await runInstance(enginePath, entry, input);
-    records.push(record);
-    await fs.appendFile(outputPath, `${JSON.stringify(record)}\n`);
-  }
-
+  await fs.writeFile(outputPath, `${records.map((record) => JSON.stringify(record)).join('\n')}\n`);
   await fs.copyFile(outputPath, path.join(outputRoot, 'latest-runs.jsonl'));
   console.log(
     JSON.stringify(
       {
         solverTarget: 'engine',
         enginePath: path.relative(repoRoot, enginePath),
+        concurrency,
+        engineTimeoutMs,
         runs: records.length,
         ok: records.filter((record) => record.status === 'ok').length,
         errors: records.filter((record) => record.status !== 'ok').length,
@@ -41,13 +39,32 @@ async function main() {
   );
 }
 
-async function runInstance(enginePath, entry, input) {
+async function runBatch(enginePath, entries, concurrency, engineTimeoutMs) {
+  const records = new Array(entries.length);
+  let nextIndex = 0;
+  const workerCount = Math.min(concurrency, entries.length);
+
+  async function worker() {
+    while (nextIndex < entries.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      const entry = entries[index];
+      const input = JSON.parse(await fs.readFile(path.join(repoRoot, entry.inputPath), 'utf8'));
+      records[index] = await runInstance(enginePath, entry, input, engineTimeoutMs);
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, worker));
+  return records;
+}
+
+async function runInstance(enginePath, entry, input, engineTimeoutMs) {
   const requestId = `analytics-${entry.instanceId}-${entry.seed}`;
   const startedAt = performance.now();
   const result = await runEngine(enginePath, {
     requestId,
     input
-  });
+  }, engineTimeoutMs);
   const wallTimeMs = Number((performance.now() - startedAt).toFixed(2));
 
   const base = {
@@ -65,7 +82,7 @@ async function runInstance(enginePath, entry, input) {
     wallTimeMs
   };
 
-  if (result.exitCode !== 0) {
+  if (result.exitCode !== 0 || result.timedOut) {
     return {
       ...base,
       feasible: null,
@@ -77,7 +94,7 @@ async function runInstance(enginePath, entry, input) {
       edgesPerNode: null,
       runtimeMs: null,
       status: 'error',
-      errorCode: parseEngineError(result.stderr)?.error?.code ?? `EXIT_${result.exitCode}`
+      errorCode: result.timedOut ? 'ENGINE_TIMEOUT' : parseEngineError(result.stderr)?.error?.code ?? `EXIT_${result.exitCode}`
     };
   }
 
@@ -100,7 +117,7 @@ async function runInstance(enginePath, entry, input) {
   };
 }
 
-function runEngine(enginePath, payload) {
+function runEngine(enginePath, payload, timeoutMs) {
   return new Promise((resolve, reject) => {
     const child = spawn(enginePath, ['--stdin'], {
       cwd: repoRoot,
@@ -108,6 +125,12 @@ function runEngine(enginePath, payload) {
     });
     let stdout = '';
     let stderr = '';
+    let timedOut = false;
+
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      child.kill('SIGTERM');
+    }, timeoutMs);
 
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
@@ -119,10 +142,12 @@ function runEngine(enginePath, payload) {
     });
     child.on('error', reject);
     child.on('close', (exitCode) => {
+      clearTimeout(timeout);
       resolve({
         exitCode,
         stdout: stdout.trim(),
-        stderr: stderr.trim()
+        stderr: stderr.trim(),
+        timedOut
       });
     });
     child.stdin.end(`${JSON.stringify(payload)}\n`);
@@ -154,6 +179,19 @@ function parseEngineError(stderr) {
 
 function createTimestamp() {
   return new Date().toISOString().replaceAll(':', '').replaceAll('.', '').replace('Z', 'Z');
+}
+
+function readPositiveIntegerEnv(name, fallback) {
+  const value = process.env[name];
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+  return parsed;
 }
 
 main().catch((error) => {

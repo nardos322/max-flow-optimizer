@@ -54,6 +54,8 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_RUNS_PER_SCENARIO` | `10` | Instancias generadas por escenario. |
 | `ANALYTICS_SCENARIOS` | todos | Lista separada por coma de escenarios a generar. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
+| `ANALYTICS_CONCURRENCY` | `1` | Procesos del solver ejecutados en paralelo por `analytics:run`. |
+| `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
 | `ANALYTICS_RUNS_FILE` | `data/analytics/latest-runs.jsonl` | Input para agregacion/reporte. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
 
@@ -86,6 +88,27 @@ analytics/python/quality.py
 analytics/python/comparison.py
 analytics/python/charts.py
 analytics/python/duckdb_queries.py
+```
+
+Escenarios incluidos por defecto:
+
+```text
+small-sparse
+small-balanced
+small-dense
+medium-sparse
+medium-balanced
+medium-dense
+large-sparse
+large-balanced
+large-dense
+xlarge-balanced
+```
+
+Corrida de 50k instancias:
+
+```bash
+ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_CONCURRENCY=8 pnpm analytics
 ```
 
 Las consultas SQL en `analytics/queries/` se ejecutan durante `analytics:aggregate` con DuckDB y leen:
