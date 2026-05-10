@@ -8,7 +8,7 @@ select
   quantile_cont(runtimeMs, 0.95) as p95RuntimeMs,
   max(runtimeMs) as maxRuntimeMs,
   max(wallTimeMs) as maxWallTimeMs
-from read_json_auto('data/analytics/latest-runs.jsonl')
+from read_parquet('data/analytics/latest-runs.parquet')
 where status = 'ok'
 group by scenarioName
 order by scenarioName;

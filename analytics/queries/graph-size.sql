@@ -6,7 +6,7 @@ select
   avg(edgesPerNode) as avgEdgesPerNode,
   avg(runtimeMs) as avgRuntimeMs,
   max(runtimeMs) as maxRuntimeMs
-from read_json_auto('data/analytics/latest-runs.jsonl')
+from read_parquet('data/analytics/latest-runs.parquet')
 where status = 'ok'
 group by scenarioName
 order by avgEdges desc;
