@@ -11,6 +11,8 @@ namespace engine {
 struct CliOptions {
   bool use_stdin = false;
   std::string input_path;
+  bool batch_jsonl = false;
+  bool analytics_jsonl = false;
 };
 
 [[nodiscard]] CliOptions ParseCliOptions(const std::vector<std::string>& arguments);

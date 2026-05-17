@@ -29,6 +29,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(nlohmann_json googletest cli11)
 
 add_library(engine_core
+  src/analytics.cpp
   src/cli.cpp
   src/contract.cpp
   src/max_flow.cpp

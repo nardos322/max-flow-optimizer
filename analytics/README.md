@@ -53,8 +53,11 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | --- | --- | --- |
 | `ANALYTICS_RUNS_PER_SCENARIO` | `10` | Instancias generadas por escenario. |
 | `ANALYTICS_SCENARIOS` | todos | Lista separada por coma de escenarios a generar. |
+| `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
+| `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
 | `ANALYTICS_CONCURRENCY` | `1` | Procesos del solver ejecutados en paralelo por `analytics:run`. |
+| `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine cuando `ANALYTICS_RUN_MODE=batch`. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
 | `ANALYTICS_RUNS_FILE` | `data/analytics/latest-runs.jsonl` | Input para agregacion/reporte. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
@@ -108,8 +111,20 @@ xlarge-balanced
 Corrida de 50k instancias:
 
 ```bash
-ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_CONCURRENCY=8 pnpm analytics
+ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_BATCH_SIZE=50 ANALYTICS_CONCURRENCY=4 pnpm analytics
 ```
+
+`analytics:generate` escribe por defecto un manifest liviano en `data/generated/manifest.json`; no materializa un JSON por instancia. `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario, y el engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`. El engine no conoce perfiles hardcodeados; solo genera desde los parametros recibidos. Si hace falta inspeccionar inputs individuales, `ANALYTICS_WRITE_INPUT_FILES=1` conserva el modo anterior, pero no es recomendable para corridas grandes y desactiva el camino compacto.
+
+`analytics:run` usa por defecto el modo batch del engine: cada proceso recibe varias instancias en JSONL y devuelve varias respuestas en JSONL. El runner y el modo batch del engine procesan por streaming, por lo que la salida `latest-runs.jsonl` se escribe a medida que terminan los chunks en vez de acumular todas las corridas en memoria. Esto reduce el overhead de lanzar decenas de miles de procesos y evita que el uso de memoria crezca linealmente con la cantidad total de instancias. Para comparar contra el modo anterior:
+
+```bash
+ANALYTICS_RUN_MODE=legacy ANALYTICS_CONCURRENCY=8 pnpm analytics:run
+```
+
+El resumen final de `analytics:run` incluye `totalWallTimeMs`, `totalWallTimeSeconds`, `startedAt` y `finishedAt` para medir cuanto tardo la etapa completa.
+
+Con `ANALYTICS_CONCURRENCY > 1`, el orden fisico de las lineas puede seguir el orden de finalizacion de chunks. Los analisis no deben depender de ese orden; cada record incluye `scenarioName`, `instanceId` y `seed`.
 
 Las consultas SQL en `analytics/queries/` se ejecutan durante `analytics:aggregate` con DuckDB y leen:
 
