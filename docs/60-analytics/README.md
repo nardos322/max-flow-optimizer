@@ -8,6 +8,7 @@ Esta carpeta define una evolucion posterior al MVP: generar muchas instancias de
 
 - `AnalyticsSpec.md`: objetivo, alcance, arquitectura, datasets, metricas y ruta de implementacion.
 - `AnalyticsImplementationRoute.md`: tareas ejecutables para implementar la primera entrega analytics.
+- `BigDataPipelinePlan.md`: plan posterior para escalar analytics a cientos de miles o millones de instancias.
 
 ## Principio De Diseno
 
