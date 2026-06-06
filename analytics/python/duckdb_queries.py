@@ -9,7 +9,7 @@ import duckdb
 from analytics_io import write_csv, write_json
 
 
-def run_duckdb_queries(*, repo_root: Path, queries_dir: Path, output_dir: Path) -> list[dict[str, Any]]:
+def run_duckdb_queries(*, repo_root: Path, queries_dir: Path, output_dir: Path, runs_input: Path) -> list[dict[str, Any]]:
     output_dir.mkdir(parents=True, exist_ok=True)
     results = []
     original_cwd = Path.cwd()
@@ -17,6 +17,7 @@ def run_duckdb_queries(*, repo_root: Path, queries_dir: Path, output_dir: Path) 
     try:
         os.chdir(repo_root)
         with duckdb.connect(database=":memory:") as connection:
+            register_runs_view(connection, runs_input)
             for query_path in sorted(queries_dir.glob("*.sql")):
                 query_name = query_path.stem
                 rows = run_query(connection, query_path)
@@ -37,6 +38,18 @@ def run_duckdb_queries(*, repo_root: Path, queries_dir: Path, output_dir: Path) 
         os.chdir(original_cwd)
 
     return results
+
+
+def register_runs_view(connection: duckdb.DuckDBPyConnection, runs_input: Path) -> None:
+    escaped_path = str(runs_input).replace("'", "''")
+    if runs_input.is_dir():
+        source = f"read_parquet('{escaped_path}/**/*.parquet', hive_partitioning = false)"
+    elif runs_input.suffix == ".parquet":
+        source = f"read_parquet('{escaped_path}')"
+    else:
+        source = f"read_json_auto('{escaped_path}', format = 'newline_delimited')"
+
+    connection.sql(f"create or replace view analytics_runs as select * from {source}")
 
 
 def run_query(connection: duckdb.DuckDBPyConnection, query_path: Path) -> list[dict[str, Any]]:

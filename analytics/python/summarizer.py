@@ -3,10 +3,11 @@ from __future__ import annotations
 import polars as pl
 
 
-def summarize_runs(runs: pl.DataFrame) -> pl.DataFrame:
+def summarize_runs(runs: pl.DataFrame | pl.LazyFrame) -> pl.DataFrame:
+    runs = runs.lazy() if isinstance(runs, pl.DataFrame) else runs
     ok_runs = runs.filter(pl.col("status") == "ok")
 
-    if ok_runs.is_empty():
+    if ok_runs.select(pl.len()).collect().item() == 0:
         return pl.DataFrame(
             schema={
                 "scenarioName": pl.String,
@@ -71,4 +72,5 @@ def summarize_runs(runs: pl.DataFrame) -> pl.DataFrame:
             "maxWallTimeMs",
         )
         .sort("scenarioName")
+        .collect()
     )

@@ -30,11 +30,13 @@ analytics:run
   -> C++ reconstruye cada instancia sintetica en --analytics-jsonl
   -> C++ resuelve max-flow
   -> Node escribe data/analytics/latest-runs.jsonl en streaming
+  -> opcionalmente convierte la corrida a Parquet particionado
 
 analytics:aggregate
-  -> Python/Polars calcula agregados, quality checks e historico
-  -> escribe Parquet
-  -> DuckDB ejecuta queries sobre data/analytics/latest-runs.parquet
+  -> Python/Polars lee JSONL o Parquet particionado con LazyFrame
+  -> calcula agregados, quality checks e historico
+  -> escribe Parquet de compatibilidad
+  -> DuckDB ejecuta queries sobre una vista analytics_runs
   -> Matplotlib genera charts
 
 analytics:report
@@ -57,6 +59,7 @@ Artefactos principales:
 data/generated/manifest.json
 data/analytics/latest-runs.jsonl
 data/analytics/latest-runs.parquet
+data/analytics/runs/
 data/analytics/latest-summary.json
 data/analytics/latest-summary.csv
 data/analytics/latest-quality.json
@@ -78,10 +81,11 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
+| `ANALYTICS_OUTPUT_FORMAT` | `jsonl` | Formato principal de salida de `analytics:run`. Usar `parquet` para escribir `data/analytics/runs/scenarioName=*/runDate=*/*.parquet`. |
 | `ANALYTICS_CONCURRENCY` | `1` | Procesos del solver ejecutados en paralelo por `analytics:run`. |
 | `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine cuando `ANALYTICS_RUN_MODE=batch`. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
-| `ANALYTICS_RUNS_FILE` | `data/analytics/latest-runs.jsonl` | Input para `analytics:aggregate`; `analytics:report` lo muestra como referencia del reporte. |
+| `ANALYTICS_RUNS_FILE` | autodetecta `data/analytics/runs` o `data/analytics/latest-runs.jsonl` | Input para `analytics:aggregate`; puede ser JSONL, Parquet o directorio Parquet particionado. `analytics:report` lo muestra como referencia del reporte. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
 
 Antes de correr `analytics:run`, compilar el engine:
@@ -163,7 +167,7 @@ Con `ANALYTICS_CONCURRENCY > 1`, el orden fisico de las lineas puede seguir el o
 Las consultas SQL en `analytics/queries/` se ejecutan durante `analytics:aggregate` con DuckDB y leen:
 
 ```text
-data/analytics/latest-runs.parquet
+analytics_runs
 ```
 
 Sus resultados se escriben como JSON y CSV en:

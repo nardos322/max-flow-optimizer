@@ -8,7 +8,7 @@ const reportTimeZone = 'America/Argentina/Buenos_Aires';
 
 async function main() {
   const summaryPath = path.join(repoRoot, 'data/analytics/latest-summary.json');
-  const runsPath = path.resolve(repoRoot, process.env.ANALYTICS_RUNS_FILE ?? 'data/analytics/latest-runs.jsonl');
+  const runsPath = path.resolve(repoRoot, process.env.ANALYTICS_RUNS_FILE ?? (await resolveDefaultRunsInput()));
   const parquetPath = path.join(repoRoot, 'data/analytics/latest-runs.parquet');
   const qualityPath = path.join(repoRoot, 'data/analytics/latest-quality.json');
   const comparisonPath = path.join(repoRoot, 'data/analytics/latest-comparison.json');
@@ -40,6 +40,28 @@ async function main() {
       2
     )
   );
+}
+
+async function resolveDefaultRunsInput() {
+  const partitionedRuns = path.join(repoRoot, 'data/analytics/runs');
+  const latestJsonl = path.join(repoRoot, 'data/analytics/latest-runs.jsonl');
+
+  if (await pathExists(partitionedRuns)) {
+    return 'data/analytics/runs';
+  }
+  if (await pathExists(latestJsonl)) {
+    return 'data/analytics/latest-runs.jsonl';
+  }
+  return 'data/analytics/latest-runs.jsonl';
+}
+
+async function pathExists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function readJsonIfExists(filePath) {

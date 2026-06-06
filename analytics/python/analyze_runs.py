@@ -37,9 +37,9 @@ except ModuleNotFoundError as error:
 from analytics_io import (
     create_timestamp,
     find_latest_history_summary,
-    read_runs,
     relative_to_repo,
     resolve_path,
+    scan_runs,
     write_csv,
     write_history,
     write_json,
@@ -82,7 +82,7 @@ def main() -> None:
         raise SystemExit(f"Input file not found: {input_path}")
 
     previous_summary_path = find_latest_history_summary(history_output)
-    runs = read_runs(input_path)
+    runs = scan_runs(input_path)
     summary = summarize_runs(runs)
     rows = summary.to_dicts()
     quality = validate_runs(runs, rows)
@@ -103,7 +103,12 @@ def main() -> None:
         runs=runs,
     )
     chart_paths = write_charts(charts_output, rows)
-    duckdb_results = run_duckdb_queries(repo_root=REPO_ROOT, queries_dir=queries_input, output_dir=duckdb_output)
+    duckdb_results = run_duckdb_queries(
+        repo_root=REPO_ROOT,
+        queries_dir=queries_input,
+        output_dir=duckdb_output,
+        runs_input=input_path,
+    )
 
     print(
         json.dumps(
@@ -135,7 +140,7 @@ def main() -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Aggregate analytics run records with Polars.")
-    parser.add_argument("--input", default=str(DEFAULT_INPUT), help="JSONL runs file.")
+    parser.add_argument("--input", default=str(DEFAULT_INPUT), help="JSONL, Parquet, or partitioned Parquet runs input.")
     parser.add_argument("--json-output", default=str(DEFAULT_JSON_OUTPUT), help="Summary JSON output path.")
     parser.add_argument("--csv-output", default=str(DEFAULT_CSV_OUTPUT), help="Summary CSV output path.")
     parser.add_argument("--parquet-output", default=str(DEFAULT_PARQUET_OUTPUT), help="Parquet runs output path.")

@@ -7,11 +7,24 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 
 async function main() {
-  const inputPath = path.resolve(repoRoot, process.env.ANALYTICS_RUNS_FILE ?? 'data/analytics/latest-runs.jsonl');
+  const inputPath = path.resolve(repoRoot, process.env.ANALYTICS_RUNS_FILE ?? resolveDefaultRunsInput());
   const scriptPath = path.join(repoRoot, 'analytics/python/analyze_runs.py');
   const python = resolvePython();
 
   await runPython(python, [scriptPath, '--input', inputPath]);
+}
+
+function resolveDefaultRunsInput() {
+  const partitionedRuns = path.join(repoRoot, 'data/analytics/runs');
+  const latestJsonl = path.join(repoRoot, 'data/analytics/latest-runs.jsonl');
+
+  if (fs.existsSync(partitionedRuns)) {
+    return 'data/analytics/runs';
+  }
+  if (fs.existsSync(latestJsonl)) {
+    return 'data/analytics/latest-runs.jsonl';
+  }
+  return 'data/analytics/latest-runs.jsonl';
 }
 
 function resolvePython() {

@@ -9,6 +9,14 @@ from typing import Any
 import polars as pl
 
 
+def scan_runs(path: Path) -> pl.LazyFrame:
+    if path.is_dir():
+        return pl.scan_parquet(str(path / "**/*.parquet"), hive_partitioning=False)
+    if path.suffix == ".parquet":
+        return pl.scan_parquet(path)
+    return pl.scan_ndjson(path)
+
+
 def read_runs(path: Path) -> pl.DataFrame:
     return pl.read_ndjson(path)
 
@@ -30,9 +38,17 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
-def write_parquet(path: Path, frame: pl.DataFrame) -> None:
+def write_parquet(path: Path, frame: pl.DataFrame | pl.LazyFrame) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    frame.write_parquet(path)
+    if isinstance(frame, pl.LazyFrame) and hasattr(frame, "sink_parquet"):
+        try:
+            frame.sink_parquet(path)
+            return
+        except pl.exceptions.InvalidOperationError:
+            pass
+
+    materialized = frame.collect() if isinstance(frame, pl.LazyFrame) else frame
+    materialized.write_parquet(path)
 
 
 def write_history(
@@ -42,7 +58,7 @@ def write_history(
     rows: list[dict[str, Any]],
     quality: dict[str, Any],
     comparison: dict[str, Any],
-    runs: pl.DataFrame,
+    runs: pl.DataFrame | pl.LazyFrame,
 ) -> list[Path]:
     history_output.mkdir(parents=True, exist_ok=True)
     summary_path = history_output / f"summary-{timestamp}.json"

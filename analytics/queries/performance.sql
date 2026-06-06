@@ -8,7 +8,7 @@ select
   quantile_cont(runtimeMs, 0.95) as p95RuntimeMs,
   max(runtimeMs) as maxRuntimeMs,
   max(wallTimeMs) as maxWallTimeMs
-from read_parquet('data/analytics/latest-runs.parquet')
+from analytics_runs
 where status = 'ok'
 group by scenarioName
 order by scenarioName;
