@@ -8,7 +8,8 @@ import {
   readOutputFormatEnv,
   readPositiveIntegerEnv,
   repoRoot,
-  resolveEnginePath
+  resolveEnginePath,
+  resolveManifestShardPath
 } from './analytics-runner/config.mjs';
 import { runJsonlBatch, runLegacyBatch } from './analytics-runner/batches.mjs';
 import { closeRunOutput, createRunOutput, destroyRunOutput } from './analytics-runner/output.mjs';
@@ -17,7 +18,9 @@ async function main() {
   const runStartedAt = new Date();
   const runStartedAtMs = performance.now();
   const enginePath = await resolveEnginePath();
-  const manifest = JSON.parse(await fs.readFile(manifestPath, 'utf8'));
+  const manifestShardPath = resolveManifestShardPath();
+  const manifestSourcePath = manifestShardPath ?? manifestPath;
+  const manifest = await readManifest(manifestSourcePath, manifestShardPath !== null);
   const concurrency = readPositiveIntegerEnv('ANALYTICS_CONCURRENCY', 1);
   const engineTimeoutMs = readPositiveIntegerEnv('ANALYTICS_ENGINE_TIMEOUT_MS', 30000);
   const batchSize = readPositiveIntegerEnv('ANALYTICS_BATCH_SIZE', 250);
@@ -59,6 +62,8 @@ async function main() {
         compactAnalytics,
         outputFormat,
         enginePath: path.relative(repoRoot, enginePath),
+        manifest: path.relative(repoRoot, manifestSourcePath),
+        manifestKind: manifest.kind,
         concurrency,
         batchSize: runMode === 'legacy' ? null : batchSize,
         engineTimeoutMs,
@@ -77,6 +82,30 @@ async function main() {
       2
     )
   );
+}
+
+async function readManifest(sourcePath, isShard) {
+  const content = await fs.readFile(sourcePath, 'utf8');
+
+  if (!isShard) {
+    return {
+      ...JSON.parse(content),
+      kind: 'manifest'
+    };
+  }
+
+  const scenarios = content
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+
+  return {
+    generatedAt: null,
+    inputMode: scenarios.some((entry) => entry.inputPath) ? 'files' : 'generated',
+    scenarios,
+    kind: 'manifest-shard'
+  };
 }
 
 main().catch((error) => {

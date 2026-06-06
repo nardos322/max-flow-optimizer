@@ -36,7 +36,13 @@ pnpm analytics
 
 `pnpm analytics:setup` crea `.venv` e instala `polars==1.14.0`, `matplotlib==3.9.2` y `duckdb==1.1.3`. `analytics:aggregate` usa automaticamente `.venv/bin/python` si existe.
 
-`analytics:generate` escribe por defecto solo `data/generated/manifest.json`; `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario. El engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`, sin conocer perfiles hardcodeados. Si hace falta inspeccionar los inputs generados como archivos JSON, usar `ANALYTICS_WRITE_INPUT_FILES=1`, pero no es recomendable para corridas grandes porque puede escribir decenas de GB y desactiva el camino compacto.
+`analytics:generate` escribe por defecto `data/generated/manifest.json` y shards JSONL en `data/generated/manifest/part-*.jsonl`; `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario. El engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`, sin conocer perfiles hardcodeados. Si hace falta inspeccionar los inputs generados como archivos JSON, usar `ANALYTICS_WRITE_INPUT_FILES=1`, pero no es recomendable para corridas grandes porque puede escribir decenas de GB y desactiva el camino compacto.
+
+Para ejecutar solo un shard:
+
+```bash
+ANALYTICS_MANIFEST_SHARD=data/generated/manifest/part-000001.jsonl pnpm analytics:run
+```
 
 `analytics:run` usa por defecto `ANALYTICS_RUN_MODE=batch`, que envia grupos de instancias al engine en JSONL para evitar lanzar un proceso por instancia. El runner escribe cada resultado al JSONL de salida mientras procesa chunks, sin retener todas las corridas en memoria. `ANALYTICS_BATCH_SIZE` controla el tamano de esos grupos y por defecto vale `250`. Para comparar con el runner anterior:
 

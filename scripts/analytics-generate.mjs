@@ -13,6 +13,7 @@ async function main() {
   const runsPerScenario = readPositiveIntegerEnv('ANALYTICS_RUNS_PER_SCENARIO', 10);
   const writeInputFiles = readBooleanEnv('ANALYTICS_WRITE_INPUT_FILES', false);
   const manifestOrder = readManifestOrderEnv();
+  const manifestShardSize = readPositiveIntegerEnv('ANALYTICS_MANIFEST_SHARD_SIZE', 1000);
   await fs.mkdir(outputRoot, { recursive: true });
 
   const manifest = {
@@ -20,6 +21,11 @@ async function main() {
     runsPerScenario,
     manifestOrder,
     inputMode: writeInputFiles ? 'files' : 'generated',
+    manifestShards: {
+      directory: 'data/generated/manifest',
+      shardSize: manifestShardSize,
+      count: 0
+    },
     scenarios: []
   };
 
@@ -39,6 +45,7 @@ async function main() {
     manifest.scenarios.push(entry);
   }
 
+  manifest.manifestShards.count = await writeManifestShards(manifest.scenarios, manifestShardSize);
   await fs.writeFile(path.join(outputRoot, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(
     JSON.stringify(
@@ -46,6 +53,8 @@ async function main() {
         output: path.relative(repoRoot, outputRoot),
         scenarios: selectedProfiles.map((profile) => profile.name),
         generatedInstances: manifest.scenarios.length,
+        manifestShards: manifest.manifestShards.count,
+        manifestShardSize,
         manifestOrder,
         inputMode: manifest.inputMode
       },
@@ -53,6 +62,23 @@ async function main() {
       2
     )
   );
+}
+
+async function writeManifestShards(entries, shardSize) {
+  const shardRoot = path.join(outputRoot, 'manifest');
+  await fs.rm(shardRoot, { recursive: true, force: true });
+  await fs.mkdir(shardRoot, { recursive: true });
+
+  let shardCount = 0;
+  for (let index = 0; index < entries.length; index += shardSize) {
+    shardCount += 1;
+    const shardEntries = entries.slice(index, index + shardSize);
+    const shardName = `part-${String(shardCount).padStart(6, '0')}.jsonl`;
+    const shardContent = `${shardEntries.map((entry) => JSON.stringify(entry)).join('\n')}\n`;
+    await fs.writeFile(path.join(shardRoot, shardName), shardContent);
+  }
+
+  return shardCount;
 }
 
 function createManifestPlan(profiles, runsPerScenario, manifestOrder) {

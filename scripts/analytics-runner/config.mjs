@@ -9,6 +9,14 @@ export const repoRoot = path.resolve(__dirname, '../..');
 export const manifestPath = path.join(repoRoot, 'data/generated/manifest.json');
 export const outputRoot = path.join(repoRoot, 'data/analytics');
 
+export function resolveManifestShardPath() {
+  const value = process.env.ANALYTICS_MANIFEST_SHARD;
+  if (!value?.trim()) {
+    return null;
+  }
+  return path.isAbsolute(value) ? value : path.join(repoRoot, value);
+}
+
 export async function resolveEnginePath() {
   const candidate =
     process.env.ANALYTICS_ENGINE_PATH ??

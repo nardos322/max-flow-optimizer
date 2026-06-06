@@ -24,9 +24,10 @@ pnpm analytics
 ```text
 analytics:generate
   -> Node escribe un manifest reproducible en data/generated/manifest.json
+  -> Node escribe shards JSONL en data/generated/manifest/
 
 analytics:run
-  -> Node lee el manifest y envia payloads compactos JSONL al engine
+  -> Node lee el manifest o un shard y envia payloads compactos JSONL al engine
   -> C++ reconstruye cada instancia sintetica en --analytics-jsonl --summary-only
   -> C++ resuelve max-flow
   -> Node escribe JSONL en streaming o envia records a un writer Parquet persistente
@@ -57,6 +58,7 @@ Artefactos principales:
 
 ```text
 data/generated/manifest.json
+data/generated/manifest/part-*.jsonl
 data/analytics/latest-runs.jsonl
 data/analytics/latest-runs.parquet
 data/analytics/runs/
@@ -79,6 +81,8 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_RUNS_PER_SCENARIO` | `10` | Instancias generadas por escenario. |
 | `ANALYTICS_SCENARIOS` | todos | Lista separada por coma de escenarios a generar. |
 | `ANALYTICS_MANIFEST_ORDER` | `scenario` | Orden del manifest. Usar `interleaved` para mezclar escenarios por indice y balancear mejor los workers. |
+| `ANALYTICS_MANIFEST_SHARD_SIZE` | `1000` | Cantidad de entradas por shard JSONL generado en `data/generated/manifest`. |
+| `ANALYTICS_MANIFEST_SHARD` | unset | Shard JSONL especifico que `analytics:run` debe procesar, por ejemplo `data/generated/manifest/part-000001.jsonl`. |
 | `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
@@ -145,7 +149,13 @@ ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_
 
 `ANALYTICS_BATCH_SIZE=50` y `ANALYTICS_CONCURRENCY=4` son valores conservadores para corridas grandes. En maquinas con mas margen se puede subir gradualmente, por ejemplo `ANALYTICS_BATCH_SIZE=75` y `ANALYTICS_CONCURRENCY=6`, midiendo el `totalWallTimeSeconds` que imprime `analytics:run`.
 
-`analytics:generate` escribe por defecto un manifest liviano en `data/generated/manifest.json`; no materializa un JSON por instancia. `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario, y el engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`. El engine no conoce perfiles hardcodeados; solo genera desde los parametros recibidos.
+`analytics:generate` escribe por defecto un manifest liviano en `data/generated/manifest.json` y shards JSONL en `data/generated/manifest/`; no materializa un JSON por instancia. `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario, y el engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`. El engine no conoce perfiles hardcodeados; solo genera desde los parametros recibidos.
+
+Para procesar solo una unidad de trabajo shardeada:
+
+```bash
+ANALYTICS_MANIFEST_SHARD=data/generated/manifest/part-000001.jsonl pnpm analytics:run
+```
 
 En el modo compacto, `analytics:run` agrega `--summary-only` por defecto. Esa salida mantiene las metricas necesarias para analytics (`feasible`, flujos, `stats`, `uncoveredDaysCount` y `analytics.availabilityPairs`) y evita serializar `assignments` o diagnosticos completos. Para comparar contra la salida completa:
 
