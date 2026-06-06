@@ -1,8 +1,30 @@
 import fs from 'node:fs/promises';
+import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
 
 import { outputRoot, repoRoot, resolvePython } from './config.mjs';
+
+export function createRunOutput({ outputFormat, runDate, timestamp }) {
+  if (outputFormat === 'parquet') {
+    const parquetOutput = createStreamingParquetOutput({ runDate, timestamp });
+    return {
+      ...parquetOutput,
+      jsonlOutput: null,
+      outputFormat
+    };
+  }
+
+  const outputPath = path.join(outputRoot, `runs-${timestamp}.jsonl`);
+  return {
+    writer: createWriteStream(outputPath, { encoding: 'utf8' }),
+    outputPath,
+    jsonlOutput: outputPath,
+    parquetOutput: null,
+    primaryOutput: outputPath,
+    outputFormat
+  };
+}
 
 export function closeWriteStream(outputStream) {
   return new Promise((resolve, reject) => {
@@ -11,65 +33,117 @@ export function closeWriteStream(outputStream) {
   });
 }
 
-export async function finalizeRunOutputs(outputPath, { outputFormat, runDate, timestamp }) {
-  if (outputFormat === 'parquet') {
-    const parquetOutput = await writePartitionedParquet(outputPath, { runDate, timestamp });
+export async function closeRunOutput(runOutput) {
+  if (runOutput.outputFormat === 'parquet') {
+    await closeStreamingParquetOutput(runOutput);
     return {
-      primaryOutput: parquetOutput,
-      parquetOutput
+      primaryOutput: runOutput.primaryOutput,
+      parquetOutput: runOutput.parquetOutput,
+      jsonlOutput: null
     };
   }
 
-  await fs.copyFile(outputPath, path.join(outputRoot, 'latest-runs.jsonl'));
+  await closeWriteStream(runOutput.writer);
+  await fs.copyFile(runOutput.outputPath, path.join(outputRoot, 'latest-runs.jsonl'));
   return {
-    primaryOutput: outputPath,
-    parquetOutput: null
+    primaryOutput: runOutput.primaryOutput,
+    parquetOutput: null,
+    jsonlOutput: runOutput.jsonlOutput
   };
 }
 
-async function writePartitionedParquet(inputPath, { runDate, timestamp }) {
-  const scriptPath = path.join(repoRoot, 'analytics/python/write_partitioned_runs.py');
-  const outputDir = path.join(outputRoot, 'runs');
-  const latestPath = path.join(outputRoot, 'latest-runs.parquet');
-  const python = resolvePython();
-
-  await runPython(python, [
-    scriptPath,
-    '--input',
-    inputPath,
-    '--output-dir',
-    outputDir,
-    '--latest-output',
-    latestPath,
-    '--run-date',
-    runDate,
-    '--part-name',
-    `part-${timestamp}.parquet`
-  ]);
-
-  return outputDir;
+export function destroyRunOutput(runOutput) {
+  if (runOutput.outputFormat === 'parquet') {
+    runOutput.writer.destroy();
+    runOutput.child.kill('SIGTERM');
+    return;
+  }
+  runOutput.writer.destroy();
 }
 
-function runPython(command, args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(command, args, {
+function createStreamingParquetOutput({ runDate, timestamp }) {
+  const scriptPath = path.join(repoRoot, 'analytics/python/stream_parquet_writer.py');
+  const outputDir = path.join(outputRoot, 'runs');
+  const latestPath = path.join(outputRoot, 'latest-runs.parquet');
+  const flushRows = readPositiveIntegerEnv('ANALYTICS_PARQUET_FLUSH_ROWS', 10000);
+  const python = resolvePython();
+  const child = spawn(
+    python,
+    [
+      scriptPath,
+      '--output-dir',
+      outputDir,
+      '--latest-output',
+      latestPath,
+      '--run-date',
+      runDate,
+      '--part-prefix',
+      `part-${timestamp}`,
+      '--flush-rows',
+      String(flushRows)
+    ],
+    {
       cwd: repoRoot,
-      stdio: 'inherit'
-    });
+      stdio: ['pipe', 'ignore', 'inherit']
+    }
+  );
 
-    child.on('error', reject);
-    child.on('close', (exitCode) => {
-      if (exitCode === 0) {
-        resolve();
+  child.stdin.setDefaultEncoding('utf8');
+
+  return {
+    writer: child.stdin,
+    child,
+    outputPath: outputDir,
+    primaryOutput: outputDir,
+    parquetOutput: outputDir,
+    latestParquetOutput: latestPath,
+    flushRows
+  };
+}
+
+function closeStreamingParquetOutput(runOutput) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+
+    function finish(error) {
+      if (settled) {
         return;
       }
+      settled = true;
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    }
 
-      reject(
+    runOutput.child.on('error', finish);
+    runOutput.child.on('close', (exitCode) => {
+      if (exitCode === 0) {
+        finish();
+        return;
+      }
+      finish(
         new Error(
           `Partitioned Parquet writer failed with exit code ${exitCode}. ` +
             'Install dependencies with: pnpm analytics:setup'
         )
       );
     });
+
+    runOutput.writer.end();
   });
+}
+
+function readPositiveIntegerEnv(name, fallback) {
+  const value = process.env[name];
+  if (value === undefined) {
+    return fallback;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+  return parsed;
 }

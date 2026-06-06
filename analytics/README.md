@@ -29,8 +29,8 @@ analytics:run
   -> Node lee el manifest y envia payloads compactos JSONL al engine
   -> C++ reconstruye cada instancia sintetica en --analytics-jsonl --summary-only
   -> C++ resuelve max-flow
-  -> Node escribe data/analytics/latest-runs.jsonl en streaming
-  -> opcionalmente convierte la corrida a Parquet particionado
+  -> Node escribe JSONL en streaming o envia records a un writer Parquet persistente
+  -> en modo parquet, Python escribe particiones sin crear un JSONL temporal gigante
 
 analytics:aggregate
   -> Python/Polars lee JSONL o Parquet particionado con LazyFrame
@@ -83,6 +83,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
 | `ANALYTICS_OUTPUT_FORMAT` | `jsonl` | Formato principal de salida de `analytics:run`. Usar `parquet` para escribir `data/analytics/runs/scenarioName=*/runDate=*/*.parquet`. |
 | `ANALYTICS_SUMMARY_ONLY` | `true` | En modo compacto, pedir al engine `--summary-only` para omitir assignments y diagnosticos extensos que analytics no persiste. |
+| `ANALYTICS_PARQUET_FLUSH_ROWS` | `10000` | Filas por escenario que el writer Parquet acumula antes de escribir una parte. Solo aplica con `ANALYTICS_OUTPUT_FORMAT=parquet`. |
 | `ANALYTICS_CONCURRENCY` | `1` | Procesos del solver ejecutados en paralelo por `analytics:run`. |
 | `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine cuando `ANALYTICS_RUN_MODE=batch`. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |

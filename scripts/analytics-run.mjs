@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import { createWriteStream } from 'node:fs';
 import path from 'node:path';
 
 import {
@@ -12,7 +11,7 @@ import {
   resolveEnginePath
 } from './analytics-runner/config.mjs';
 import { runJsonlBatch, runLegacyBatch } from './analytics-runner/batches.mjs';
-import { closeWriteStream, finalizeRunOutputs } from './analytics-runner/output.mjs';
+import { closeRunOutput, createRunOutput, destroyRunOutput } from './analytics-runner/output.mjs';
 
 async function main() {
   const runStartedAt = new Date();
@@ -28,27 +27,27 @@ async function main() {
   await fs.mkdir(outputRoot, { recursive: true });
 
   const timestamp = createTimestamp();
-  const outputPath = path.join(outputRoot, `runs-${timestamp}.jsonl`);
-  const outputStream = createWriteStream(outputPath, { encoding: 'utf8' });
-  let stats;
-
-  try {
-    stats =
-      runMode === 'legacy'
-        ? await runLegacyBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs, outputStream)
-        : await runJsonlBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs, batchSize, outputStream);
-
-    await closeWriteStream(outputStream);
-  } catch (error) {
-    outputStream.destroy();
-    throw error;
-  }
-
-  const { primaryOutput, parquetOutput } = await finalizeRunOutputs(outputPath, {
+  const runOutput = createRunOutput({
     outputFormat,
     runDate: runStartedAt.toISOString().slice(0, 10),
     timestamp
   });
+  const writer = runOutput.writer;
+  let stats;
+  let finalizedOutput;
+
+  try {
+    stats =
+      runMode === 'legacy'
+        ? await runLegacyBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs, writer)
+        : await runJsonlBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs, batchSize, writer);
+
+    finalizedOutput = await closeRunOutput(runOutput);
+  } catch (error) {
+    destroyRunOutput(runOutput);
+    throw error;
+  }
+
   const runFinishedAt = new Date();
   const totalWallTimeMs = Number((performance.now() - runStartedAtMs).toFixed(2));
 
@@ -70,9 +69,9 @@ async function main() {
         totalWallTimeSeconds: Number((totalWallTimeMs / 1000).toFixed(2)),
         startedAt: runStartedAt.toISOString(),
         finishedAt: runFinishedAt.toISOString(),
-        output: path.relative(repoRoot, primaryOutput),
-        jsonlOutput: path.relative(repoRoot, outputPath),
-        parquetOutput: parquetOutput ? path.relative(repoRoot, parquetOutput) : null
+        output: path.relative(repoRoot, finalizedOutput.primaryOutput),
+        jsonlOutput: finalizedOutput.jsonlOutput ? path.relative(repoRoot, finalizedOutput.jsonlOutput) : null,
+        parquetOutput: finalizedOutput.parquetOutput ? path.relative(repoRoot, finalizedOutput.parquetOutput) : null
       },
       null,
       2

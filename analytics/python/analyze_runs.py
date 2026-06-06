@@ -91,7 +91,8 @@ def main() -> None:
 
     write_json(json_output, rows)
     write_csv(csv_output, rows)
-    write_parquet(parquet_output, runs)
+    if input_path.resolve() != parquet_output.resolve():
+        write_parquet(parquet_output, runs)
     write_json(quality_output, quality)
     write_json(comparison_output, comparison)
     history_paths = write_history(
