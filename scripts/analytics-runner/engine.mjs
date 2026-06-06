@@ -46,7 +46,11 @@ export function runEngine(enginePath, payload, timeoutMs) {
 export function runBatchEngine(enginePath, chunk, timeoutMs) {
   return new Promise((resolve, reject) => {
     const usesCompactAnalytics = chunk.every(({ entry }) => !entry.inputPath);
-    const child = spawn(enginePath, ['--stdin', usesCompactAnalytics ? '--analytics-jsonl' : '--batch-jsonl'], {
+    const args = ['--stdin', usesCompactAnalytics ? '--analytics-jsonl' : '--batch-jsonl'];
+    if (usesCompactAnalytics && summaryOnlyEnabled()) {
+      args.push('--summary-only');
+    }
+    const child = spawn(enginePath, args, {
       cwd: repoRoot,
       stdio: ['pipe', 'pipe', 'pipe']
     });
@@ -89,6 +93,17 @@ export function runBatchEngine(enginePath, chunk, timeoutMs) {
       reject(error);
     });
   });
+}
+
+function summaryOnlyEnabled() {
+  const value = process.env.ANALYTICS_SUMMARY_ONLY ?? 'true';
+  if (['1', 'true', 'yes'].includes(value.toLowerCase())) {
+    return true;
+  }
+  if (['0', 'false', 'no'].includes(value.toLowerCase())) {
+    return false;
+  }
+  throw new Error('ANALYTICS_SUMMARY_ONLY must be a boolean value: true/false or 1/0.');
 }
 
 export function parseEngineError(stderr) {

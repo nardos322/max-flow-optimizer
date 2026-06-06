@@ -162,4 +162,22 @@ std::string SerializeAnalyticsResponse(const AnalyticsSolveResult& result) {
   return SerializeJson(root);
 }
 
+std::string SerializeAnalyticsSummaryResponse(const AnalyticsSolveResult& result) {
+  const SolveResponse& response = result.response;
+  const int uncovered_days_count =
+      response.diagnostics.has_value() ? static_cast<int>(response.diagnostics->uncovered_days.size()) : 0;
+
+  JsonValue root = JsonValue::object();
+  root["instanceId"] = response.instance_id;
+  root["feasible"] = response.feasible;
+  root["requiredFlow"] = response.required_flow;
+  root["maxFlow"] = response.max_flow;
+  root["uncoveredDaysCount"] = uncovered_days_count;
+  root["stats"] = JsonValue{{"nodes", response.stats.nodes},
+                             {"edges", response.stats.edges},
+                             {"runtimeMs", response.stats.runtime_ms}};
+  root["analytics"] = JsonValue{{"availabilityPairs", result.availability_pairs}};
+  return SerializeJson(root);
+}
+
 }  // namespace engine

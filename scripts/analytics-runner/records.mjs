@@ -42,7 +42,7 @@ export function createOkRecord(entry, response, wallTimeMs) {
     feasible: response.feasible,
     requiredFlow: response.requiredFlow,
     maxFlow: response.maxFlow,
-    uncoveredDaysCount: response.diagnostics?.uncoveredDays?.length ?? 0,
+    uncoveredDaysCount: response.uncoveredDaysCount ?? response.diagnostics?.uncoveredDays?.length ?? 0,
     nodes,
     edges,
     edgesPerNode:

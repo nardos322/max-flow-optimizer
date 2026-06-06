@@ -4,11 +4,21 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "engine/cli.hpp"
 #include "engine/json.hpp"
 #include "test_utils.hpp"
+
+namespace {
+
+constexpr std::string_view kSmallSparseAnalyticsPayload =
+    R"({"requestId":"analytics-small-sparse-0001-1101","scenarioName":"small-sparse",)"
+    R"("seed":1101,"instanceId":"small-sparse-0001","daysCount":25,"medicsCount":10,)"
+    R"("periodsCount":5,"availabilityDensity":0.15,"maxDaysPerMedic":3})";
+
+}  // namespace
 
 TEST(CliTest, ParsesSupportedArgumentShapes) {
   const engine::CliOptions stdin_options = engine::ParseCliOptions({"--stdin"});
@@ -30,6 +40,16 @@ TEST(CliTest, ParsesSupportedArgumentShapes) {
   EXPECT_TRUE(analytics_options.use_stdin);
   EXPECT_FALSE(analytics_options.batch_jsonl);
   EXPECT_TRUE(analytics_options.analytics_jsonl);
+  EXPECT_FALSE(analytics_options.summary_only);
+
+  const engine::CliOptions summary_options =
+      engine::ParseCliOptions({"--stdin", "--analytics-jsonl", "--summary-only"});
+  EXPECT_TRUE(summary_options.use_stdin);
+  EXPECT_FALSE(summary_options.batch_jsonl);
+  EXPECT_TRUE(summary_options.analytics_jsonl);
+  EXPECT_TRUE(summary_options.summary_only);
+
+  EXPECT_THROW(static_cast<void>(engine::ParseCliOptions({"--stdin", "--summary-only"})), engine::EngineError);
 }
 
 TEST(CliTest, EmitsCanonicalResponseForStdinAndFileModes) {
@@ -99,8 +119,7 @@ TEST(CliTest, EmitsJsonlResponsesForBatchMode) {
 
 TEST(CliTest, EmitsJsonlResponsesForCompactAnalyticsMode) {
   std::stringstream stdin_stream;
-  stdin_stream << R"({"requestId":"analytics-small-sparse-0001-1101","scenarioName":"small-sparse","seed":1101,"instanceId":"small-sparse-0001","daysCount":25,"medicsCount":10,"periodsCount":5,"availabilityDensity":0.15,"maxDaysPerMedic":3})"
-               << '\n';
+  stdin_stream << kSmallSparseAnalyticsPayload << '\n';
 
   std::ostringstream stdout_stream;
   std::ostringstream stderr_stream;
@@ -121,6 +140,35 @@ TEST(CliTest, EmitsJsonlResponsesForCompactAnalyticsMode) {
   EXPECT_EQ(actual.at("stats").at("nodes").get<int>(), 87);
   EXPECT_EQ(actual.at("stats").at("edges").get<int>(), 130);
   EXPECT_EQ(actual.at("analytics").at("availabilityPairs").get<int>(), 45);
+}
+
+TEST(CliTest, EmitsSummaryOnlyResponsesForCompactAnalyticsMode) {
+  std::stringstream stdin_stream;
+  stdin_stream << kSmallSparseAnalyticsPayload << '\n';
+
+  std::ostringstream stdout_stream;
+  std::ostringstream stderr_stream;
+  EXPECT_EQ(engine::RunCli(engine::CliOptions{.use_stdin = true,
+                                             .input_path = "",
+                                             .batch_jsonl = false,
+                                             .analytics_jsonl = true,
+                                             .summary_only = true},
+                           stdin_stream, stdout_stream, stderr_stream),
+            0);
+  EXPECT_TRUE(stderr_stream.str().empty());
+
+  engine::JsonValue actual = engine::ParseJson(stdout_stream.str());
+  engine::test::NormalizeRuntimeMs(actual);
+  EXPECT_EQ(actual.at("instanceId").get<std::string>(), "small-sparse-0001");
+  EXPECT_EQ(actual.at("feasible").get<bool>(), false);
+  EXPECT_EQ(actual.at("requiredFlow").get<int>(), 25);
+  EXPECT_EQ(actual.at("maxFlow").get<int>(), 17);
+  EXPECT_EQ(actual.at("uncoveredDaysCount").get<int>(), 8);
+  EXPECT_EQ(actual.at("stats").at("nodes").get<int>(), 87);
+  EXPECT_EQ(actual.at("stats").at("edges").get<int>(), 130);
+  EXPECT_EQ(actual.at("analytics").at("availabilityPairs").get<int>(), 45);
+  EXPECT_FALSE(actual.contains("assignments"));
+  EXPECT_FALSE(actual.contains("diagnostics"));
 }
 
 TEST(CliTest, RejectsAllCanonicalInvalidInputs) {

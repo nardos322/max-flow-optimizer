@@ -27,7 +27,7 @@ analytics:generate
 
 analytics:run
   -> Node lee el manifest y envia payloads compactos JSONL al engine
-  -> C++ reconstruye cada instancia sintetica en --analytics-jsonl
+  -> C++ reconstruye cada instancia sintetica en --analytics-jsonl --summary-only
   -> C++ resuelve max-flow
   -> Node escribe data/analytics/latest-runs.jsonl en streaming
   -> opcionalmente convierte la corrida a Parquet particionado
@@ -82,6 +82,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
 | `ANALYTICS_OUTPUT_FORMAT` | `jsonl` | Formato principal de salida de `analytics:run`. Usar `parquet` para escribir `data/analytics/runs/scenarioName=*/runDate=*/*.parquet`. |
+| `ANALYTICS_SUMMARY_ONLY` | `true` | En modo compacto, pedir al engine `--summary-only` para omitir assignments y diagnosticos extensos que analytics no persiste. |
 | `ANALYTICS_CONCURRENCY` | `1` | Procesos del solver ejecutados en paralelo por `analytics:run`. |
 | `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine cuando `ANALYTICS_RUN_MODE=batch`. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
@@ -143,6 +144,12 @@ ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_BATCH_SIZE=50 ANALYTICS_CONCURRENCY=4
 `ANALYTICS_BATCH_SIZE=50` y `ANALYTICS_CONCURRENCY=4` son valores conservadores para corridas grandes. En maquinas con mas margen se puede subir gradualmente, por ejemplo `ANALYTICS_BATCH_SIZE=75` y `ANALYTICS_CONCURRENCY=6`, midiendo el `totalWallTimeSeconds` que imprime `analytics:run`.
 
 `analytics:generate` escribe por defecto un manifest liviano en `data/generated/manifest.json`; no materializa un JSON por instancia. `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario, y el engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`. El engine no conoce perfiles hardcodeados; solo genera desde los parametros recibidos.
+
+En el modo compacto, `analytics:run` agrega `--summary-only` por defecto. Esa salida mantiene las metricas necesarias para analytics (`feasible`, flujos, `stats`, `uncoveredDaysCount` y `analytics.availabilityPairs`) y evita serializar `assignments` o diagnosticos completos. Para comparar contra la salida completa:
+
+```bash
+ANALYTICS_SUMMARY_ONLY=false pnpm analytics:run
+```
 
 El resumen final de `analytics:run` debe incluir:
 

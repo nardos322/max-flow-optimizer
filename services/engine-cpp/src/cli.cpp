@@ -77,7 +77,7 @@ int RunBatchPayloads(const CliOptions& options, std::istream& stdin_stream, std:
   return RunBatchPayloadsFromStream(file, stdout_stream);
 }
 
-int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream) {
+int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream, bool summary_only) {
   std::string line;
 
   while (std::getline(lines, line)) {
@@ -86,7 +86,9 @@ int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_str
     }
 
     try {
-      stdout_stream << SerializeAnalyticsResponse(SolveAnalyticsPayload(line)) << '\n';
+      const AnalyticsSolveResult result = SolveAnalyticsPayload(line);
+      stdout_stream << (summary_only ? SerializeAnalyticsSummaryResponse(result) : SerializeAnalyticsResponse(result))
+                    << '\n';
     } catch (const EngineError& error) {
       stdout_stream << SerializeError(ErrorPayload{error.code(), error.what()}) << '\n';
     } catch (const std::exception& error) {
@@ -100,14 +102,14 @@ int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_str
 
 int RunAnalyticsPayloads(const CliOptions& options, std::istream& stdin_stream, std::ostream& stdout_stream) {
   if (options.use_stdin) {
-    return RunAnalyticsPayloadsFromStream(stdin_stream, stdout_stream);
+    return RunAnalyticsPayloadsFromStream(stdin_stream, stdout_stream, options.summary_only);
   }
 
   std::ifstream file(options.input_path);
   if (!file.is_open()) {
     ThrowInvalidInput("Unable to open input file: " + options.input_path + ".");
   }
-  return RunAnalyticsPayloadsFromStream(file, stdout_stream);
+  return RunAnalyticsPayloadsFromStream(file, stdout_stream, options.summary_only);
 }
 
 }  // namespace
@@ -123,6 +125,8 @@ CliOptions ParseCliOptions(const std::vector<std::string>& arguments) {
                "Read newline-delimited wrapper JSON payloads and write newline-delimited responses");
   app.add_flag("--analytics-jsonl", options.analytics_jsonl,
                "Read newline-delimited compact analytics payloads and write newline-delimited responses");
+  app.add_flag("--summary-only", options.summary_only,
+               "Omit assignments and verbose diagnostics from analytics output");
 
   std::vector<std::string> storage;
   storage.reserve(arguments.size() + 1);
@@ -145,6 +149,9 @@ CliOptions ParseCliOptions(const std::vector<std::string>& arguments) {
   }
   if (options.batch_jsonl && options.analytics_jsonl) {
     ThrowInvalidInput("Use at most one batch mode: --batch-jsonl or --analytics-jsonl.");
+  }
+  if (options.summary_only && !options.analytics_jsonl) {
+    ThrowInvalidInput("Use --summary-only only with --analytics-jsonl.");
   }
 
   return options;

@@ -15,6 +15,7 @@ struct AnalyticsSolveResult {
 
 [[nodiscard]] AnalyticsSolveResult SolveAnalyticsPayload(std::string_view payload);
 [[nodiscard]] std::string SerializeAnalyticsResponse(const AnalyticsSolveResult& result);
+[[nodiscard]] std::string SerializeAnalyticsSummaryResponse(const AnalyticsSolveResult& result);
 
 }  // namespace engine
 
