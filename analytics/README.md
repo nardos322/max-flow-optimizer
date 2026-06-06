@@ -78,6 +78,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | --- | --- | --- |
 | `ANALYTICS_RUNS_PER_SCENARIO` | `10` | Instancias generadas por escenario. |
 | `ANALYTICS_SCENARIOS` | todos | Lista separada por coma de escenarios a generar. |
+| `ANALYTICS_MANIFEST_ORDER` | `scenario` | Orden del manifest. Usar `interleaved` para mezclar escenarios por indice y balancear mejor los workers. |
 | `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
@@ -139,7 +140,7 @@ xlarge-balanced
 Corrida recomendada de 50k instancias:
 
 ```bash
-ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_BATCH_SIZE=50 ANALYTICS_CONCURRENCY=4 pnpm analytics
+ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=50 ANALYTICS_CONCURRENCY=4 pnpm analytics
 ```
 
 `ANALYTICS_BATCH_SIZE=50` y `ANALYTICS_CONCURRENCY=4` son valores conservadores para corridas grandes. En maquinas con mas margen se puede subir gradualmente, por ejemplo `ANALYTICS_BATCH_SIZE=75` y `ANALYTICS_CONCURRENCY=6`, midiendo el `totalWallTimeSeconds` que imprime `analytics:run`.

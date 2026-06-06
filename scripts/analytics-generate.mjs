@@ -12,11 +12,13 @@ async function main() {
   const selectedProfiles = selectProfiles(process.env.ANALYTICS_SCENARIOS);
   const runsPerScenario = readPositiveIntegerEnv('ANALYTICS_RUNS_PER_SCENARIO', 10);
   const writeInputFiles = readBooleanEnv('ANALYTICS_WRITE_INPUT_FILES', false);
+  const manifestOrder = readManifestOrderEnv();
   await fs.mkdir(outputRoot, { recursive: true });
 
   const manifest = {
     generatedAt: new Date().toISOString(),
     runsPerScenario,
+    manifestOrder,
     inputMode: writeInputFiles ? 'files' : 'generated',
     scenarios: []
   };
@@ -25,16 +27,16 @@ async function main() {
     if (writeInputFiles) {
       await fs.mkdir(path.join(outputRoot, profile.name), { recursive: true });
     }
+  }
 
-    for (let index = 0; index < runsPerScenario; index += 1) {
-      const entry = createManifestEntry(profile, index, { includeInputPath: writeInputFiles });
-      if (writeInputFiles) {
-        const instance = generateInstance(profile, entry.seed, index);
-        entry.availabilityPairs = instance.availability.length;
-        await fs.writeFile(path.join(repoRoot, entry.inputPath), `${JSON.stringify(instance)}\n`);
-      }
-      manifest.scenarios.push(entry);
+  for (const { profile, index } of createManifestPlan(selectedProfiles, runsPerScenario, manifestOrder)) {
+    const entry = createManifestEntry(profile, index, { includeInputPath: writeInputFiles });
+    if (writeInputFiles) {
+      const instance = generateInstance(profile, entry.seed, index);
+      entry.availabilityPairs = instance.availability.length;
+      await fs.writeFile(path.join(repoRoot, entry.inputPath), `${JSON.stringify(instance)}\n`);
     }
+    manifest.scenarios.push(entry);
   }
 
   await fs.writeFile(path.join(outputRoot, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
@@ -44,12 +46,41 @@ async function main() {
         output: path.relative(repoRoot, outputRoot),
         scenarios: selectedProfiles.map((profile) => profile.name),
         generatedInstances: manifest.scenarios.length,
+        manifestOrder,
         inputMode: manifest.inputMode
       },
       null,
       2
     )
   );
+}
+
+function createManifestPlan(profiles, runsPerScenario, manifestOrder) {
+  const plan = [];
+
+  if (manifestOrder === 'interleaved') {
+    for (let index = 0; index < runsPerScenario; index += 1) {
+      for (const profile of profiles) {
+        plan.push({ profile, index });
+      }
+    }
+    return plan;
+  }
+
+  for (const profile of profiles) {
+    for (let index = 0; index < runsPerScenario; index += 1) {
+      plan.push({ profile, index });
+    }
+  }
+  return plan;
+}
+
+function readManifestOrderEnv() {
+  const value = process.env.ANALYTICS_MANIFEST_ORDER ?? 'scenario';
+  if (['scenario', 'interleaved'].includes(value)) {
+    return value;
+  }
+  throw new Error('ANALYTICS_MANIFEST_ORDER must be scenario or interleaved.');
 }
 
 function readPositiveIntegerEnv(name, fallback) {
