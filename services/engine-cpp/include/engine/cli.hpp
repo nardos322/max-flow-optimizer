@@ -14,6 +14,7 @@ struct CliOptions {
   bool batch_jsonl = false;
   bool analytics_jsonl = false;
   bool summary_only = false;
+  bool flush_lines = false;
 };
 
 [[nodiscard]] CliOptions ParseCliOptions(const std::vector<std::string>& arguments);

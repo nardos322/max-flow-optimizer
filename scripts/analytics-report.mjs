@@ -43,6 +43,19 @@ async function main() {
 }
 
 async function resolveDefaultRunsInput() {
+  const runIdInput = process.env.ANALYTICS_RUN_ID?.trim();
+  if (runIdInput) {
+    return `data/analytics/runs/runId=${runIdInput}`;
+  }
+
+  const latestRun = await readLatestRun();
+  if (latestRun?.parquetOutput) {
+    return latestRun.parquetOutput;
+  }
+  if (latestRun?.jsonlOutput) {
+    return latestRun.jsonlOutput;
+  }
+
   const partitionedRuns = path.join(repoRoot, 'data/analytics/runs');
   const latestJsonl = path.join(repoRoot, 'data/analytics/latest-runs.jsonl');
 
@@ -53,6 +66,17 @@ async function resolveDefaultRunsInput() {
     return 'data/analytics/latest-runs.jsonl';
   }
   return 'data/analytics/latest-runs.jsonl';
+}
+
+async function readLatestRun() {
+  try {
+    return JSON.parse(await fs.readFile(path.join(repoRoot, 'data/analytics/latest-run.json'), 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return null;
+    }
+    throw error;
+  }
 }
 
 async function pathExists(filePath) {

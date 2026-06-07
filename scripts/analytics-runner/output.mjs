@@ -5,24 +5,26 @@ import { spawn } from 'node:child_process';
 
 import { outputRoot, repoRoot, resolvePython } from './config.mjs';
 
-export function createRunOutput({ outputFormat, runDate, timestamp }) {
+export function createRunOutput({ outputFormat, runDate, runId, timestamp, updateLatest = true }) {
   if (outputFormat === 'parquet') {
-    const parquetOutput = createStreamingParquetOutput({ runDate, timestamp });
+    const parquetOutput = createStreamingParquetOutput({ runDate, runId, timestamp, updateLatest });
     return {
       ...parquetOutput,
       jsonlOutput: null,
-      outputFormat
+      outputFormat,
+      updateLatest
     };
   }
 
-  const outputPath = path.join(outputRoot, `runs-${timestamp}.jsonl`);
+  const outputPath = path.join(outputRoot, `runs-${runId}-${timestamp}.jsonl`);
   return {
     writer: createWriteStream(outputPath, { encoding: 'utf8' }),
     outputPath,
     jsonlOutput: outputPath,
     parquetOutput: null,
     primaryOutput: outputPath,
-    outputFormat
+    outputFormat,
+    updateLatest
   };
 }
 
@@ -44,7 +46,9 @@ export async function closeRunOutput(runOutput) {
   }
 
   await closeWriteStream(runOutput.writer);
-  await fs.copyFile(runOutput.outputPath, path.join(outputRoot, 'latest-runs.jsonl'));
+  if (runOutput.updateLatest) {
+    await fs.copyFile(runOutput.outputPath, path.join(outputRoot, 'latest-runs.jsonl'));
+  }
   return {
     primaryOutput: runOutput.primaryOutput,
     parquetOutput: null,
@@ -61,10 +65,12 @@ export function destroyRunOutput(runOutput) {
   runOutput.writer.destroy();
 }
 
-function createStreamingParquetOutput({ runDate, timestamp }) {
+function createStreamingParquetOutput({ runDate, runId, timestamp, updateLatest }) {
   const scriptPath = path.join(repoRoot, 'analytics/python/stream_parquet_writer.py');
-  const outputDir = path.join(outputRoot, 'runs');
-  const latestPath = path.join(outputRoot, 'latest-runs.parquet');
+  const outputDir = path.join(outputRoot, 'runs', `runId=${runId}`);
+  const latestPath = updateLatest
+    ? path.join(outputRoot, 'latest-runs.parquet')
+    : path.join(outputRoot, 'tune', `latest-runs-${runId}.parquet`);
   const flushRows = readPositiveIntegerEnv('ANALYTICS_PARQUET_FLUSH_ROWS', 10000);
   const python = resolvePython();
   const child = spawn(
@@ -77,6 +83,8 @@ function createStreamingParquetOutput({ runDate, timestamp }) {
       latestPath,
       '--run-date',
       runDate,
+      '--run-id',
+      runId,
       '--part-prefix',
       `part-${timestamp}`,
       '--flush-rows',

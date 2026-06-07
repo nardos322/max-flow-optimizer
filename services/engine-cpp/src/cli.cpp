@@ -44,7 +44,7 @@ int RunSinglePayload(const CliOptions& options, std::istream& stdin_stream, std:
   return static_cast<int>(ExitCode::kSuccess);
 }
 
-int RunBatchPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream) {
+int RunBatchPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream, bool flush_lines) {
   std::string line;
 
   while (std::getline(lines, line)) {
@@ -59,7 +59,9 @@ int RunBatchPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream)
     } catch (const std::exception& error) {
       stdout_stream << SerializeError(ErrorPayload{"INTERNAL_ERROR", error.what()}) << '\n';
     }
-    stdout_stream.flush();
+    if (flush_lines) {
+      stdout_stream.flush();
+    }
   }
 
   return static_cast<int>(ExitCode::kSuccess);
@@ -67,17 +69,18 @@ int RunBatchPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream)
 
 int RunBatchPayloads(const CliOptions& options, std::istream& stdin_stream, std::ostream& stdout_stream) {
   if (options.use_stdin) {
-    return RunBatchPayloadsFromStream(stdin_stream, stdout_stream);
+    return RunBatchPayloadsFromStream(stdin_stream, stdout_stream, options.flush_lines);
   }
 
   std::ifstream file(options.input_path);
   if (!file.is_open()) {
     ThrowInvalidInput("Unable to open input file: " + options.input_path + ".");
   }
-  return RunBatchPayloadsFromStream(file, stdout_stream);
+  return RunBatchPayloadsFromStream(file, stdout_stream, options.flush_lines);
 }
 
-int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream, bool summary_only) {
+int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_stream, bool summary_only,
+                                   bool flush_lines) {
   std::string line;
 
   while (std::getline(lines, line)) {
@@ -94,7 +97,9 @@ int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_str
     } catch (const std::exception& error) {
       stdout_stream << SerializeError(ErrorPayload{"INTERNAL_ERROR", error.what()}) << '\n';
     }
-    stdout_stream.flush();
+    if (flush_lines) {
+      stdout_stream.flush();
+    }
   }
 
   return static_cast<int>(ExitCode::kSuccess);
@@ -102,14 +107,14 @@ int RunAnalyticsPayloadsFromStream(std::istream& lines, std::ostream& stdout_str
 
 int RunAnalyticsPayloads(const CliOptions& options, std::istream& stdin_stream, std::ostream& stdout_stream) {
   if (options.use_stdin) {
-    return RunAnalyticsPayloadsFromStream(stdin_stream, stdout_stream, options.summary_only);
+    return RunAnalyticsPayloadsFromStream(stdin_stream, stdout_stream, options.summary_only, options.flush_lines);
   }
 
   std::ifstream file(options.input_path);
   if (!file.is_open()) {
     ThrowInvalidInput("Unable to open input file: " + options.input_path + ".");
   }
-  return RunAnalyticsPayloadsFromStream(file, stdout_stream, options.summary_only);
+  return RunAnalyticsPayloadsFromStream(file, stdout_stream, options.summary_only, options.flush_lines);
 }
 
 }  // namespace
@@ -127,6 +132,7 @@ CliOptions ParseCliOptions(const std::vector<std::string>& arguments) {
                "Read newline-delimited compact analytics payloads and write newline-delimited responses");
   app.add_flag("--summary-only", options.summary_only,
                "Omit assignments and verbose diagnostics from analytics output");
+  app.add_flag("--flush-lines", options.flush_lines, "Flush stdout after each JSONL response");
 
   std::vector<std::string> storage;
   storage.reserve(arguments.size() + 1);
@@ -152,6 +158,9 @@ CliOptions ParseCliOptions(const std::vector<std::string>& arguments) {
   }
   if (options.summary_only && !options.analytics_jsonl) {
     ThrowInvalidInput("Use --summary-only only with --analytics-jsonl.");
+  }
+  if (options.flush_lines && !options.batch_jsonl && !options.analytics_jsonl) {
+    ThrowInvalidInput("Use --flush-lines only with --batch-jsonl or --analytics-jsonl.");
   }
 
   return options;

@@ -9,6 +9,8 @@ Scripts de desarrollo local y automatizaciones pequenas.
 - `analytics-run.mjs`: ejecuta escenarios generados contra el engine C++ y escribe JSONL en `data/analytics`.
 - `analytics-aggregate.mjs`: ejecuta el pipeline Python modular en `analytics/python/` para calcular agregados por escenario, exportar Parquet, correr quality checks, guardar historico, ejecutar queries DuckDB y generar graficos con Matplotlib.
 - `analytics-report.mjs`: genera un reporte markdown local desde los agregados, quality checks, comparacion historica y graficos.
+- `analytics-tune.mjs`: prueba combinaciones de `ANALYTICS_BATCH_SIZE` y `ANALYTICS_CONCURRENCY` sobre una muestra temporal para recomendar valores por maquina.
+- `analytics-timed.mjs`: ejecuta `generate`, `run`, `aggregate` y `report`, midiendo segundos por etapa.
 
 ## Uso
 Con API local en `http://127.0.0.1:3000`:
@@ -51,6 +53,17 @@ ANALYTICS_RUN_MODE=legacy ANALYTICS_CONCURRENCY=8 pnpm analytics:run
 ```
 
 El JSON final impreso por `analytics:run` incluye `totalWallTimeMs`, `totalWallTimeSeconds`, `startedAt` y `finishedAt` para medir la duracion total de la etapa.
+Tambien incluye diagnosticos de throughput y overhead:
+
+```text
+rowsPerSecond
+engineRuntimeSecondsTotal
+amortizedWallTimeSecondsTotal
+estimatedRunnerOverheadSeconds
+estimatedIdealSecondsAtConcurrency
+```
+
+`engineRuntimeSecondsTotal` suma `stats.runtimeMs` reportado por el engine. `amortizedWallTimeSecondsTotal` suma el wall time del batch repartido entre sus instancias. La diferencia es una estimacion del overhead del runner/proceso/serializacion/escritura.
 
 Corrida pequena para desarrollo:
 
@@ -64,7 +77,50 @@ pnpm analytics:report
 Corrida de 50k instancias con los 10 escenarios por defecto:
 
 ```bash
-ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_BATCH_SIZE=50 ANALYTICS_CONCURRENCY=4 pnpm analytics
+ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=100 ANALYTICS_CONCURRENCY=auto pnpm analytics
+```
+
+Corrida de 500k instancias con salida Parquet:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 \
+ANALYTICS_RUNS_PER_SCENARIO=50000 \
+ANALYTICS_MANIFEST_ORDER=interleaved \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+ANALYTICS_BATCH_SIZE=100 \
+ANALYTICS_CONCURRENCY=auto \
+pnpm analytics
+```
+
+`ANALYTICS_RUN_ID` aisla la corrida bajo `data/analytics/runs/runId=<id>/`. `analytics:aggregate` y `analytics:report` usan esa corrida si se pasa el mismo id, o la ultima corrida registrada en `data/analytics/latest-run.json` si no se pasa ninguno.
+
+Para medir tiempos por etapa en la misma corrida:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 \
+ANALYTICS_RUNS_PER_SCENARIO=50000 \
+ANALYTICS_MANIFEST_ORDER=interleaved \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+ANALYTICS_BATCH_SIZE=100 \
+ANALYTICS_CONCURRENCY=auto \
+pnpm analytics:timed
+```
+
+El resumen se guarda en `data/analytics/latest-timing.json`.
+
+Para medir una configuracion recomendada en la maquina local:
+
+```bash
+pnpm analytics:tune
+```
+
+El tuner no pisa `data/generated/manifest.json`; crea un shard temporal en `/tmp` y ejecuta `analytics:run` contra ese shard. Si se quiere una prueba mas rapida:
+
+```bash
+ANALYTICS_TUNE_RUNS_PER_SCENARIO=100 \
+ANALYTICS_TUNE_BATCH_SIZES=50,100 \
+ANALYTICS_TUNE_CONCURRENCIES=auto,4,8 \
+pnpm analytics:tune
 ```
 
 Con `ANALYTICS_CONCURRENCY > 1`, las lineas de `latest-runs.jsonl` pueden quedar en orden de finalizacion de chunks. No depender del orden fisico del archivo; usar `scenarioName`, `instanceId` y `seed` para filtrar o agrupar.

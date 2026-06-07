@@ -62,6 +62,14 @@ export function readOutputFormatEnv() {
   throw new Error('ANALYTICS_OUTPUT_FORMAT must be jsonl or parquet.');
 }
 
+export function resolveRunId(timestamp) {
+  const value = process.env.ANALYTICS_RUN_ID?.trim() || timestamp;
+  if (!/^[A-Za-z0-9_.-]+$/.test(value)) {
+    throw new Error('ANALYTICS_RUN_ID may only contain letters, numbers, dot, underscore, or dash.');
+  }
+  return value;
+}
+
 export function createTimestamp() {
   return new Date().toISOString().replaceAll(':', '').replaceAll('.', '').replace('Z', 'Z');
 }

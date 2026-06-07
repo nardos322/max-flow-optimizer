@@ -35,6 +35,12 @@ TEST(CliTest, ParsesSupportedArgumentShapes) {
   EXPECT_TRUE(batch_options.use_stdin);
   EXPECT_TRUE(batch_options.batch_jsonl);
   EXPECT_FALSE(batch_options.analytics_jsonl);
+  EXPECT_FALSE(batch_options.flush_lines);
+
+  const engine::CliOptions flushing_batch_options =
+      engine::ParseCliOptions({"--stdin", "--batch-jsonl", "--flush-lines"});
+  EXPECT_TRUE(flushing_batch_options.batch_jsonl);
+  EXPECT_TRUE(flushing_batch_options.flush_lines);
 
   const engine::CliOptions analytics_options = engine::ParseCliOptions({"--stdin", "--analytics-jsonl"});
   EXPECT_TRUE(analytics_options.use_stdin);
@@ -50,6 +56,7 @@ TEST(CliTest, ParsesSupportedArgumentShapes) {
   EXPECT_TRUE(summary_options.summary_only);
 
   EXPECT_THROW(static_cast<void>(engine::ParseCliOptions({"--stdin", "--summary-only"})), engine::EngineError);
+  EXPECT_THROW(static_cast<void>(engine::ParseCliOptions({"--stdin", "--flush-lines"})), engine::EngineError);
 }
 
 TEST(CliTest, EmitsCanonicalResponseForStdinAndFileModes) {
@@ -140,6 +147,9 @@ TEST(CliTest, EmitsJsonlResponsesForCompactAnalyticsMode) {
   EXPECT_EQ(actual.at("stats").at("nodes").get<int>(), 87);
   EXPECT_EQ(actual.at("stats").at("edges").get<int>(), 130);
   EXPECT_EQ(actual.at("analytics").at("availabilityPairs").get<int>(), 45);
+  EXPECT_TRUE(actual.at("analytics").contains("timings"));
+  EXPECT_TRUE(actual.at("analytics").at("timings").contains("generateMs"));
+  EXPECT_TRUE(actual.at("analytics").at("timings").contains("buildNetworkMs"));
 }
 
 TEST(CliTest, EmitsSummaryOnlyResponsesForCompactAnalyticsMode) {
@@ -167,6 +177,9 @@ TEST(CliTest, EmitsSummaryOnlyResponsesForCompactAnalyticsMode) {
   EXPECT_EQ(actual.at("stats").at("nodes").get<int>(), 87);
   EXPECT_EQ(actual.at("stats").at("edges").get<int>(), 130);
   EXPECT_EQ(actual.at("analytics").at("availabilityPairs").get<int>(), 45);
+  EXPECT_TRUE(actual.at("analytics").contains("timings"));
+  EXPECT_TRUE(actual.at("analytics").at("timings").contains("maxFlowMs"));
+  EXPECT_TRUE(actual.at("analytics").at("timings").contains("totalMs"));
   EXPECT_FALSE(actual.contains("assignments"));
   EXPECT_FALSE(actual.contains("diagnostics"));
 }

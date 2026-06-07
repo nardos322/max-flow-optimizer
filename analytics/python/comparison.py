@@ -58,7 +58,7 @@ def compare_with_previous_summary(
 
     return {
         "status": "compared",
-        "baseline": str(previous_summary_path.relative_to(repo_root)),
+        "baseline": relative_to_repo(repo_root, previous_summary_path),
         "changes": changes,
     }
 
@@ -78,3 +78,10 @@ def compare_metric(previous: dict[str, Any], current: dict[str, Any], field: str
         "delta": round(delta, 4) if isinstance(delta, float) else delta,
         "pctDelta": pct_delta,
     }
+
+
+def relative_to_repo(repo_root: Path, path: Path) -> str:
+    try:
+        return str(path.relative_to(repo_root))
+    except ValueError:
+        return str(path)

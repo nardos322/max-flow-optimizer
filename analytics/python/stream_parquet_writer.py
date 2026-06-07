@@ -19,6 +19,7 @@ except ModuleNotFoundError as error:
 
 RUN_SCHEMA = {
     "runId": pl.String,
+    "analyticsRunId": pl.String,
     "scenarioName": pl.String,
     "seed": pl.Int64,
     "solverTarget": pl.String,
@@ -38,6 +39,15 @@ RUN_SCHEMA = {
     "edges": pl.Int64,
     "edgesPerNode": pl.Float64,
     "runtimeMs": pl.Int64,
+    "engineParseMs": pl.Int64,
+    "syntheticGenerateMs": pl.Int64,
+    "engineSolveMs": pl.Int64,
+    "engineTotalMs": pl.Int64,
+    "normalizeMs": pl.Int64,
+    "buildNetworkMs": pl.Int64,
+    "maxFlowMs": pl.Int64,
+    "finalizeMs": pl.Int64,
+    "solveTotalMs": pl.Int64,
     "status": pl.String,
     "errorCode": pl.String,
 }
@@ -49,6 +59,7 @@ def main() -> None:
         output_dir=Path(args.output_dir),
         latest_output=Path(args.latest_output),
         run_date=args.run_date,
+        run_id=args.run_id,
         part_prefix=args.part_prefix,
         flush_rows=args.flush_rows,
     )
@@ -69,12 +80,14 @@ class StreamParquetWriter:
         output_dir: Path,
         latest_output: Path,
         run_date: str,
+        run_id: str,
         part_prefix: str,
         flush_rows: int,
     ) -> None:
         self.output_dir = output_dir
         self.latest_output = latest_output
         self.run_date = run_date
+        self.run_id = run_id
         self.part_prefix = part_prefix
         self.flush_rows = flush_rows
         self.buffers: dict[str, list[dict[str, Any]]] = defaultdict(list)
@@ -87,6 +100,7 @@ class StreamParquetWriter:
         if not isinstance(scenario, str) or not scenario:
             raise ValueError("Analytics record must include a non-empty scenarioName.")
 
+        record["analyticsRunId"] = self.run_id
         buffer = self.buffers[scenario]
         buffer.append(record)
         if len(buffer) >= self.flush_rows:
@@ -141,6 +155,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", required=True, help="Root directory for partitioned Parquet output.")
     parser.add_argument("--latest-output", required=True, help="Compatibility Parquet output path.")
     parser.add_argument("--run-date", required=True, help="Run date partition value in YYYY-MM-DD format.")
+    parser.add_argument("--run-id", required=True, help="Analytics run id.")
     parser.add_argument("--part-prefix", required=True, help="Prefix for Parquet part file names.")
     parser.add_argument("--flush-rows", type=positive_int, default=10000, help="Rows to buffer per scenario.")
     return parser.parse_args()

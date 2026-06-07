@@ -13,6 +13,8 @@
     "analytics:run": "node ./scripts/analytics-run.mjs",
     "analytics:aggregate": "node ./scripts/analytics-aggregate.mjs",
     "analytics:report": "node ./scripts/analytics-report.mjs",
+    "analytics:tune": "node ./scripts/analytics-tune.mjs",
+    "analytics:timed": "node ./scripts/analytics-timed.mjs",
     "smoke:api": "node ./scripts/smoke-api.mjs",
     "benchmark:api": "node ./scripts/benchmark-api.mjs",
     "test:engine": "pnpm run build:engine && ctest --test-dir services/engine-cpp/build --output-on-failure",

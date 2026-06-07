@@ -83,13 +83,15 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_MANIFEST_ORDER` | `scenario` | Orden del manifest. Usar `interleaved` para mezclar escenarios por indice y balancear mejor los workers. |
 | `ANALYTICS_MANIFEST_SHARD_SIZE` | `1000` | Cantidad de entradas por shard JSONL generado en `data/generated/manifest`. |
 | `ANALYTICS_MANIFEST_SHARD` | unset | Shard JSONL especifico que `analytics:run` debe procesar, por ejemplo `data/generated/manifest/part-000001.jsonl`. |
+| `ANALYTICS_RUN_ID` | timestamp de la corrida | Identificador de corrida. En Parquet escribe bajo `data/analytics/runs/runId=<id>/`. |
+| `ANALYTICS_UPDATE_LATEST` | `true` | Actualiza `latest-run.json`, `latest-runs.jsonl` o `latest-runs.parquet`. El tuner lo desactiva para no contaminar la ultima corrida. |
 | `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
 | `ANALYTICS_OUTPUT_FORMAT` | `jsonl` | Formato principal de salida de `analytics:run`. Usar `parquet` para escribir `data/analytics/runs/scenarioName=*/runDate=*/*.parquet`. |
 | `ANALYTICS_SUMMARY_ONLY` | `true` | En modo compacto, pedir al engine `--summary-only` para omitir assignments y diagnosticos extensos que analytics no persiste. |
 | `ANALYTICS_PARQUET_FLUSH_ROWS` | `10000` | Filas por escenario que el writer Parquet acumula antes de escribir una parte. Solo aplica con `ANALYTICS_OUTPUT_FORMAT=parquet`. |
-| `ANALYTICS_CONCURRENCY` | `1` | Procesos del solver ejecutados en paralelo por `analytics:run`. |
+| `ANALYTICS_CONCURRENCY` | `auto` | Procesos del solver ejecutados en paralelo por `analytics:run`. `auto` usa hasta `8` workers, dejando un core libre. |
 | `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine cuando `ANALYTICS_RUN_MODE=batch`. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
 | `ANALYTICS_RUNS_FILE` | autodetecta `data/analytics/runs` o `data/analytics/latest-runs.jsonl` | Input para `analytics:aggregate`; puede ser JSONL, Parquet o directorio Parquet particionado. `analytics:report` lo muestra como referencia del reporte. |
@@ -144,10 +146,82 @@ xlarge-balanced
 Corrida recomendada de 50k instancias:
 
 ```bash
-ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=50 ANALYTICS_CONCURRENCY=4 pnpm analytics
+ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=100 ANALYTICS_CONCURRENCY=auto pnpm analytics
 ```
 
-`ANALYTICS_BATCH_SIZE=50` y `ANALYTICS_CONCURRENCY=4` son valores conservadores para corridas grandes. En maquinas con mas margen se puede subir gradualmente, por ejemplo `ANALYTICS_BATCH_SIZE=75` y `ANALYTICS_CONCURRENCY=6`, midiendo el `totalWallTimeSeconds` que imprime `analytics:run`.
+`ANALYTICS_BATCH_SIZE=100` y `ANALYTICS_CONCURRENCY=auto` son el punto de partida recomendado para corridas grandes. En maquinas con mas margen se puede fijar la concurrencia manualmente, por ejemplo `ANALYTICS_CONCURRENCY=8`, midiendo el `totalWallTimeSeconds` que imprime `analytics:run`. Batches mucho mas grandes pueden empeorar el balance entre workers.
+
+Corrida de 500k instancias con salida Parquet:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 \
+ANALYTICS_RUNS_PER_SCENARIO=50000 \
+ANALYTICS_MANIFEST_ORDER=interleaved \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+ANALYTICS_BATCH_SIZE=100 \
+ANALYTICS_CONCURRENCY=auto \
+pnpm analytics
+```
+
+Para reagregar o reportar una corrida especifica:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 pnpm analytics:aggregate
+ANALYTICS_RUN_ID=run-500k-001 pnpm analytics:report
+```
+
+Si `ANALYTICS_RUN_ID` no esta definido, `analytics:aggregate` y `analytics:report` usan `data/analytics/latest-run.json` cuando existe. Esto evita sumar accidentalmente corridas acumuladas en `data/analytics/runs/`.
+
+Para medir tiempos por etapa:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 \
+ANALYTICS_RUNS_PER_SCENARIO=50000 \
+ANALYTICS_MANIFEST_ORDER=interleaved \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+ANALYTICS_BATCH_SIZE=100 \
+ANALYTICS_CONCURRENCY=auto \
+pnpm analytics:timed
+```
+
+`analytics:timed` ejecuta las mismas cuatro etapas que `pnpm analytics` y escribe `data/analytics/latest-timing.json` con `generate`, `run`, `aggregate`, `report` y `total`.
+
+`analytics:run` escribe diagnosticos de rendimiento en `data/analytics/latest-run.json`:
+
+```text
+rowsPerSecond
+engineRuntimeSecondsTotal
+amortizedWallTimeSecondsTotal
+estimatedRunnerOverheadSeconds
+estimatedIdealSecondsAtConcurrency
+```
+
+Estos campos separan el tiempo reportado por el engine del wall time amortizado del runner. Son aproximados, pero sirven para decidir si el siguiente cuello esta en solver, runner/JSON/procesos o escritura.
+
+Antes de una corrida grande, se puede medir la mejor combinacion local de batch y concurrencia:
+
+```bash
+pnpm analytics:tune
+```
+
+Para una prueba rapida del tuner:
+
+```bash
+ANALYTICS_TUNE_RUNS_PER_SCENARIO=100 \
+ANALYTICS_TUNE_BATCH_SIZES=50,100 \
+ANALYTICS_TUNE_CONCURRENCIES=auto,4,8 \
+pnpm analytics:tune
+```
+
+Variables del tuner:
+
+| Variable | Default | Uso |
+| --- | --- | --- |
+| `ANALYTICS_TUNE_RUNS_PER_SCENARIO` | `1000` | Instancias por escenario para la muestra temporal. |
+| `ANALYTICS_TUNE_BATCH_SIZES` | `50,100,150,250` | Lista de batch sizes a probar. |
+| `ANALYTICS_TUNE_CONCURRENCIES` | `auto,4,6,8` | Lista de concurrencias a probar. |
+| `ANALYTICS_TUNE_OUTPUT_FORMAT` | `jsonl` | Formato usado por las pruebas del tuner. |
+| `ANALYTICS_TUNE_SCENARIOS` | todos | Escenarios a incluir en la muestra temporal. |
 
 `analytics:generate` escribe por defecto un manifest liviano en `data/generated/manifest.json` y shards JSONL en `data/generated/manifest/`; no materializa un JSON por instancia. `analytics:run` envia payloads compactos al engine con `scenarioName`, `seed`, `instanceId` y parametros del escenario, y el engine reconstruye cada instancia sintetica internamente en modo `--analytics-jsonl`. El engine no conoce perfiles hardcodeados; solo genera desde los parametros recibidos.
 

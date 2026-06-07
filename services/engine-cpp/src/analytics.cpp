@@ -1,5 +1,6 @@
 #include "engine/analytics.hpp"
 
+#include <chrono>
 #include <cstdint>
 #include <iomanip>
 #include <iterator>
@@ -22,6 +23,10 @@ struct SyntheticProfile {
   double availability_density = 0.0;
   int max_days_per_medic = 0;
 };
+
+int ElapsedMs(std::chrono::steady_clock::time_point started_at, std::chrono::steady_clock::time_point finished_at) {
+  return static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(finished_at - started_at).count());
+}
 
 class Prng {
  public:
@@ -135,6 +140,7 @@ void ValidateSyntheticProfile(const SyntheticProfile& profile) {
 }  // namespace
 
 AnalyticsSolveResult SolveAnalyticsPayload(std::string_view payload) {
+  const auto started_at = std::chrono::steady_clock::now();
   const JsonValue root = ParseJson(payload);
   if (!root.is_object()) {
     ThrowInvalidInput("Analytics request must be a JSON object.");
@@ -151,14 +157,37 @@ AnalyticsSolveResult SolveAnalyticsPayload(std::string_view payload) {
 
   const int seed = RequireAnalyticsInteger(root, "seed");
   const std::string instance_id = RequireAnalyticsString(root, "instanceId");
+  const auto parsed_at = std::chrono::steady_clock::now();
   SolveInput input = GenerateSyntheticInput(profile, instance_id, seed);
   const int availability_pairs = static_cast<int>(input.availability.size());
-  return AnalyticsSolveResult{.response = SolveInstance(input), .availability_pairs = availability_pairs};
+  const auto generated_at = std::chrono::steady_clock::now();
+  ProfiledSolveResult solve_result = SolveInstanceProfiled(input);
+  const auto solved_at = std::chrono::steady_clock::now();
+  return AnalyticsSolveResult{.response = std::move(solve_result.response),
+                              .solve_timings = solve_result.timings,
+                              .availability_pairs = availability_pairs,
+                              .parse_ms = ElapsedMs(started_at, parsed_at),
+                              .generate_ms = ElapsedMs(parsed_at, generated_at),
+                              .solve_ms = ElapsedMs(generated_at, solved_at),
+                              .total_ms = ElapsedMs(started_at, solved_at)};
+}
+
+JsonValue ToAnalyticsTimingsJson(const AnalyticsSolveResult& result) {
+  return JsonValue{{"parseMs", result.parse_ms},
+                   {"generateMs", result.generate_ms},
+                   {"solveMs", result.solve_ms},
+                   {"totalMs", result.total_ms},
+                   {"normalizeMs", result.solve_timings.normalize_ms},
+                   {"buildNetworkMs", result.solve_timings.build_network_ms},
+                   {"maxFlowMs", result.solve_timings.max_flow_ms},
+                   {"finalizeMs", result.solve_timings.finalize_ms},
+                   {"solveTotalMs", result.solve_timings.total_ms}};
 }
 
 std::string SerializeAnalyticsResponse(const AnalyticsSolveResult& result) {
   JsonValue root = ToJson(result.response);
-  root["analytics"] = JsonValue{{"availabilityPairs", result.availability_pairs}};
+  root["analytics"] = JsonValue{{"availabilityPairs", result.availability_pairs},
+                                 {"timings", ToAnalyticsTimingsJson(result)}};
   return SerializeJson(root);
 }
 
@@ -176,7 +205,8 @@ std::string SerializeAnalyticsSummaryResponse(const AnalyticsSolveResult& result
   root["stats"] = JsonValue{{"nodes", response.stats.nodes},
                              {"edges", response.stats.edges},
                              {"runtimeMs", response.stats.runtime_ms}};
-  root["analytics"] = JsonValue{{"availabilityPairs", result.availability_pairs}};
+  root["analytics"] = JsonValue{{"availabilityPairs", result.availability_pairs},
+                                 {"timings", ToAnalyticsTimingsJson(result)}};
   return SerializeJson(root);
 }
 

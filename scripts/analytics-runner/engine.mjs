@@ -117,6 +117,12 @@ export function parseEngineError(stderr) {
 async function writeBatchPayloads(stdin, chunk) {
   stdin.setDefaultEncoding('utf8');
   const usesCompactAnalytics = chunk.every(({ entry }) => !entry.inputPath);
+  await writeLines(stdin, await createBatchPayloadLines(chunk, usesCompactAnalytics));
+  stdin.end();
+}
+
+async function createBatchPayloadLines(chunk, usesCompactAnalytics) {
+  const lines = [];
   for (const { entry } of chunk) {
     const payload = usesCompactAnalytics
       ? createCompactAnalyticsPayload(entry)
@@ -124,10 +130,16 @@ async function writeBatchPayloads(stdin, chunk) {
           requestId: createRequestId(entry),
           input: await loadInput(entry)
         };
+    lines.push(`${JSON.stringify(payload)}\n`);
+  }
+  return lines;
+}
 
-    if (!stdin.write(`${JSON.stringify(payload)}\n`)) {
+async function writeLines(stdin, lines) {
+  stdin.setDefaultEncoding('utf8');
+  for (const line of lines) {
+    if (!stdin.write(line)) {
       await once(stdin, 'drain');
     }
   }
-  stdin.end();
 }
