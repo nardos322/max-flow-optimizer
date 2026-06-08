@@ -74,7 +74,11 @@ docs/
 
 ### `60-analytics`
 - `60-analytics/AnalyticsSpec.md`: especificacion de batch simulation, datasets, metricas y ruta analytics.
+- `60-analytics/AnalyticsPipelineContract.md`: contrato operativo del pipeline analytics, comandos, variables, outputs, metricas y criterios de optimizacion.
 - `60-analytics/AnalyticsImplementationRoute.md`: ruta ejecutable para implementar analytics offline.
+- `60-analytics/PipelineOptimizationPlan.md`: plan incremental para reducir tiempos de corridas masivas.
+- `60-analytics/BigDataPipelinePlan.md`: plan de escalamiento para cientos de miles o millones de instancias.
+- `60-analytics/EngineBreakdownFindings.md`: hallazgos de timings internos del engine para orientar optimizacion.
 
 ## Orden recomendado de lectura
 1. `00-product/PRD.md`
@@ -106,4 +110,8 @@ docs/
 27. `00-product/ReleaseChecklist.md`
 28. `00-product/DemoScript.md`
 29. `60-analytics/AnalyticsSpec.md`
-30. `60-analytics/AnalyticsImplementationRoute.md`
+30. `60-analytics/AnalyticsPipelineContract.md`
+31. `60-analytics/AnalyticsImplementationRoute.md`
+32. `60-analytics/PipelineOptimizationPlan.md`
+33. `60-analytics/EngineBreakdownFindings.md`
+34. `60-analytics/BigDataPipelinePlan.md`
