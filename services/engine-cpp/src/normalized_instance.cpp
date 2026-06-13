@@ -1,11 +1,11 @@
 #include "engine/normalized_instance.hpp"
 
 #include <algorithm>
-#include <set>
+#include <cstddef>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <unordered_set>
-#include <utility>
 #include <vector>
 
 #include "engine/error.hpp"
@@ -55,33 +55,37 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
   normalized.days.reserve(sorted_days.size());
   normalized.medics.reserve(sorted_medics.size());
 
-  std::unordered_map<std::string, int> period_index_by_id;
-  std::unordered_map<std::string, int> day_index_by_id;
-  std::unordered_map<std::string, int> medic_index_by_id;
-  std::unordered_set<std::string> seen_dates;
+  std::unordered_map<std::string_view, int> period_index_by_id;
+  std::unordered_map<std::string_view, int> day_index_by_id;
+  std::unordered_map<std::string_view, int> medic_index_by_id;
+  std::unordered_set<std::string_view> seen_dates;
+  period_index_by_id.reserve(sorted_periods.size());
+  day_index_by_id.reserve(sorted_days.size());
+  medic_index_by_id.reserve(sorted_medics.size());
+  seen_dates.reserve(sorted_days.size());
 
   for (std::size_t index = 0; index < sorted_periods.size(); ++index) {
-    period_index_by_id.emplace(sorted_periods[index]->id, static_cast<int>(index));
+    period_index_by_id.emplace(std::string_view(sorted_periods[index]->id), static_cast<int>(index));
     normalized.periods.push_back({sorted_periods[index]->id, {}});
   }
 
   for (std::size_t index = 0; index < sorted_days.size(); ++index) {
-    if (!seen_dates.insert(sorted_days[index]->date).second) {
+    if (!seen_dates.insert(std::string_view(sorted_days[index]->date)).second) {
       ThrowInvalidInput("Duplicate day date found while normalizing input: " + sorted_days[index]->date + ".");
     }
-    day_index_by_id.emplace(sorted_days[index]->id, static_cast<int>(index));
+    day_index_by_id.emplace(std::string_view(sorted_days[index]->id), static_cast<int>(index));
     normalized.days.push_back({sorted_days[index]->id, sorted_days[index]->date, -1});
   }
 
   for (std::size_t index = 0; index < sorted_medics.size(); ++index) {
-    medic_index_by_id.emplace(sorted_medics[index]->id, static_cast<int>(index));
+    medic_index_by_id.emplace(std::string_view(sorted_medics[index]->id), static_cast<int>(index));
     normalized.medics.push_back({sorted_medics[index]->id, sorted_medics[index]->name});
   }
 
   for (const PeriodInput* raw_period : sorted_periods) {
-    const int period_index = period_index_by_id.at(raw_period->id);
+    const int period_index = period_index_by_id.at(std::string_view(raw_period->id));
     for (const std::string& day_id : raw_period->day_ids) {
-      const auto iterator = day_index_by_id.find(day_id);
+      const auto iterator = day_index_by_id.find(std::string_view(day_id));
       if (iterator == day_index_by_id.end()) {
         ThrowInvalidInput("Unknown day reference in periods: " + day_id + ".");
       }
@@ -105,20 +109,25 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
   }
 
   normalized.availability_by_medic.assign(normalized.medics.size(), {});
-  std::set<std::pair<int, int>> unique_pairs;
+  std::vector<unsigned char> seen_availability(normalized.medics.size() * normalized.days.size(), 0);
   for (const AvailabilityInput& availability : input.availability) {
-    const auto medic_iterator = medic_index_by_id.find(availability.medic_id);
+    const auto medic_iterator = medic_index_by_id.find(std::string_view(availability.medic_id));
     if (medic_iterator == medic_index_by_id.end()) {
       ThrowInvalidInput("Unknown medic reference in availability: " + availability.medic_id + ".");
     }
-    const auto day_iterator = day_index_by_id.find(availability.day_id);
+    const auto day_iterator = day_index_by_id.find(std::string_view(availability.day_id));
     if (day_iterator == day_index_by_id.end()) {
       ThrowInvalidInput("Unknown day reference in availability: " + availability.day_id + ".");
     }
 
-    const std::pair<int, int> pair{medic_iterator->second, day_iterator->second};
-    if (unique_pairs.insert(pair).second) {
-      normalized.availability_by_medic[pair.first].push_back(pair.second);
+    const int medic_index = medic_iterator->second;
+    const int day_index = day_iterator->second;
+    unsigned char& seen =
+        seen_availability[(static_cast<std::size_t>(medic_index) * normalized.days.size()) +
+                          static_cast<std::size_t>(day_index)];
+    if (seen == 0) {
+      seen = 1;
+      normalized.availability_by_medic[static_cast<std::size_t>(medic_index)].push_back(day_index);
     }
   }
 

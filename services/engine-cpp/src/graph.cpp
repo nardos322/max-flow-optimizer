@@ -1,5 +1,7 @@
 #include "engine/graph.hpp"
 
+#include <cstddef>
+
 #include "engine/error.hpp"
 
 namespace engine {
@@ -9,6 +11,13 @@ Graph::Graph(int node_count) : adjacency_(node_count) {}
 int Graph::node_count() const noexcept { return static_cast<int>(adjacency_.size()); }
 
 int Graph::logical_edge_count() const noexcept { return logical_edge_count_; }
+
+void Graph::ReserveEdgesFrom(int node, int edge_count) {
+  if (node < 0 || node >= node_count() || edge_count < 0) {
+    ThrowInternalError("Invalid reserve parameters while building graph.");
+  }
+  adjacency_[node].reserve(static_cast<std::size_t>(edge_count));
+}
 
 EdgeRef Graph::AddEdge(int from, int to, int capacity) {
   if (from < 0 || to < 0 || from >= node_count() || to >= node_count() || capacity < 0) {
