@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 
 import {
   createTimestamp,
@@ -28,17 +29,21 @@ async function main() {
   const batchSize = readPositiveIntegerEnv('ANALYTICS_BATCH_SIZE', 250);
   const runMode = process.env.ANALYTICS_RUN_MODE ?? 'batch';
   const outputFormat = readOutputFormatEnv();
-  const compactAnalytics = runMode === 'batch' && manifest.inputMode !== 'files';
+  const chunkStrategy = readChunkStrategyEnv();
+  const resume = readBooleanEnv('ANALYTICS_RESUME', false);
   await fs.mkdir(outputRoot, { recursive: true });
 
   const timestamp = createTimestamp();
   const runId = resolveRunId(timestamp);
+  const filteredEntries = resume ? await filterCompletedEntries(manifest.scenarios, runId) : manifest.scenarios;
+  const compactAnalytics = runMode === 'batch' && manifest.inputMode !== 'files';
   const runOutput = createRunOutput({
     outputFormat,
     runDate: runStartedAt.toISOString().slice(0, 10),
     runId,
     timestamp,
-    updateLatest: updateLatestEnabled()
+    updateLatest: updateLatestEnabled(),
+    updateLatestOutput: updateLatestOutputEnabled()
   });
   const writer = runOutput.writer;
   let stats;
@@ -47,8 +52,16 @@ async function main() {
   try {
     stats =
       runMode === 'legacy'
-        ? await runLegacyBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs, writer)
-        : await runJsonlBatch(enginePath, manifest.scenarios, concurrency, engineTimeoutMs, batchSize, writer);
+        ? await runLegacyBatch(enginePath, filteredEntries, concurrency, engineTimeoutMs, writer)
+        : await runJsonlBatch(
+            enginePath,
+            filteredEntries,
+            concurrency,
+            engineTimeoutMs,
+            batchSize,
+            writer,
+            chunkStrategy
+          );
 
     finalizedOutput = await closeRunOutput(runOutput);
   } catch (error) {
@@ -85,8 +98,12 @@ async function main() {
     enginePath: path.relative(repoRoot, enginePath),
     manifest: path.relative(repoRoot, manifestSourcePath),
     manifestKind: manifest.kind,
+    manifestEntries: manifest.scenarios.length,
+    skippedExistingRuns: manifest.scenarios.length - filteredEntries.length,
+    resume,
     concurrency,
     batchSize: runMode === 'legacy' ? null : batchSize,
+    chunkStrategy: runMode === 'legacy' ? null : chunkStrategy,
     engineTimeoutMs,
     runs: stats.runs,
     ok: stats.ok,
@@ -165,14 +182,143 @@ function readConcurrencyEnv() {
 }
 
 function updateLatestEnabled() {
-  const value = process.env.ANALYTICS_UPDATE_LATEST ?? 'true';
+  return readBooleanEnv('ANALYTICS_UPDATE_LATEST', true);
+}
+
+function updateLatestOutputEnabled() {
+  return readBooleanEnv('ANALYTICS_UPDATE_LATEST_OUTPUT', updateLatestEnabled());
+}
+
+function readBooleanEnv(name, fallback) {
+  const value = process.env[name];
+  if (value === undefined) {
+    return fallback;
+  }
   if (['1', 'true', 'yes'].includes(value.toLowerCase())) {
     return true;
   }
   if (['0', 'false', 'no'].includes(value.toLowerCase())) {
     return false;
   }
-  throw new Error('ANALYTICS_UPDATE_LATEST must be a boolean value: true/false or 1/0.');
+  throw new Error(`${name} must be a boolean value: true/false or 1/0.`);
+}
+
+function readChunkStrategyEnv() {
+  const value = process.env.ANALYTICS_CHUNK_STRATEGY ?? 'cost-balanced';
+  if (['sequential', 'cost-balanced'].includes(value)) {
+    return value;
+  }
+  throw new Error('ANALYTICS_CHUNK_STRATEGY must be sequential or cost-balanced.');
+}
+
+async function filterCompletedEntries(entries, runId) {
+  const completedKeys = await readCompletedKeys(runId);
+  if (completedKeys.size === 0) {
+    return entries;
+  }
+  return entries.filter((entry) => !completedKeys.has(createEntryKey(entry)));
+}
+
+async function readCompletedKeys(runId) {
+  const keys = new Set();
+  const runDir = path.join(outputRoot, 'runs', `runId=${runId}`);
+  await addKeysFromPath(keys, runDir);
+
+  let outputEntries = [];
+  try {
+    outputEntries = await fs.readdir(outputRoot, { withFileTypes: true });
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return keys;
+    }
+    throw error;
+  }
+
+  for (const entry of outputEntries) {
+    if (!entry.isFile() || !entry.name.startsWith(`runs-${runId}-`) || !entry.name.endsWith('.jsonl')) {
+      continue;
+    }
+    await addKeysFromPath(keys, path.join(outputRoot, entry.name));
+  }
+
+  return keys;
+}
+
+async function addKeysFromPath(keys, inputPath) {
+  let stat;
+  try {
+    stat = await fs.stat(inputPath);
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return;
+    }
+    throw error;
+  }
+
+  if (stat.isFile() && inputPath.endsWith('.jsonl')) {
+    const content = await fs.readFile(inputPath, 'utf8');
+    for (const line of content.split(/\r?\n/)) {
+      if (!line.trim()) {
+        continue;
+      }
+      const record = JSON.parse(line);
+      keys.add(createEntryKey(record));
+    }
+    return;
+  }
+
+  const scriptPath = path.join(repoRoot, 'analytics/python/list_run_keys.py');
+  const stdout = await runPythonCapture(resolvePython(), [scriptPath, '--input', inputPath]);
+  for (const line of stdout.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed) {
+      keys.add(trimmed);
+    }
+  }
+}
+
+function resolvePython() {
+  if (process.env.PYTHON) {
+    return process.env.PYTHON;
+  }
+  const localVenvPython = path.join(repoRoot, '.venv/bin/python');
+  return fs
+    .access(localVenvPython)
+    .then(() => localVenvPython)
+    .catch(() => 'python3');
+}
+
+async function runPythonCapture(commandOrPromise, args) {
+  const command = await commandOrPromise;
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      cwd: repoRoot,
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on('data', (chunk) => {
+      stderr += chunk;
+    });
+    child.on('error', reject);
+    child.on('close', (exitCode) => {
+      if (exitCode === 0) {
+        resolve(stdout);
+        return;
+      }
+      reject(new Error(`Failed to read completed analytics records with exit code ${exitCode}.\n${stderr}`));
+    });
+  });
+}
+
+function createEntryKey(entry) {
+  return `${entry.instanceId}\t${entry.seed}`;
 }
 
 main().catch((error) => {

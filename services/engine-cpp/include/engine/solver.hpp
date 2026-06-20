@@ -2,6 +2,7 @@
 #define ENGINE_SOLVER_HPP
 
 #include "engine/contract.hpp"
+#include "engine/normalized_instance.hpp"
 
 namespace engine {
 
@@ -20,6 +21,7 @@ struct ProfiledSolveResult {
 
 [[nodiscard]] SolveResponse SolveInstance(const SolveInput& input);
 [[nodiscard]] ProfiledSolveResult SolveInstanceProfiled(const SolveInput& input);
+[[nodiscard]] ProfiledSolveResult SolveNormalizedInstanceProfiled(const NormalizedInstance& instance);
 
 }  // namespace engine
 

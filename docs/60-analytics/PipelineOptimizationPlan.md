@@ -19,26 +19,28 @@ Bajar el tiempo de corridas de `500k` instancias en dos etapas:
 
 ## Baseline Actual
 
-Configuracion recomendada al inicio de esta fase:
+Configuracion recomendada despues del tuning local de `500k`:
 
 ```bash
 ANALYTICS_RUNS_PER_SCENARIO=50000 \
 ANALYTICS_MANIFEST_ORDER=interleaved \
 ANALYTICS_OUTPUT_FORMAT=parquet \
-ANALYTICS_BATCH_SIZE=100 \
-ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_BATCH_SIZE=500 \
+ANALYTICS_CONCURRENCY=8 \
 pnpm analytics
 ```
 
-Mediciones locales preliminares con `10k` instancias:
+Mediciones locales:
 
 | Configuracion | Tiempo |
 | --- | ---: |
 | `BATCH_SIZE=100`, `CONCURRENCY=4` | `~11.9s` |
 | `BATCH_SIZE=100`, `CONCURRENCY=8` | `~8.9s` |
 | `BATCH_SIZE=100`, `CONCURRENCY=auto` | `~9.4s` |
+| `BATCH_SIZE=250`, `CONCURRENCY=8`, `500k` | `152.14s`, `3286.45 rows/s` |
+| `BATCH_SIZE=500`, `CONCURRENCY=8`, `500k` | `120.11s`, `4162.85 rows/s` |
 
-Estas mediciones indican que la concurrencia aporta mas que aumentar demasiado el batch. Batches muy grandes pueden empeorar el balance entre workers.
+Estas mediciones indican que la concurrencia aporta mas que aumentar demasiado el batch en muestras chicas, pero para `500k` la corrida completa favorecio `BATCH_SIZE=500` con `CONCURRENCY=8`. En otra maquina se debe volver a medir con `analytics:tune`.
 
 ## Fase 1 - Tuning Medible
 
@@ -55,7 +57,7 @@ Configuracion inicial:
 
 ```text
 runsPerScenario: 1000
-batchSize: 50,100,150,250
+batchSize: 50,100,150,250,500
 concurrency: auto,4,6,8
 outputFormat: jsonl
 ```
@@ -96,13 +98,15 @@ DoD: `analytics/README.md` y `scripts/README.md` muestran comandos actuales para
 
 ## Fase 2 - Reducir Overhead Del Pipeline Actual
 
+Estado: implementada en el runner actual. Mantener esta fase como superficie de tuning; nuevas optimizaciones deben compararse contra `run-50k-engine-breakdown`.
+
 ### 2.1 Output Parquet mas eficiente
 
-Evaluar:
+Implementado:
 
-- subir `ANALYTICS_PARQUET_FLUSH_ROWS`,
-- evitar `latest-runs.parquet` cuando no sea necesario,
-- reducir columnas redundantes si no se usan en aggregate/report.
+- `ANALYTICS_PARQUET_FLUSH_ROWS` controla filas acumuladas por escenario antes de escribir partes.
+- `ANALYTICS_UPDATE_LATEST_OUTPUT=false` evita crear `latest-runs.parquet` o copiar `latest-runs.jsonl` cuando solo interesa el output aislado por `runId`.
+- el writer Parquet escribe particiones en streaming bajo `data/analytics/runs/runId=<id>/`.
 
 DoD: menor tiempo de escritura sin romper `analytics:aggregate`.
 
@@ -110,17 +114,21 @@ DoD: menor tiempo de escritura sin romper `analytics:aggregate`.
 
 El manifest interleaved balancea por escenario, pero no por costo real. Escenarios como `large-dense` y `xlarge-balanced` pesan mas.
 
-Opciones:
+Implementado:
 
-- ordenar chunks mezclando costo estimado,
-- reducir `batchSize` para escenarios costosos,
-- generar shards con peso aproximado uniforme.
+- `ANALYTICS_CHUNK_STRATEGY=cost-balanced` distribuye entradas pesadas entre chunks usando tamano del escenario, densidad y pares de disponibilidad cuando estan disponibles.
+- `ANALYTICS_CHUNK_STRATEGY=sequential` conserva el comportamiento anterior para comparar.
+- `ANALYTICS_MANIFEST_ORDER=interleaved` sigue siendo util, pero el balance fino ahora ocurre en `analytics:run`.
 
 DoD: menor tail latency de workers y menor diferencia entre primer y ultimo worker.
 
 ### 2.3 Modo resumible por run id
 
-Agregar `ANALYTICS_RUN_ID` para agrupar outputs y reintentos.
+Implementado:
+
+- `ANALYTICS_RUN_ID` agrupa outputs de corrida.
+- `ANALYTICS_RESUME=true` omite records ya presentes para el mismo `runId`, tanto en JSONL como en Parquet particionado.
+- `analytics:aggregate` y `analytics:report` pueden apuntar al mismo `ANALYTICS_RUN_ID`.
 
 DoD: una corrida puede reanudarse o limpiarse por `runId` sin borrar todo el datalake.
 
@@ -150,6 +158,6 @@ DoD: mejora material frente al runner Node, idealmente `2x` o mas en `analytics:
 1. Implementar `analytics:tune`.
 2. Medir `50k` con configuracion recomendada.
 3. Agregar medicion por etapa.
-4. Optimizar writer Parquet y configuracion de flush.
-5. Implementar balanceo por costo si los workers terminan desparejos.
-6. Evaluar runner C++ nativo con datos comparativos.
+4. Medir Fase 2 contra `run-50k-engine-breakdown`.
+5. Optimizar `normalized_instance.cpp` y `problem_network.cpp` si `runSeconds` sigue dominando.
+6. Evaluar runner C++ nativo solo con datos comparativos.

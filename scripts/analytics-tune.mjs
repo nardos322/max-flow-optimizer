@@ -12,7 +12,7 @@ const repoRoot = path.resolve(__dirname, '..');
 async function main() {
   const profiles = selectProfiles(process.env.ANALYTICS_TUNE_SCENARIOS);
   const runsPerScenario = readPositiveIntegerEnv('ANALYTICS_TUNE_RUNS_PER_SCENARIO', 1000);
-  const batchSizes = readIntegerListEnv('ANALYTICS_TUNE_BATCH_SIZES', [50, 100, 150, 250]);
+  const batchSizes = readIntegerListEnv('ANALYTICS_TUNE_BATCH_SIZES', [50, 100, 150, 250, 500]);
   const concurrencies = readConcurrencyListEnv('ANALYTICS_TUNE_CONCURRENCIES', ['auto', '4', '6', '8']);
   const outputFormat = readOutputFormatEnv('ANALYTICS_TUNE_OUTPUT_FORMAT', 'jsonl');
   const shardPath = await writeTuneShard(profiles, runsPerScenario);

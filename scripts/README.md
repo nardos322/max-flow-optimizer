@@ -52,6 +52,12 @@ ANALYTICS_MANIFEST_SHARD=data/generated/manifest/part-000001.jsonl pnpm analytic
 ANALYTICS_RUN_MODE=legacy ANALYTICS_CONCURRENCY=8 pnpm analytics:run
 ```
 
+En modo batch, `ANALYTICS_CHUNK_STRATEGY=cost-balanced` es el default y reparte escenarios pesados entre chunks usando tamano de escenario, densidad y pares de disponibilidad. Para comparar contra el orden fisico del manifest:
+
+```bash
+ANALYTICS_CHUNK_STRATEGY=sequential pnpm analytics:run
+```
+
 El JSON final impreso por `analytics:run` incluye `totalWallTimeMs`, `totalWallTimeSeconds`, `startedAt` y `finishedAt` para medir la duracion total de la etapa.
 Tambien incluye diagnosticos de throughput y overhead:
 
@@ -87,12 +93,26 @@ ANALYTICS_RUN_ID=run-500k-001 \
 ANALYTICS_RUNS_PER_SCENARIO=50000 \
 ANALYTICS_MANIFEST_ORDER=interleaved \
 ANALYTICS_OUTPUT_FORMAT=parquet \
-ANALYTICS_BATCH_SIZE=100 \
-ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_BATCH_SIZE=500 \
+ANALYTICS_CONCURRENCY=8 \
+ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics
 ```
 
-`ANALYTICS_RUN_ID` aisla la corrida bajo `data/analytics/runs/runId=<id>/`. `analytics:aggregate` y `analytics:report` usan esa corrida si se pasa el mismo id, o la ultima corrida registrada en `data/analytics/latest-run.json` si no se pasa ninguno.
+La medicion local recomendada para `500k` es `ANALYTICS_BATCH_SIZE=500` con `ANALYTICS_CONCURRENCY=8`: `run-500k-batch500-concurrency8-final` completo `500000` instancias en `120.11s`, `4162.85 rows/s`, `0` errores. La comparacion directa con `BATCH_SIZE=250`, `CONCURRENCY=8` fue `152.14s`, `3286.45 rows/s`, `0` errores.
+
+`ANALYTICS_RUN_ID` aisla la corrida bajo `data/analytics/runs/runId=<id>/`. `analytics:aggregate` y `analytics:report` usan esa corrida si se pasa el mismo id, o la ultima corrida registrada en `data/analytics/latest-run.json` si no se pasa ninguno. `ANALYTICS_UPDATE_LATEST_OUTPUT=false` evita crear el archivo pesado de compatibilidad `latest-runs.parquet`; el output por `runId` sigue quedando disponible para aggregate/report.
+
+Para reintentar una corrida interrumpida con el mismo `runId`:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 \
+ANALYTICS_RESUME=true \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+pnpm analytics:run
+```
+
+`ANALYTICS_RESUME=true` salta records ya escritos para ese `runId`, tanto en Parquet particionado como en JSONL.
 
 Para medir tiempos por etapa en la misma corrida:
 
@@ -101,8 +121,9 @@ ANALYTICS_RUN_ID=run-500k-001 \
 ANALYTICS_RUNS_PER_SCENARIO=50000 \
 ANALYTICS_MANIFEST_ORDER=interleaved \
 ANALYTICS_OUTPUT_FORMAT=parquet \
-ANALYTICS_BATCH_SIZE=100 \
-ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_BATCH_SIZE=500 \
+ANALYTICS_CONCURRENCY=8 \
+ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics:timed
 ```
 

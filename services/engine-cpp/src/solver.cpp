@@ -17,10 +17,9 @@ int ElapsedMs(std::chrono::steady_clock::time_point started_at, std::chrono::ste
 
 }  // namespace
 
-ProfiledSolveResult SolveInstanceProfiled(const SolveInput& input) {
-  const auto started_at = std::chrono::steady_clock::now();
-  const NormalizedInstance instance = NormalizeInput(input);
-  const auto normalized_at = std::chrono::steady_clock::now();
+ProfiledSolveResult SolveNormalizedInstanceProfiledInternal(const NormalizedInstance& instance,
+                                                            std::chrono::steady_clock::time_point started_at,
+                                                            std::chrono::steady_clock::time_point normalized_at) {
   ProblemNetwork network = BuildProblemNetwork(instance);
   const auto network_built_at = std::chrono::steady_clock::now();
   const MaxFlowResult max_flow = ComputeMaxFlow(network.graph, network.source, network.sink);
@@ -51,6 +50,18 @@ ProfiledSolveResult SolveInstanceProfiled(const SolveInput& input) {
                                   .max_flow_ms = ElapsedMs(network_built_at, max_flow_finished_at),
                                   .finalize_ms = ElapsedMs(max_flow_finished_at, finished_at),
                                   .total_ms = ElapsedMs(started_at, finished_at)}};
+}
+
+ProfiledSolveResult SolveInstanceProfiled(const SolveInput& input) {
+  const auto started_at = std::chrono::steady_clock::now();
+  const NormalizedInstance instance = NormalizeInput(input);
+  const auto normalized_at = std::chrono::steady_clock::now();
+  return SolveNormalizedInstanceProfiledInternal(instance, started_at, normalized_at);
+}
+
+ProfiledSolveResult SolveNormalizedInstanceProfiled(const NormalizedInstance& instance) {
+  const auto started_at = std::chrono::steady_clock::now();
+  return SolveNormalizedInstanceProfiledInternal(instance, started_at, started_at);
 }
 
 SolveResponse SolveInstance(const SolveInput& input) {

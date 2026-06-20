@@ -57,7 +57,7 @@ def main() -> None:
     args = parse_args()
     writer = StreamParquetWriter(
         output_dir=Path(args.output_dir),
-        latest_output=Path(args.latest_output),
+        latest_output=Path(args.latest_output) if args.latest_output else None,
         run_date=args.run_date,
         run_id=args.run_id,
         part_prefix=args.part_prefix,
@@ -78,7 +78,7 @@ class StreamParquetWriter:
         self,
         *,
         output_dir: Path,
-        latest_output: Path,
+        latest_output: Path | None,
         run_date: str,
         run_id: str,
         part_prefix: str,
@@ -110,9 +110,10 @@ class StreamParquetWriter:
         for scenario in list(self.buffers):
             self.flush(scenario)
 
-        self.write_latest_output()
+        if self.latest_output is not None:
+            self.write_latest_output()
         return {
-            "latestOutput": str(self.latest_output),
+            "latestOutput": str(self.latest_output) if self.latest_output is not None else None,
             "partitionedOutput": str(self.output_dir),
             "parts": len(self.parts),
             "rowsWritten": self.rows_written,
@@ -153,7 +154,7 @@ class StreamParquetWriter:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Stream analytics JSONL records into partitioned Parquet.")
     parser.add_argument("--output-dir", required=True, help="Root directory for partitioned Parquet output.")
-    parser.add_argument("--latest-output", required=True, help="Compatibility Parquet output path.")
+    parser.add_argument("--latest-output", help="Optional compatibility Parquet output path.")
     parser.add_argument("--run-date", required=True, help="Run date partition value in YYYY-MM-DD format.")
     parser.add_argument("--run-id", required=True, help="Analytics run id.")
     parser.add_argument("--part-prefix", required=True, help="Prefix for Parquet part file names.")

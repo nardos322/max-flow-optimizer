@@ -83,8 +83,10 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_MANIFEST_ORDER` | `scenario` | Orden del manifest. Usar `interleaved` para mezclar escenarios por indice y balancear mejor los workers. |
 | `ANALYTICS_MANIFEST_SHARD_SIZE` | `1000` | Cantidad de entradas por shard JSONL generado en `data/generated/manifest`. |
 | `ANALYTICS_MANIFEST_SHARD` | unset | Shard JSONL especifico que `analytics:run` debe procesar, por ejemplo `data/generated/manifest/part-000001.jsonl`. |
-| `ANALYTICS_RUN_ID` | timestamp de la corrida | Identificador de corrida. En Parquet escribe bajo `data/analytics/runs/runId=<id>/`. |
+| `ANALYTICS_RUN_ID` | timestamp de la corrida | Identificador de corrida. Escribe bajo `data/analytics/runs/runId=<id>/`. |
+| `ANALYTICS_RESUME` | `false` | Si es `true`, omite records ya escritos para el mismo `ANALYTICS_RUN_ID`; sirve para reintentar una corrida interrumpida sin duplicar records. |
 | `ANALYTICS_UPDATE_LATEST` | `true` | Actualiza `latest-run.json`, `latest-runs.jsonl` o `latest-runs.parquet`. El tuner lo desactiva para no contaminar la ultima corrida. |
+| `ANALYTICS_UPDATE_LATEST_OUTPUT` | igual a `ANALYTICS_UPDATE_LATEST` | Controla solo el artefacto pesado `latest-runs.jsonl` o `latest-runs.parquet`. Usar `false` en corridas grandes si se trabajara por `runId`. |
 | `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
 | `ANALYTICS_ENGINE_PATH` | ruta estandar del repo | Override del binario C++. |
 | `ANALYTICS_RUN_MODE` | `batch` | Modo de ejecucion de `analytics:run`. Usar `legacy` para lanzar un proceso del engine por instancia. |
@@ -93,6 +95,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_PARQUET_FLUSH_ROWS` | `10000` | Filas por escenario que el writer Parquet acumula antes de escribir una parte. Solo aplica con `ANALYTICS_OUTPUT_FORMAT=parquet`. |
 | `ANALYTICS_CONCURRENCY` | `auto` | Procesos del solver ejecutados en paralelo por `analytics:run`. `auto` usa hasta `8` workers, dejando un core libre. |
 | `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine cuando `ANALYTICS_RUN_MODE=batch`. |
+| `ANALYTICS_CHUNK_STRATEGY` | `cost-balanced` | Estrategia para armar chunks en modo batch. `cost-balanced` distribuye escenarios pesados; `sequential` conserva el orden del manifest. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
 | `ANALYTICS_RUNS_FILE` | autodetecta `data/analytics/runs` o `data/analytics/latest-runs.jsonl` | Input para `analytics:aggregate`; puede ser JSONL, Parquet o directorio Parquet particionado. `analytics:report` lo muestra como referencia del reporte. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
@@ -149,7 +152,7 @@ Corrida recomendada de 50k instancias:
 ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=100 ANALYTICS_CONCURRENCY=auto pnpm analytics
 ```
 
-`ANALYTICS_BATCH_SIZE=100` y `ANALYTICS_CONCURRENCY=auto` son el punto de partida recomendado para corridas grandes. En maquinas con mas margen se puede fijar la concurrencia manualmente, por ejemplo `ANALYTICS_CONCURRENCY=8`, midiendo el `totalWallTimeSeconds` que imprime `analytics:run`. Batches mucho mas grandes pueden empeorar el balance entre workers.
+`ANALYTICS_BATCH_SIZE=500` y `ANALYTICS_CONCURRENCY=8` son la configuracion recomendada medida para corridas de `500k` en esta maquina. La corrida final `run-500k-batch500-concurrency8-final` proceso `500000` instancias en `120.11s`, `4162.85 rows/s`, con `0` errores. Como referencia, `BATCH_SIZE=250`, `CONCURRENCY=8` proceso la misma escala en `152.14s`, `3286.45 rows/s`, con `0` errores. En otra maquina, volver a medir con `pnpm analytics:tune`.
 
 Corrida de 500k instancias con salida Parquet:
 
@@ -158,8 +161,9 @@ ANALYTICS_RUN_ID=run-500k-001 \
 ANALYTICS_RUNS_PER_SCENARIO=50000 \
 ANALYTICS_MANIFEST_ORDER=interleaved \
 ANALYTICS_OUTPUT_FORMAT=parquet \
-ANALYTICS_BATCH_SIZE=100 \
-ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_BATCH_SIZE=500 \
+ANALYTICS_CONCURRENCY=8 \
+ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics
 ```
 
@@ -172,6 +176,17 @@ ANALYTICS_RUN_ID=run-500k-001 pnpm analytics:report
 
 Si `ANALYTICS_RUN_ID` no esta definido, `analytics:aggregate` y `analytics:report` usan `data/analytics/latest-run.json` cuando existe. Esto evita sumar accidentalmente corridas acumuladas en `data/analytics/runs/`.
 
+Para reintentar una corrida interrumpida con el mismo `runId`:
+
+```bash
+ANALYTICS_RUN_ID=run-500k-001 \
+ANALYTICS_RESUME=true \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+pnpm analytics:run
+```
+
+`ANALYTICS_RESUME=true` lee los records existentes bajo `data/analytics/runs/runId=<id>/` y solo ejecuta las instancias faltantes.
+
 Para medir tiempos por etapa:
 
 ```bash
@@ -179,8 +194,9 @@ ANALYTICS_RUN_ID=run-500k-001 \
 ANALYTICS_RUNS_PER_SCENARIO=50000 \
 ANALYTICS_MANIFEST_ORDER=interleaved \
 ANALYTICS_OUTPUT_FORMAT=parquet \
-ANALYTICS_BATCH_SIZE=100 \
-ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_BATCH_SIZE=500 \
+ANALYTICS_CONCURRENCY=8 \
+ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics:timed
 ```
 
@@ -218,7 +234,7 @@ Variables del tuner:
 | Variable | Default | Uso |
 | --- | --- | --- |
 | `ANALYTICS_TUNE_RUNS_PER_SCENARIO` | `1000` | Instancias por escenario para la muestra temporal. |
-| `ANALYTICS_TUNE_BATCH_SIZES` | `50,100,150,250` | Lista de batch sizes a probar. |
+| `ANALYTICS_TUNE_BATCH_SIZES` | `50,100,150,250,500` | Lista de batch sizes a probar. |
 | `ANALYTICS_TUNE_CONCURRENCIES` | `auto,4,6,8` | Lista de concurrencias a probar. |
 | `ANALYTICS_TUNE_OUTPUT_FORMAT` | `jsonl` | Formato usado por las pruebas del tuner. |
 | `ANALYTICS_TUNE_SCENARIOS` | todos | Escenarios a incluir en la muestra temporal. |

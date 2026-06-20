@@ -11,7 +11,18 @@ import polars as pl
 
 def scan_runs(path: Path) -> pl.LazyFrame:
     if path.is_dir():
-        return pl.scan_parquet(str(path / "**/*.parquet"), hive_partitioning=False)
+        parquet_files = sorted(path.glob("**/*.parquet"))
+        jsonl_files = sorted(path.glob("**/*.jsonl"))
+        scans: list[pl.LazyFrame] = []
+        if parquet_files:
+            scans.append(pl.scan_parquet(str(path / "**/*.parquet"), hive_partitioning=False))
+        if jsonl_files:
+            scans.append(pl.scan_ndjson(str(path / "**/*.jsonl")))
+        if not scans:
+            return pl.LazyFrame()
+        if len(scans) == 1:
+            return scans[0]
+        return pl.concat(scans, how="diagonal")
     if path.suffix == ".parquet":
         return pl.scan_parquet(path)
     return pl.scan_ndjson(path)

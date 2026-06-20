@@ -43,13 +43,22 @@ def run_duckdb_queries(*, repo_root: Path, queries_dir: Path, output_dir: Path, 
 def register_runs_view(connection: duckdb.DuckDBPyConnection, runs_input: Path) -> None:
     escaped_path = str(runs_input).replace("'", "''")
     if runs_input.is_dir():
-        source = f"read_parquet('{escaped_path}/**/*.parquet', hive_partitioning = false)"
+        parquet_files = list(runs_input.glob("**/*.parquet"))
+        jsonl_files = list(runs_input.glob("**/*.jsonl"))
+        sources = []
+        if parquet_files:
+            sources.append(f"select * from read_parquet('{escaped_path}/**/*.parquet', hive_partitioning = false)")
+        if jsonl_files:
+            sources.append(f"select * from read_json_auto('{escaped_path}/**/*.jsonl', format = 'newline_delimited')")
+        if not sources:
+            raise FileNotFoundError(f"No analytics run files found in {runs_input}.")
+        source = " union all by name ".join(sources)
     elif runs_input.suffix == ".parquet":
         source = f"read_parquet('{escaped_path}')"
     else:
         source = f"read_json_auto('{escaped_path}', format = 'newline_delimited')"
 
-    connection.sql(f"create or replace view analytics_runs as select * from {source}")
+    connection.sql(f"create or replace view analytics_runs as select * from ({source})")
 
 
 def run_query(connection: duckdb.DuckDBPyConnection, query_path: Path) -> list[dict[str, Any]]:

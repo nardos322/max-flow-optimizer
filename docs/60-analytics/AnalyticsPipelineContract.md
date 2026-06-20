@@ -226,6 +226,7 @@ Variables principales del contrato:
 | Variable | Default esperado | Uso |
 | --- | --- | --- |
 | `ANALYTICS_RUN_ID` | timestamp de corrida | Identificador para agrupar outputs y reintentos. |
+| `ANALYTICS_RESUME` | `false` | Omitir records ya escritos para el mismo `runId` al reintentar una corrida. |
 | `ANALYTICS_RUNS_PER_SCENARIO` | `10` | Cantidad de instancias por escenario. |
 | `ANALYTICS_SCENARIOS` | todos | Lista separada por coma de escenarios. |
 | `ANALYTICS_MANIFEST_ORDER` | `scenario` | Orden de trabajo; `interleaved` balancea mejor escenarios. |
@@ -233,8 +234,10 @@ Variables principales del contrato:
 | `ANALYTICS_MANIFEST_SHARD` | unset | Shard especifico a procesar. |
 | `ANALYTICS_RUN_MODE` | `batch` | `batch` compacto o `legacy`. |
 | `ANALYTICS_OUTPUT_FORMAT` | `jsonl` | `jsonl` para debug, `parquet` para corridas grandes. |
+| `ANALYTICS_UPDATE_LATEST_OUTPUT` | igual a `ANALYTICS_UPDATE_LATEST` | Crear o copiar `latest-runs.*`; puede desactivarse para evitar I/O extra en corridas grandes. |
 | `ANALYTICS_SUMMARY_ONLY` | `true` | Omite payloads grandes del engine en analytics. |
 | `ANALYTICS_BATCH_SIZE` | `250` | Instancias por proceso del engine en modo batch. |
+| `ANALYTICS_CHUNK_STRATEGY` | `cost-balanced` | `cost-balanced` reparte chunks por costo estimado; `sequential` conserva orden del manifest. |
 | `ANALYTICS_CONCURRENCY` | `auto` | Procesos paralelos del solver. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
 | `ANALYTICS_RUNS_FILE` | autodetectado | Input para agregacion y reporte. |
@@ -244,7 +247,7 @@ Variables de tuning:
 | Variable | Default esperado | Uso |
 | --- | --- | --- |
 | `ANALYTICS_TUNE_RUNS_PER_SCENARIO` | `1000` | Muestra por escenario para tuning local. |
-| `ANALYTICS_TUNE_BATCH_SIZES` | `50,100,150,250` | Batch sizes a comparar. |
+| `ANALYTICS_TUNE_BATCH_SIZES` | `50,100,150,250,500` | Batch sizes a comparar. |
 | `ANALYTICS_TUNE_CONCURRENCIES` | `auto,4,6,8` | Concurrencias a comparar. |
 | `ANALYTICS_TUNE_OUTPUT_FORMAT` | `jsonl` | Formato usado por el tuner. |
 | `ANALYTICS_TUNE_SCENARIOS` | todos | Escenarios incluidos en tuning. |
@@ -276,10 +279,13 @@ ANALYTICS_RUN_ID=run-500k-001 \
 ANALYTICS_RUNS_PER_SCENARIO=50000 \
 ANALYTICS_MANIFEST_ORDER=interleaved \
 ANALYTICS_OUTPUT_FORMAT=parquet \
-ANALYTICS_BATCH_SIZE=100 \
-ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_BATCH_SIZE=500 \
+ANALYTICS_CONCURRENCY=8 \
+ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics:timed
 ```
+
+Medicion local recomendada para `500k`: `ANALYTICS_BATCH_SIZE=500` y `ANALYTICS_CONCURRENCY=8`. La corrida `run-500k-batch500-concurrency8-final` proceso `500000` instancias en `120.11s`, `4162.85 rows/s`, con `0` errores. La comparacion directa con `BATCH_SIZE=250`, `CONCURRENCY=8` fue `152.14s`, `3286.45 rows/s`, con `0` errores.
 
 Reagregar o reportar una corrida existente:
 

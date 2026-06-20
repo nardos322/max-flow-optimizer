@@ -1,4 +1,5 @@
 import { loadInput } from './inputs.mjs';
+import { planJsonlChunks } from './chunks.mjs';
 import { parseEngineError, runBatchEngine, runEngine } from './engine.mjs';
 import {
   applyAnalyticsMetadata,
@@ -28,19 +29,26 @@ export async function runLegacyBatch(enginePath, entries, concurrency, engineTim
   return stats;
 }
 
-export async function runJsonlBatch(enginePath, entries, concurrency, engineTimeoutMs, batchSize, outputStream) {
+export async function runJsonlBatch(
+  enginePath,
+  entries,
+  concurrency,
+  engineTimeoutMs,
+  batchSize,
+  outputStream,
+  chunkStrategy = 'cost-balanced'
+) {
   const stats = createRunStats();
-  const workerCount = Math.min(concurrency, entries.length);
+  const plannedChunks = planJsonlChunks(entries, batchSize, chunkStrategy);
+  const workerCount = Math.min(concurrency, plannedChunks.length);
   let nextIndex = 0;
 
   await Promise.all(
     Array.from({ length: workerCount }, async () => {
-      while (nextIndex < entries.length) {
-        const startIndex = nextIndex;
-        nextIndex += batchSize;
-        const chunk = entries
-          .slice(startIndex, Math.min(startIndex + batchSize, entries.length))
-          .map((entry) => ({ entry }));
+      while (nextIndex < plannedChunks.length) {
+        const chunkIndex = nextIndex;
+        nextIndex += 1;
+        const chunk = plannedChunks[chunkIndex].entries.map((entry) => ({ entry }));
         await runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeoutMs);
       }
     })
