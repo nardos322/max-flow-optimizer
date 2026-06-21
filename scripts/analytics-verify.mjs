@@ -12,6 +12,7 @@ async function main() {
   const run = runIdInput ? await readRunMetadata(runIdInput) : latestRun;
   const quality = await readRequiredJson(path.join(outputRoot, 'latest-quality.json'), 'Quality report');
   const summaries = await readRequiredJson(path.join(outputRoot, 'latest-summary.json'), 'Summary report');
+  const benchmark = await readOptionalJson(path.join(outputRoot, 'latest-benchmark.json'));
   const checks = [];
 
   checks.push(check('run_metadata_present', Boolean(run), { runId: runIdInput ?? latestRun.runId ?? null }));
@@ -28,6 +29,14 @@ async function main() {
     checks.push(await checkRunOutput(run));
     checks.push(checkManifestFingerprint(run));
     checks.push(checkSummaryCounts(run, summaries));
+  }
+
+  if (benchmark && benchmark.status !== 'no_baseline') {
+    checks.push(check('benchmark_passed', benchmark.status === 'passed', {
+      status: benchmark.status,
+      baseline: benchmark.baseline ?? null,
+      failedRegressions: benchmark.failedRegressions ?? null
+    }));
   }
 
   checks.push(await checkOptionalReport());
@@ -119,6 +128,17 @@ async function readRequiredJson(filePath, label) {
   } catch (error) {
     if (error?.code === 'ENOENT') {
       throw new Error(`${label} not found: ${path.relative(repoRoot, filePath)}`);
+    }
+    throw error;
+  }
+}
+
+async function readOptionalJson(filePath) {
+  try {
+    return JSON.parse(await fs.readFile(filePath, 'utf8'));
+  } catch (error) {
+    if (error?.code === 'ENOENT') {
+      return null;
     }
     throw error;
   }

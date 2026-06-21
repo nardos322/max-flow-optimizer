@@ -15,9 +15,27 @@ def compare_with_previous_summary(
             "changes": [],
         }
 
-    previous_rows = json.loads(previous_summary_path.read_text(encoding="utf-8"))
+    return compare_with_summary(current_rows, previous_summary_path, repo_root)
+
+
+def compare_with_summary(
+    current_rows: list[dict[str, Any]],
+    baseline_summary_path: Path | None,
+    repo_root: Path,
+    *,
+    max_p95_runtime_regression_pct: float | None = None,
+) -> dict[str, Any]:
+    if baseline_summary_path is None:
+        return {
+            "status": "no_baseline",
+            "baseline": None,
+            "changes": [],
+        }
+
+    previous_rows = json.loads(baseline_summary_path.read_text(encoding="utf-8"))
     previous_by_scenario = {row["scenarioName"]: row for row in previous_rows}
     changes = []
+    regressions = []
 
     for current in current_rows:
         scenario = current["scenarioName"]
@@ -32,18 +50,36 @@ def compare_with_previous_summary(
             )
             continue
 
+        metrics = {
+            "feasibilityRatePct": compare_metric(previous, current, "feasibilityRatePct"),
+            "p95RuntimeMs": compare_metric(previous, current, "p95RuntimeMs"),
+            "avgEdges": compare_metric(previous, current, "avgEdges"),
+            "errorRuns": compare_metric(previous, current, "errorRuns"),
+        }
         changes.append(
             {
                 "scenarioName": scenario,
                 "status": "compared",
-                "metrics": {
-                    "feasibilityRatePct": compare_metric(previous, current, "feasibilityRatePct"),
-                    "p95RuntimeMs": compare_metric(previous, current, "p95RuntimeMs"),
-                    "avgEdges": compare_metric(previous, current, "avgEdges"),
-                    "errorRuns": compare_metric(previous, current, "errorRuns"),
-                },
+                "metrics": metrics,
             }
         )
+
+        p95_delta = metrics["p95RuntimeMs"].get("pctDelta")
+        if (
+            max_p95_runtime_regression_pct is not None
+            and p95_delta is not None
+            and p95_delta > max_p95_runtime_regression_pct
+        ):
+            regressions.append(
+                {
+                    "scenarioName": scenario,
+                    "metric": "p95RuntimeMs",
+                    "pctDelta": p95_delta,
+                    "thresholdPct": max_p95_runtime_regression_pct,
+                    "previous": metrics["p95RuntimeMs"].get("previous"),
+                    "current": metrics["p95RuntimeMs"].get("current"),
+                }
+            )
 
     previous_scenarios = set(previous_by_scenario)
     current_scenarios = {row["scenarioName"] for row in current_rows}
@@ -57,8 +93,13 @@ def compare_with_previous_summary(
         )
 
     return {
-        "status": "compared",
-        "baseline": relative_to_repo(repo_root, previous_summary_path),
+        "status": "failed" if regressions else "passed",
+        "baseline": relative_to_repo(repo_root, baseline_summary_path),
+        "thresholds": {
+            "maxP95RuntimeRegressionPct": max_p95_runtime_regression_pct,
+        },
+        "failedRegressions": len(regressions),
+        "regressions": regressions,
         "changes": changes,
     }
 

@@ -67,9 +67,11 @@ data/analytics/latest-summary.json
 data/analytics/latest-summary.csv
 data/analytics/latest-quality.json
 data/analytics/latest-comparison.json
+data/analytics/latest-benchmark.json
 data/analytics/duckdb/
 data/analytics/history/
 data/analytics/runs/runId=<id>/run.json
+data/analytics/runs/runId=<id>/summary.json
 analytics/reports/latest-report.md
 analytics/reports/charts/
 ```
@@ -104,6 +106,9 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_EXPECTED_MANIFEST` | manifest de `latest-run.json` cuando coincide | Manifest o shard usado por `analytics:aggregate` para validar completitud y conteos por escenario. |
 | `ANALYTICS_ALLOW_PARTIAL` | `false` | Permite que quality pase cuando la corrida tiene menos filas que el manifest esperado. Usar solo para agregaciones parciales intencionales. |
 | `ANALYTICS_MAX_ERROR_RATE` | `0` | Tasa maxima de records con `status=error` permitida por quality, entre `0` y `1`. |
+| `ANALYTICS_BASELINE_RUN_ID` | unset | `runId` estable para benchmark. Lee `data/analytics/runs/runId=<id>/summary.json`. |
+| `ANALYTICS_BASELINE_SUMMARY` | unset | Ruta directa a un summary JSON usado como baseline. Tiene prioridad sobre `ANALYTICS_BASELINE_RUN_ID`. |
+| `ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT` | unset | Si se define, benchmark falla cuando el p95 runtime de un escenario supera ese porcentaje contra el baseline. |
 | `ANALYTICS_VERIFY_REQUIRE_REPORT` | `false` | Hace que `analytics:verify` falle si `analytics/reports/latest-report.md` no existe. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
 
@@ -241,6 +246,17 @@ pnpm analytics:verify
 ```
 
 `analytics:verify` valida metadata de corrida, estado de quality, existencia del output principal, conteos del summary y fingerprint del manifest. Por defecto el reporte markdown es opcional para permitir correr verify antes de `analytics:report`; usar `ANALYTICS_VERIFY_REQUIRE_REPORT=true` para exigirlo.
+
+Para comparar contra un baseline estable en vez del historico anterior:
+
+```bash
+ANALYTICS_BASELINE_RUN_ID=run-500k-known-good \
+ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT=10 \
+pnpm analytics:aggregate
+pnpm analytics:verify
+```
+
+`analytics:aggregate` escribe `data/analytics/runs/runId=<id>/summary.json` para que una corrida aprobada pueda usarse luego como baseline. El resultado del benchmark queda en `data/analytics/latest-benchmark.json` y tambien se muestra en el reporte markdown.
 
 Antes de una corrida grande, se puede medir la mejor combinacion local de batch y concurrencia:
 

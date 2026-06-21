@@ -12,18 +12,20 @@ async function main() {
   const parquetPath = path.join(repoRoot, 'data/analytics/latest-runs.parquet');
   const qualityPath = path.join(repoRoot, 'data/analytics/latest-quality.json');
   const comparisonPath = path.join(repoRoot, 'data/analytics/latest-comparison.json');
+  const benchmarkPath = path.join(repoRoot, 'data/analytics/latest-benchmark.json');
   const duckdbOutputPath = path.join(repoRoot, 'data/analytics/duckdb');
   const reportPath = path.join(repoRoot, 'analytics/reports/latest-report.md');
   const summaries = JSON.parse(await fs.readFile(summaryPath, 'utf8'));
   const quality = await readJsonIfExists(qualityPath);
   const comparison = await readJsonIfExists(comparisonPath);
+  const benchmark = await readJsonIfExists(benchmarkPath);
   const duckdbOutputs = await listDuckdbOutputs(duckdbOutputPath);
   const charts = getChartReferences();
 
   await fs.mkdir(path.dirname(reportPath), { recursive: true });
   await fs.writeFile(
     reportPath,
-    renderReport(summaries, { runsPath, parquetPath, quality, comparison, duckdbOutputs, charts })
+    renderReport(summaries, { runsPath, parquetPath, quality, comparison, benchmark, duckdbOutputs, charts })
   );
 
   console.log(
@@ -32,6 +34,7 @@ async function main() {
         summary: path.relative(repoRoot, summaryPath),
         quality: path.relative(repoRoot, qualityPath),
         comparison: path.relative(repoRoot, comparisonPath),
+        benchmark: path.relative(repoRoot, benchmarkPath),
         duckdb: duckdbOutputs.map((item) => item.relativePath),
         report: path.relative(repoRoot, reportPath),
         charts: charts.map((chart) => `analytics/reports/charts/${chart.fileName}`)
@@ -115,7 +118,7 @@ async function listDuckdbOutputs(outputPath) {
   }
 }
 
-function renderReport(summaries, { runsPath, parquetPath, quality, comparison, duckdbOutputs, charts }) {
+function renderReport(summaries, { runsPath, parquetPath, quality, comparison, benchmark, duckdbOutputs, charts }) {
   const totalRuns = summaries.reduce((sum, row) => sum + row.runs, 0);
   const generatedAt = formatReportDate(new Date());
 
@@ -152,6 +155,10 @@ ${renderQualitySection(quality)}
 
 ${renderComparisonSection(comparison)}
 
+## Benchmark
+
+${renderBenchmarkSection(benchmark)}
+
 ## DuckDB Query Outputs
 
 ${renderDuckdbSection(duckdbOutputs)}
@@ -172,6 +179,36 @@ pnpm analytics:aggregate
 pnpm analytics:report
 \`\`\`
 `;
+}
+
+function renderBenchmarkSection(benchmark) {
+  if (!benchmark) {
+    return 'Benchmark report not found. Run `pnpm analytics:aggregate` before generating the report.';
+  }
+  if (benchmark.status === 'no_baseline') {
+    return 'No explicit benchmark baseline configured.';
+  }
+
+  const lines = [
+    `- Status: \`${benchmark.status}\``,
+    `- Baseline: \`${benchmark.baseline}\``,
+    `- Failed regressions: ${benchmark.failedRegressions ?? 0}`
+  ];
+
+  if (!benchmark.regressions?.length) {
+    return lines.join('\n');
+  }
+
+  return [
+    ...lines,
+    '',
+    '| Scenario | Metric | Delta | Threshold | Previous | Current |',
+    '| --- | --- | ---: | ---: | ---: | ---: |',
+    ...benchmark.regressions.map(
+      (regression) =>
+        `| \`${regression.scenarioName}\` | \`${regression.metric}\` | ${regression.pctDelta}% | ${regression.thresholdPct}% | ${regression.previous} | ${regression.current} |`
+    )
+  ].join('\n');
 }
 
 function renderSummaryRow(row) {

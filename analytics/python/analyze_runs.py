@@ -46,7 +46,7 @@ from analytics_io import (
     write_parquet,
 )
 from charts import write_charts
-from comparison import compare_with_previous_summary
+from comparison import compare_with_previous_summary, compare_with_summary
 from duckdb_queries import run_duckdb_queries
 from quality import validate_runs
 from summarizer import summarize_runs
@@ -59,6 +59,7 @@ DEFAULT_CSV_OUTPUT = REPO_ROOT / "data/analytics/latest-summary.csv"
 DEFAULT_PARQUET_OUTPUT = REPO_ROOT / "data/analytics/latest-runs.parquet"
 DEFAULT_QUALITY_OUTPUT = REPO_ROOT / "data/analytics/latest-quality.json"
 DEFAULT_COMPARISON_OUTPUT = REPO_ROOT / "data/analytics/latest-comparison.json"
+DEFAULT_BENCHMARK_OUTPUT = REPO_ROOT / "data/analytics/latest-benchmark.json"
 DEFAULT_HISTORY_OUTPUT = REPO_ROOT / "data/analytics/history"
 DEFAULT_CHARTS_OUTPUT = REPO_ROOT / "analytics/reports/charts"
 DEFAULT_QUERIES_INPUT = REPO_ROOT / "analytics/queries"
@@ -73,6 +74,9 @@ def main() -> None:
     parquet_output = resolve_path(REPO_ROOT, args.parquet_output)
     quality_output = resolve_path(REPO_ROOT, args.quality_output)
     comparison_output = resolve_path(REPO_ROOT, args.comparison_output)
+    benchmark_output = resolve_path(REPO_ROOT, args.benchmark_output)
+    run_summary_output = resolve_path(REPO_ROOT, args.run_summary_output) if args.run_summary_output else None
+    baseline_summary = resolve_path(REPO_ROOT, args.baseline_summary) if args.baseline_summary else None
     history_output = resolve_path(REPO_ROOT, args.history_output)
     charts_output = resolve_path(REPO_ROOT, args.charts_output)
     queries_input = resolve_path(REPO_ROOT, args.queries_input)
@@ -96,14 +100,23 @@ def main() -> None:
         max_error_rate=args.max_error_rate,
     )
     comparison = compare_with_previous_summary(rows, previous_summary_path, REPO_ROOT)
+    benchmark = compare_with_summary(
+        rows,
+        baseline_summary,
+        REPO_ROOT,
+        max_p95_runtime_regression_pct=args.max_p95_runtime_regression_pct,
+    )
     timestamp = create_timestamp()
 
     write_json(json_output, rows)
     write_csv(csv_output, rows)
+    if run_summary_output is not None:
+        write_json(run_summary_output, rows)
     if input_path.resolve() != parquet_output.resolve():
         write_parquet(parquet_output, runs)
     write_json(quality_output, quality)
     write_json(comparison_output, comparison)
+    write_json(benchmark_output, benchmark)
     history_paths = write_history(
         history_output=history_output,
         timestamp=timestamp,
@@ -136,6 +149,9 @@ def main() -> None:
                 if args.run_metadata
                 else None,
                 "comparison": relative_to_repo(REPO_ROOT, comparison_output),
+                "benchmark": relative_to_repo(REPO_ROOT, benchmark_output),
+                "baselineSummary": relative_to_repo(REPO_ROOT, baseline_summary) if baseline_summary else None,
+                "runSummary": relative_to_repo(REPO_ROOT, run_summary_output) if run_summary_output else None,
                 "history": [relative_to_repo(REPO_ROOT, path) for path in history_paths],
                 "charts": [relative_to_repo(REPO_ROOT, path) for path in chart_paths],
                 "duckdb": [
@@ -165,6 +181,17 @@ def parse_args() -> argparse.Namespace:
         "--comparison-output",
         default=str(DEFAULT_COMPARISON_OUTPUT),
         help="Previous-run comparison JSON output path.",
+    )
+    parser.add_argument("--benchmark-output", default=str(DEFAULT_BENCHMARK_OUTPUT), help="Benchmark JSON output path.")
+    parser.add_argument("--baseline-summary", help="Stable summary JSON used as benchmark baseline.")
+    parser.add_argument("--run-summary-output", help="Optional path to write this run's summary JSON.")
+    parser.add_argument(
+        "--max-p95-runtime-regression-pct",
+        type=float,
+        default=float(os.environ["ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT"])
+        if "ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT" in os.environ
+        else None,
+        help="Fail benchmark when scenario p95 runtime grows by more than this percentage.",
     )
     parser.add_argument("--history-output", default=str(DEFAULT_HISTORY_OUTPUT), help="Analytics history directory.")
     parser.add_argument("--charts-output", default=str(DEFAULT_CHARTS_OUTPUT), help="Charts output directory.")

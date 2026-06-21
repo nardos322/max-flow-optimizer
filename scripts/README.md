@@ -105,6 +105,15 @@ La medicion local recomendada para `500k` es `ANALYTICS_BATCH_SIZE=500` con `ANA
 
 `ANALYTICS_RUN_ID` aisla la corrida bajo `data/analytics/runs/runId=<id>/`. `analytics:aggregate` y `analytics:report` usan esa corrida si se pasa el mismo id, o la ultima corrida registrada en `data/analytics/latest-run.json` si no se pasa ninguno. `ANALYTICS_UPDATE_LATEST_OUTPUT=false` evita crear el archivo pesado de compatibilidad `latest-runs.parquet`; el output por `runId` sigue quedando disponible para aggregate/report.
 
+`analytics:aggregate` escribe `data/analytics/runs/runId=<id>/summary.json` cuando puede asociar el agregado con una corrida. Para benchmarks estables, usar:
+
+```bash
+ANALYTICS_BASELINE_RUN_ID=run-500k-known-good \
+ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT=10 \
+pnpm analytics:aggregate
+pnpm analytics:verify
+```
+
 Para reintentar una corrida interrumpida con el mismo `runId`:
 
 ```bash

@@ -17,14 +17,32 @@ async function main() {
 
   if (matchingLatestRun) {
     args.push('--run-metadata', path.join(repoRoot, 'data/analytics/latest-run.json'));
+    args.push('--run-summary-output', path.join(repoRoot, 'data/analytics/runs', `runId=${matchingLatestRun.runId}`, 'summary.json'));
   }
   if (process.env.ANALYTICS_EXPECTED_MANIFEST) {
     args.push('--expected-manifest', path.resolve(repoRoot, process.env.ANALYTICS_EXPECTED_MANIFEST));
   } else if (matchingLatestRun?.manifest) {
     args.push('--expected-manifest', path.resolve(repoRoot, matchingLatestRun.manifest));
   }
+  const baselineSummary = resolveBaselineSummary();
+  if (baselineSummary) {
+    args.push('--baseline-summary', baselineSummary);
+  }
 
   await runPython(python, args);
+}
+
+function resolveBaselineSummary() {
+  if (process.env.ANALYTICS_BASELINE_SUMMARY?.trim()) {
+    return path.resolve(repoRoot, process.env.ANALYTICS_BASELINE_SUMMARY);
+  }
+
+  const baselineRunId = process.env.ANALYTICS_BASELINE_RUN_ID?.trim();
+  if (!baselineRunId) {
+    return null;
+  }
+
+  return path.join(repoRoot, 'data/analytics/runs', `runId=${baselineRunId}`, 'summary.json');
 }
 
 async function resolveDefaultRunsInput(latestRun) {
