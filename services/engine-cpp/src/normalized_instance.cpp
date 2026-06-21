@@ -63,6 +63,16 @@ int ResolveIndexedId(std::string_view id, char prefix, const std::vector<int>& i
   return index_by_numeric_id[static_cast<std::size_t>(numeric_index)];
 }
 
+template <typename T, typename Accessor>
+std::unordered_map<std::string_view, int> BuildIndexById(const std::vector<const T*>& sorted_items, Accessor accessor) {
+  std::unordered_map<std::string_view, int> index_by_id;
+  index_by_id.reserve(sorted_items.size());
+  for (std::size_t index = 0; index < sorted_items.size(); ++index) {
+    index_by_id.emplace(std::string_view(accessor(*sorted_items[index])), static_cast<int>(index));
+  }
+  return index_by_id;
+}
+
 }  // namespace
 
 NormalizedInstance NormalizeInput(const SolveInput& input) {
@@ -84,14 +94,12 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
   normalized.days.reserve(sorted_days.size());
   normalized.medics.reserve(sorted_medics.size());
 
-  std::unordered_map<std::string_view, int> day_index_by_id;
-  std::unordered_map<std::string_view, int> medic_index_by_id;
   std::unordered_set<std::string_view> seen_dates;
-  day_index_by_id.reserve(sorted_days.size());
-  medic_index_by_id.reserve(sorted_medics.size());
   seen_dates.reserve(sorted_days.size());
   std::vector<int> day_index_by_numeric_id(sorted_days.size(), -1);
   std::vector<int> medic_index_by_numeric_id(sorted_medics.size(), -1);
+  std::unordered_map<std::string_view, int> day_index_by_id;
+  std::unordered_map<std::string_view, int> medic_index_by_id;
 
   for (std::size_t index = 0; index < sorted_periods.size(); ++index) {
     normalized.periods.push_back({sorted_periods[index]->id, {}});
@@ -101,7 +109,6 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
     if (!seen_dates.insert(std::string_view(sorted_days[index]->date)).second) {
       ThrowInvalidInput("Duplicate day date found while normalizing input: " + sorted_days[index]->date + ".");
     }
-    day_index_by_id.emplace(std::string_view(sorted_days[index]->id), static_cast<int>(index));
     const int numeric_index = ParsePositivePrefixedId(sorted_days[index]->id, 'd');
     if (numeric_index >= 0 && numeric_index < static_cast<int>(day_index_by_numeric_id.size())) {
       day_index_by_numeric_id[static_cast<std::size_t>(numeric_index)] = static_cast<int>(index);
@@ -110,7 +117,6 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
   }
 
   for (std::size_t index = 0; index < sorted_medics.size(); ++index) {
-    medic_index_by_id.emplace(std::string_view(sorted_medics[index]->id), static_cast<int>(index));
     const int numeric_index = ParsePositivePrefixedId(sorted_medics[index]->id, 'm');
     if (numeric_index >= 0 && numeric_index < static_cast<int>(medic_index_by_numeric_id.size())) {
       medic_index_by_numeric_id[static_cast<std::size_t>(numeric_index)] = static_cast<int>(index);
@@ -124,6 +130,10 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
     for (const std::string& day_id : raw_period->day_ids) {
       int day_index = ResolveIndexedId(day_id, 'd', day_index_by_numeric_id);
       if (day_index == -1) {
+        if (day_index_by_id.empty()) {
+          day_index_by_id =
+              BuildIndexById(sorted_days, [](const DayInput& item) -> const std::string& { return item.id; });
+        }
         const auto iterator = day_index_by_id.find(std::string_view(day_id));
         if (iterator == day_index_by_id.end()) {
           ThrowInvalidInput("Unknown day reference in periods: " + day_id + ".");
@@ -158,6 +168,10 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
   for (const AvailabilityInput& availability : input.availability) {
     int medic_index = ResolveIndexedId(availability.medic_id, 'm', medic_index_by_numeric_id);
     if (medic_index == -1) {
+      if (medic_index_by_id.empty()) {
+        medic_index_by_id =
+            BuildIndexById(sorted_medics, [](const MedicInput& item) -> const std::string& { return item.id; });
+      }
       const auto medic_iterator = medic_index_by_id.find(std::string_view(availability.medic_id));
       if (medic_iterator == medic_index_by_id.end()) {
         ThrowInvalidInput("Unknown medic reference in availability: " + availability.medic_id + ".");
@@ -166,6 +180,10 @@ NormalizedInstance NormalizeInput(const SolveInput& input) {
     }
     int day_index = ResolveIndexedId(availability.day_id, 'd', day_index_by_numeric_id);
     if (day_index == -1) {
+      if (day_index_by_id.empty()) {
+        day_index_by_id =
+            BuildIndexById(sorted_days, [](const DayInput& item) -> const std::string& { return item.id; });
+      }
       const auto day_iterator = day_index_by_id.find(std::string_view(availability.day_id));
       if (day_iterator == day_index_by_id.end()) {
         ThrowInvalidInput("Unknown day reference in availability: " + availability.day_id + ".");
