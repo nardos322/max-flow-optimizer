@@ -169,10 +169,16 @@ large-dense
 xlarge-balanced
 ```
 
-Corrida recomendada de 50k instancias:
+Corrida recomendada de 50k instancias con salida Parquet:
 
 ```bash
-ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=100 ANALYTICS_CONCURRENCY=auto pnpm analytics
+ANALYTICS_RUNS_PER_SCENARIO=5000 \
+ANALYTICS_MANIFEST_ORDER=interleaved \
+ANALYTICS_OUTPUT_FORMAT=parquet \
+ANALYTICS_BATCH_SIZE=100 \
+ANALYTICS_CONCURRENCY=auto \
+ANALYTICS_UPDATE_LATEST_OUTPUT=false \
+pnpm analytics
 ```
 
 Equivalente con preset:
