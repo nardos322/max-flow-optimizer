@@ -119,6 +119,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_BASELINE_RUN_ID` | unset | `runId` estable para benchmark. Lee `data/analytics/runs/runId=<id>/summary.json`. |
 | `ANALYTICS_BASELINE_SUMMARY` | unset | Ruta directa a un summary JSON usado como baseline. Tiene prioridad sobre `ANALYTICS_BASELINE_RUN_ID`. |
 | `ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT` | unset | Si se define, benchmark falla cuando el p95 runtime de un escenario supera ese porcentaje contra el baseline. |
+| `ANALYTICS_MIN_P95_RUNTIME_REGRESSION_MS` | `1` | Delta absoluto minimo para que una regresion p95 cuente como fallo. Evita fallar por ruido de 1 ms en escenarios rapidos. |
 | `ANALYTICS_VERIFY_REQUIRE_REPORT` | `false` | Hace que `analytics:verify` falle si `analytics/reports/latest-report.md` no existe. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
 

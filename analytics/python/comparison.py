@@ -24,6 +24,7 @@ def compare_with_summary(
     repo_root: Path,
     *,
     max_p95_runtime_regression_pct: float | None = None,
+    min_p95_runtime_regression_ms: float = 1.0,
 ) -> dict[str, Any]:
     if baseline_summary_path is None:
         return {
@@ -69,13 +70,16 @@ def compare_with_summary(
             max_p95_runtime_regression_pct is not None
             and p95_delta is not None
             and p95_delta > max_p95_runtime_regression_pct
+            and (metrics["p95RuntimeMs"].get("delta") or 0) > min_p95_runtime_regression_ms
         ):
             regressions.append(
                 {
                     "scenarioName": scenario,
                     "metric": "p95RuntimeMs",
+                    "delta": metrics["p95RuntimeMs"].get("delta"),
                     "pctDelta": p95_delta,
                     "thresholdPct": max_p95_runtime_regression_pct,
+                    "minDeltaMs": min_p95_runtime_regression_ms,
                     "previous": metrics["p95RuntimeMs"].get("previous"),
                     "current": metrics["p95RuntimeMs"].get("current"),
                 }
@@ -97,6 +101,7 @@ def compare_with_summary(
         "baseline": relative_to_repo(repo_root, baseline_summary_path),
         "thresholds": {
             "maxP95RuntimeRegressionPct": max_p95_runtime_regression_pct,
+            "minP95RuntimeRegressionMs": min_p95_runtime_regression_ms,
         },
         "failedRegressions": len(regressions),
         "regressions": regressions,

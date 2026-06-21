@@ -105,6 +105,7 @@ def main() -> None:
         baseline_summary,
         REPO_ROOT,
         max_p95_runtime_regression_pct=args.max_p95_runtime_regression_pct,
+        min_p95_runtime_regression_ms=args.min_p95_runtime_regression_ms,
     )
     timestamp = create_timestamp()
 
@@ -192,6 +193,12 @@ def parse_args() -> argparse.Namespace:
         if "ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT" in os.environ
         else None,
         help="Fail benchmark when scenario p95 runtime grows by more than this percentage.",
+    )
+    parser.add_argument(
+        "--min-p95-runtime-regression-ms",
+        type=float,
+        default=float(os.environ.get("ANALYTICS_MIN_P95_RUNTIME_REGRESSION_MS", "1")),
+        help="Ignore p95 runtime regressions at or below this absolute delta in milliseconds.",
     )
     parser.add_argument("--history-output", default=str(DEFAULT_HISTORY_OUTPUT), help="Analytics history directory.")
     parser.add_argument("--charts-output", default=str(DEFAULT_CHARTS_OUTPUT), help="Charts output directory.")

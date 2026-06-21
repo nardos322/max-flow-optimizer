@@ -119,6 +119,7 @@ La medicion local recomendada para `500k` es `ANALYTICS_BATCH_SIZE=500` con `ANA
 ```bash
 ANALYTICS_BASELINE_RUN_ID=run-500k-known-good \
 ANALYTICS_MAX_P95_RUNTIME_REGRESSION_PCT=10 \
+ANALYTICS_MIN_P95_RUNTIME_REGRESSION_MS=1 \
 pnpm analytics:aggregate
 pnpm analytics:verify
 ```

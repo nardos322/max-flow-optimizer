@@ -206,7 +206,7 @@ function renderBenchmarkSection(benchmark) {
     '| --- | --- | ---: | ---: | ---: | ---: |',
     ...benchmark.regressions.map(
       (regression) =>
-        `| \`${regression.scenarioName}\` | \`${regression.metric}\` | ${regression.pctDelta}% | ${regression.thresholdPct}% | ${regression.previous} | ${regression.current} |`
+        `| \`${regression.scenarioName}\` | \`${regression.metric}\` | ${regression.delta} ms (${regression.pctDelta}%) | ${regression.minDeltaMs} ms and ${regression.thresholdPct}% | ${regression.previous} | ${regression.current} |`
     )
   ].join('\n');
 }
