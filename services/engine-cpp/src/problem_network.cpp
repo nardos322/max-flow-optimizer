@@ -3,6 +3,13 @@
 #include <algorithm>
 
 namespace engine {
+namespace {
+
+int MedicPeriodNode(const ProblemNetwork& network, int medic_index, int period_index) {
+  return network.medic_period_node_base + (medic_index * network.period_count) + period_index;
+}
+
+}  // namespace
 
 ProblemNetwork BuildProblemNetwork(const NormalizedInstance& instance) {
   const int medic_count = static_cast<int>(instance.medics.size());
@@ -14,8 +21,9 @@ ProblemNetwork BuildProblemNetwork(const NormalizedInstance& instance) {
   network.graph = Graph(node_count);
   network.source = 0;
   network.sink = node_count - 1;
+  network.medic_period_node_base = 1 + medic_count;
+  network.period_count = period_count;
   network.medic_nodes.resize(medic_count);
-  network.medic_period_nodes.assign(medic_count, std::vector<int>(period_count, -1));
   network.day_nodes.resize(day_count);
   network.day_sink_edges.resize(day_count);
 
@@ -23,11 +31,7 @@ ProblemNetwork BuildProblemNetwork(const NormalizedInstance& instance) {
   for (int medic_index = 0; medic_index < medic_count; ++medic_index) {
     network.medic_nodes[static_cast<std::size_t>(medic_index)] = next_node++;
   }
-  for (int medic_index = 0; medic_index < medic_count; ++medic_index) {
-    for (int period_index = 0; period_index < period_count; ++period_index) {
-      network.medic_period_nodes[static_cast<std::size_t>(medic_index)][static_cast<std::size_t>(period_index)] = next_node++;
-    }
-  }
+  next_node += medic_count * period_count;
   for (int day_index = 0; day_index < day_count; ++day_index) {
     network.day_nodes[static_cast<std::size_t>(day_index)] = next_node++;
   }
@@ -50,8 +54,7 @@ ProblemNetwork BuildProblemNetwork(const NormalizedInstance& instance) {
   for (int medic_index = 0; medic_index < medic_count; ++medic_index) {
     network.graph.ReserveEdgesFrom(network.medic_nodes[static_cast<std::size_t>(medic_index)], period_count + 1);
     for (int period_index = 0; period_index < period_count; ++period_index) {
-      const int medic_period_node =
-          network.medic_period_nodes[static_cast<std::size_t>(medic_index)][static_cast<std::size_t>(period_index)];
+      const int medic_period_node = MedicPeriodNode(network, medic_index, period_index);
       const int outgoing_count =
           medic_period_availability_count[static_cast<std::size_t>((medic_index * period_count) + period_index)];
       network.graph.ReserveEdgesFrom(medic_period_node, outgoing_count + 1);
@@ -66,8 +69,7 @@ ProblemNetwork BuildProblemNetwork(const NormalizedInstance& instance) {
     const int medic_node = network.medic_nodes[static_cast<std::size_t>(medic_index)];
     (void)network.graph.AddEdge(network.source, medic_node, instance.max_days_per_medic);
     for (int period_index = 0; period_index < period_count; ++period_index) {
-      const int medic_period_node =
-          network.medic_period_nodes[static_cast<std::size_t>(medic_index)][static_cast<std::size_t>(period_index)];
+      const int medic_period_node = MedicPeriodNode(network, medic_index, period_index);
       (void)network.graph.AddEdge(medic_node, medic_period_node, 1);
     }
   }
@@ -75,8 +77,7 @@ ProblemNetwork BuildProblemNetwork(const NormalizedInstance& instance) {
   for (int medic_index = 0; medic_index < medic_count; ++medic_index) {
     for (const int day_index : instance.availability_by_medic[static_cast<std::size_t>(medic_index)]) {
       const int period_index = instance.days[static_cast<std::size_t>(day_index)].period_index;
-      const int from =
-          network.medic_period_nodes[static_cast<std::size_t>(medic_index)][static_cast<std::size_t>(period_index)];
+      const int from = MedicPeriodNode(network, medic_index, period_index);
       const int to = network.day_nodes[static_cast<std::size_t>(day_index)];
       const EdgeRef edge_ref = network.graph.AddEdge(from, to, 1);
       network.assignment_arcs.push_back({edge_ref, medic_index, period_index, day_index});

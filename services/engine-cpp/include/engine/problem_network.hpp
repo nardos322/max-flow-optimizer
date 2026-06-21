@@ -20,8 +20,9 @@ struct ProblemNetwork {
   Graph graph;
   int source = 0;
   int sink = 0;
+  int medic_period_node_base = 0;
+  int period_count = 0;
   std::vector<int> medic_nodes;
-  std::vector<std::vector<int>> medic_period_nodes;
   std::vector<int> day_nodes;
   std::vector<EdgeRef> day_sink_edges;
   std::vector<AssignmentArc> assignment_arcs;
