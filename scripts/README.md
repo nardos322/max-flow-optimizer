@@ -9,6 +9,7 @@ Scripts de desarrollo local y automatizaciones pequenas.
 - `analytics-run.mjs`: ejecuta escenarios generados contra el engine C++ y escribe JSONL en `data/analytics`.
 - `analytics-aggregate.mjs`: ejecuta el pipeline Python modular en `analytics/python/` para calcular agregados por escenario, exportar Parquet, correr quality checks, guardar historico, ejecutar queries DuckDB y generar graficos con Matplotlib.
 - `analytics-report.mjs`: genera un reporte markdown local desde los agregados, quality checks, comparacion historica y graficos.
+- `analytics-verify.mjs`: valida metadata, outputs, quality checks, summary y fingerprint de manifest de la ultima corrida o de `ANALYTICS_RUN_ID`.
 - `analytics-tune.mjs`: prueba combinaciones de `ANALYTICS_BATCH_SIZE` y `ANALYTICS_CONCURRENCY` sobre una muestra temporal para recomendar valores por maquina.
 - `analytics-timed.mjs`: ejecuta `generate`, `run`, `aggregate` y `report`, midiendo segundos por etapa.
 
@@ -77,6 +78,7 @@ Corrida pequena para desarrollo:
 ANALYTICS_SCENARIOS=small-sparse ANALYTICS_RUNS_PER_SCENARIO=1 pnpm analytics:generate
 pnpm analytics:run
 pnpm analytics:aggregate
+pnpm analytics:verify
 pnpm analytics:report
 ```
 
@@ -112,7 +114,7 @@ ANALYTICS_OUTPUT_FORMAT=parquet \
 pnpm analytics:run
 ```
 
-`ANALYTICS_RESUME=true` salta records ya escritos para ese `runId`, tanto en Parquet particionado como en JSONL.
+`ANALYTICS_RESUME=true` salta records ya escritos para ese `runId`, tanto en Parquet particionado como en JSONL. Antes de saltar records, compara el manifest actual contra `data/analytics/runs/runId=<id>/run.json`; si no hay metadata o el fingerprint no coincide, falla salvo que se use `ANALYTICS_FORCE_RESUME=true`.
 
 Para medir tiempos por etapa en la misma corrida:
 

@@ -37,7 +37,17 @@ async function main() {
 
   const timestamp = createTimestamp();
   const runId = resolveRunId(timestamp);
-  const filteredEntries = resume ? await filterCompletedEntries(manifest.scenarios, runId) : manifest.scenarios;
+  const completedKeys = resume ? await readCompletedKeys(runId) : new Set();
+  if (resume) {
+    await validateResumeManifest(runId, manifestFingerprint, completedKeys.size);
+  }
+  const filteredEntries = resume
+    ? manifest.scenarios.filter((entry) => !completedKeys.has(createEntryKey(entry)))
+    : manifest.scenarios;
+  if (resume && filteredEntries.length === 0) {
+    await finishAlreadyCompleteResume(runId, manifest, manifestFingerprint);
+    return;
+  }
   const compactAnalytics = runMode === 'batch' && manifest.inputMode !== 'files';
   const runOutput = createRunOutput({
     outputFormat,
@@ -145,6 +155,7 @@ async function main() {
   if (process.env.ANALYTICS_RUN_SUMMARY_FILE) {
     await fs.writeFile(process.env.ANALYTICS_RUN_SUMMARY_FILE, `${JSON.stringify(summary, null, 2)}\n`);
   }
+  await writeRunMetadata(runId, summary);
   if (updateLatestEnabled()) {
     await fs.writeFile(path.join(outputRoot, 'latest-run.json'), `${JSON.stringify(summary, null, 2)}\n`);
   }
@@ -235,14 +246,6 @@ function readChunkStrategyEnv() {
   throw new Error('ANALYTICS_CHUNK_STRATEGY must be sequential or cost-balanced.');
 }
 
-async function filterCompletedEntries(entries, runId) {
-  const completedKeys = await readCompletedKeys(runId);
-  if (completedKeys.size === 0) {
-    return entries;
-  }
-  return entries.filter((entry) => !completedKeys.has(createEntryKey(entry)));
-}
-
 async function readCompletedKeys(runId) {
   const keys = new Set();
   const runDir = path.join(outputRoot, 'runs', `runId=${runId}`);
@@ -266,6 +269,103 @@ async function readCompletedKeys(runId) {
   }
 
   return keys;
+}
+
+async function validateResumeManifest(runId, manifestFingerprint, completedCount) {
+  if (completedCount === 0) {
+    return;
+  }
+
+  const existingMetadata = await readRunMetadata(runId);
+  if (!existingMetadata?.manifestFingerprint) {
+    if (readBooleanEnv('ANALYTICS_FORCE_RESUME', false)) {
+      return;
+    }
+    throw new Error(
+      `Cannot resume ${runId}: existing records were found but no run metadata exists. ` +
+        'Set ANALYTICS_FORCE_RESUME=true only if the manifest is known to match.'
+    );
+  }
+
+  if (manifestFingerprintMatches(existingMetadata.manifestFingerprint, manifestFingerprint)) {
+    return;
+  }
+  if (readBooleanEnv('ANALYTICS_FORCE_RESUME', false)) {
+    return;
+  }
+
+  throw new Error(
+    `Cannot resume ${runId}: current manifest does not match the existing run fingerprint. ` +
+      'Set ANALYTICS_FORCE_RESUME=true only for an intentional override.'
+  );
+}
+
+async function finishAlreadyCompleteResume(runId, manifest, manifestFingerprint) {
+  const existingMetadata = await readRunMetadata(runId);
+  const summary =
+    existingMetadata ??
+    {
+      solverTarget: 'engine',
+      runId,
+      manifest: manifestFingerprint.source,
+      manifestKind: manifest.kind,
+      manifestFingerprint,
+      manifestEntries: manifest.scenarios.length,
+      runs: manifest.scenarios.length,
+      ok: null,
+      errors: null,
+      output: null,
+      jsonlOutput: null,
+      parquetOutput: null
+    };
+  const resumedSummary = {
+    ...summary,
+    resume: true,
+    resumedWithoutWork: true,
+    skippedExistingRuns: manifest.scenarios.length
+  };
+
+  await writeRunMetadata(runId, resumedSummary);
+  if (updateLatestEnabled()) {
+    await fs.writeFile(path.join(outputRoot, 'latest-run.json'), `${JSON.stringify(resumedSummary, null, 2)}\n`);
+  }
+  console.log(JSON.stringify(resumedSummary, null, 2));
+}
+
+async function readRunMetadata(runId) {
+  const candidates = [
+    path.join(outputRoot, 'runs', `runId=${runId}`, 'run.json'),
+    path.join(outputRoot, 'latest-run.json')
+  ];
+
+  for (const candidate of candidates) {
+    try {
+      const metadata = JSON.parse(await fs.readFile(candidate, 'utf8'));
+      if (metadata.runId === runId) {
+        return metadata;
+      }
+    } catch (error) {
+      if (error?.code !== 'ENOENT') {
+        throw error;
+      }
+    }
+  }
+
+  return null;
+}
+
+function manifestFingerprintMatches(left, right) {
+  return (
+    left?.sha256 === right?.sha256 &&
+    left?.entries === right?.entries &&
+    JSON.stringify(left?.scenarios ?? []) === JSON.stringify(right?.scenarios ?? [])
+  );
+}
+
+async function writeRunMetadata(runId, summary) {
+  const runDir = path.join(outputRoot, 'runs', `runId=${runId}`);
+  await fs.mkdir(runDir, { recursive: true });
+  await fs.writeFile(path.join(runDir, 'run.json'), `${JSON.stringify(summary, null, 2)}\n`);
 }
 
 async function addKeysFromPath(keys, inputPath) {

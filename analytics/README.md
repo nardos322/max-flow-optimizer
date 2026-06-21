@@ -10,6 +10,7 @@ pnpm run build:engine
 pnpm analytics:generate
 pnpm analytics:run
 pnpm analytics:aggregate
+pnpm analytics:verify
 pnpm analytics:report
 ```
 
@@ -68,6 +69,7 @@ data/analytics/latest-quality.json
 data/analytics/latest-comparison.json
 data/analytics/duckdb/
 data/analytics/history/
+data/analytics/runs/runId=<id>/run.json
 analytics/reports/latest-report.md
 analytics/reports/charts/
 ```
@@ -85,6 +87,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_MANIFEST_SHARD` | unset | Shard JSONL especifico que `analytics:run` debe procesar, por ejemplo `data/generated/manifest/part-000001.jsonl`. |
 | `ANALYTICS_RUN_ID` | timestamp de la corrida | Identificador de corrida. Escribe bajo `data/analytics/runs/runId=<id>/`. |
 | `ANALYTICS_RESUME` | `false` | Si es `true`, omite records ya escritos para el mismo `ANALYTICS_RUN_ID`; sirve para reintentar una corrida interrumpida sin duplicar records. |
+| `ANALYTICS_FORCE_RESUME` | `false` | Permite reanudar aunque existan records previos sin metadata o con fingerprint de manifest distinto. Usar solo para overrides intencionales. |
 | `ANALYTICS_UPDATE_LATEST` | `true` | Actualiza `latest-run.json`, `latest-runs.jsonl` o `latest-runs.parquet`. El tuner lo desactiva para no contaminar la ultima corrida. |
 | `ANALYTICS_UPDATE_LATEST_OUTPUT` | igual a `ANALYTICS_UPDATE_LATEST` | Controla solo el artefacto pesado `latest-runs.jsonl` o `latest-runs.parquet`. Usar `false` en corridas grandes si se trabajara por `runId`. |
 | `ANALYTICS_WRITE_INPUT_FILES` | `false` | Escribir un JSON por instancia en `data/generated`. Usar solo para depuracion o muestras chicas. |
@@ -101,6 +104,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_EXPECTED_MANIFEST` | manifest de `latest-run.json` cuando coincide | Manifest o shard usado por `analytics:aggregate` para validar completitud y conteos por escenario. |
 | `ANALYTICS_ALLOW_PARTIAL` | `false` | Permite que quality pase cuando la corrida tiene menos filas que el manifest esperado. Usar solo para agregaciones parciales intencionales. |
 | `ANALYTICS_MAX_ERROR_RATE` | `0` | Tasa maxima de records con `status=error` permitida por quality, entre `0` y `1`. |
+| `ANALYTICS_VERIFY_REQUIRE_REPORT` | `false` | Hace que `analytics:verify` falle si `analytics/reports/latest-report.md` no existe. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
 
 Antes de correr `analytics:run`, compilar el engine:
@@ -219,6 +223,8 @@ Estos campos separan el tiempo reportado por el engine del wall time amortizado 
 
 `latest-run.json` tambien guarda `manifestFingerprint` con el hash SHA-256 del manifest, el total de entradas y los conteos por escenario. `analytics:aggregate` usa esa metadata, cuando coincide con el `ANALYTICS_RUN_ID` solicitado, para activar checks de completitud en `latest-quality.json`.
 
+Cada corrida tambien escribe `data/analytics/runs/runId=<id>/run.json`. Ese archivo permite que `ANALYTICS_RESUME=true` compare el manifest actual contra la corrida existente antes de omitir records. Si existen records previos pero no existe metadata de la corrida, o el fingerprint no coincide, resume falla salvo que se use `ANALYTICS_FORCE_RESUME=true`.
+
 Los checks de calidad incluyen:
 
 - columnas requeridas y valores validos,
@@ -227,6 +233,14 @@ Los checks de calidad incluyen:
 - cantidad total de records contra el manifest esperado,
 - conteos por escenario contra el manifest esperado,
 - consistencia entre `manifestFingerprint` y el manifest usado.
+
+Para verificar que los artefactos principales son coherentes despues de `analytics:aggregate`:
+
+```bash
+pnpm analytics:verify
+```
+
+`analytics:verify` valida metadata de corrida, estado de quality, existencia del output principal, conteos del summary y fingerprint del manifest. Por defecto el reporte markdown es opcional para permitir correr verify antes de `analytics:report`; usar `ANALYTICS_VERIFY_REQUIRE_REPORT=true` para exigirlo.
 
 Antes de una corrida grande, se puede medir la mejor combinacion local de batch y concurrencia:
 
