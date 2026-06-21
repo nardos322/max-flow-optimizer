@@ -24,8 +24,10 @@ class Graph {
   [[nodiscard]] int node_count() const noexcept;
   [[nodiscard]] int logical_edge_count() const noexcept;
 
+  void ReserveEdges(const std::vector<int>& edge_counts);
   void ReserveEdgesFrom(int node, int edge_count);
   [[nodiscard]] EdgeRef AddEdge(int from, int to, int capacity);
+  [[nodiscard]] EdgeRef AddEdgeUnchecked(int from, int to, int capacity);
   [[nodiscard]] const std::vector<Edge>& edges_from(int node) const;
   [[nodiscard]] std::vector<Edge>& mutable_edges_from(int node);
   [[nodiscard]] const Edge& GetEdge(const EdgeRef& reference) const;

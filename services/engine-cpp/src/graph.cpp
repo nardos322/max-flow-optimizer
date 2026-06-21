@@ -12,6 +12,20 @@ int Graph::node_count() const noexcept { return static_cast<int>(adjacency_.size
 
 int Graph::logical_edge_count() const noexcept { return logical_edge_count_; }
 
+void Graph::ReserveEdges(const std::vector<int>& edge_counts) {
+  if (edge_counts.size() != adjacency_.size()) {
+    ThrowInternalError("Invalid reserve count size while building graph.");
+  }
+
+  for (int node = 0; node < node_count(); ++node) {
+    const int edge_count = edge_counts[static_cast<std::size_t>(node)];
+    if (edge_count < 0) {
+      ThrowInternalError("Invalid reserve parameters while building graph.");
+    }
+    adjacency_[static_cast<std::size_t>(node)].reserve(static_cast<std::size_t>(edge_count));
+  }
+}
+
 void Graph::ReserveEdgesFrom(int node, int edge_count) {
   if (node < 0 || node >= node_count() || edge_count < 0) {
     ThrowInternalError("Invalid reserve parameters while building graph.");
@@ -24,6 +38,10 @@ EdgeRef Graph::AddEdge(int from, int to, int capacity) {
     ThrowInternalError("Invalid edge parameters while building graph.");
   }
 
+  return AddEdgeUnchecked(from, to, capacity);
+}
+
+EdgeRef Graph::AddEdgeUnchecked(int from, int to, int capacity) {
   Edge forward{to, static_cast<int>(adjacency_[to].size()), capacity, 0};
   Edge reverse{from, static_cast<int>(adjacency_[from].size()), 0, 0};
   const int forward_index = static_cast<int>(adjacency_[from].size());
