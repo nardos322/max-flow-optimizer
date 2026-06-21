@@ -1,6 +1,6 @@
 import { once } from 'node:events';
 
-export function createBaseRecord(entry, wallTimeMs) {
+export function createBaseRecord(entry, wallTimeMs, context = {}) {
   return {
     runId: createRequestId(entry),
     scenarioName: entry.scenarioName,
@@ -13,13 +13,19 @@ export function createBaseRecord(entry, wallTimeMs) {
     availabilityPairs: entry.availabilityPairs,
     availabilityDensity: entry.availabilityDensity,
     maxDaysPerMedic: entry.maxDaysPerMedic,
-    wallTimeMs
+    wallTimeMs,
+    chunkIndex: context.chunkIndex ?? null,
+    chunkSize: context.chunkSize ?? null,
+    chunkEstimatedCost: context.chunkEstimatedCost ?? null,
+    engineExitCode: context.engineExitCode ?? null,
+    engineStderrHash: context.engineStderrHash ?? null,
+    engineStderrSnippet: context.engineStderrSnippet ?? null
   };
 }
 
-export function createErrorRecord(entry, { wallTimeMs, errorCode }) {
+export function createErrorRecord(entry, { wallTimeMs, errorCode, context = {} }) {
   return {
-    ...createBaseRecord(entry, wallTimeMs),
+    ...createBaseRecord(entry, wallTimeMs, context),
     feasible: null,
     requiredFlow: null,
     maxFlow: null,
@@ -42,13 +48,13 @@ export function createErrorRecord(entry, { wallTimeMs, errorCode }) {
   };
 }
 
-export function createOkRecord(entry, response, wallTimeMs) {
+export function createOkRecord(entry, response, wallTimeMs, context = {}) {
   const nodes = response.stats?.nodes ?? null;
   const edges = response.stats?.edges ?? null;
   const timings = response.analytics?.timings ?? {};
 
   return {
-    ...createBaseRecord(entry, wallTimeMs),
+    ...createBaseRecord(entry, wallTimeMs, context),
     feasible: response.feasible,
     requiredFlow: response.requiredFlow,
     maxFlow: response.maxFlow,

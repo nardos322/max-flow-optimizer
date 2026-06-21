@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { loadInput } from './inputs.mjs';
 import { planJsonlChunks } from './chunks.mjs';
 import { parseEngineError, runBatchEngine, runEngine } from './engine.mjs';
@@ -48,8 +50,12 @@ export async function runJsonlBatch(
       while (nextIndex < plannedChunks.length) {
         const chunkIndex = nextIndex;
         nextIndex += 1;
-        const chunk = plannedChunks[chunkIndex].entries.map((entry) => ({ entry }));
-        await runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeoutMs);
+        const plannedChunk = plannedChunks[chunkIndex];
+        const chunk = plannedChunk.entries.map((entry) => ({ entry }));
+        await runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeoutMs, {
+          chunkIndex,
+          chunkEstimatedCost: plannedChunk.estimatedCost
+        });
       }
     })
   );
@@ -57,20 +63,31 @@ export async function runJsonlBatch(
   return stats;
 }
 
-async function runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeoutMs) {
+async function runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeoutMs, chunkContext) {
   const startedAt = performance.now();
   const result = await runBatchEngine(enginePath, chunk, engineTimeoutMs * chunk.length);
   const batchWallTimeMs = Number((performance.now() - startedAt).toFixed(2));
   const amortizedWallTimeMs = Number((batchWallTimeMs / chunk.length).toFixed(2));
+  const baseContext = {
+    ...chunkContext,
+    chunkSize: chunk.length
+  };
 
   if (result.exitCode !== 0 || result.timedOut) {
+    const errorContext = {
+      ...baseContext,
+      engineExitCode: result.exitCode,
+      engineStderrHash: hashText(result.stderr),
+      engineStderrSnippet: truncateText(result.stderr, 500)
+    };
     for (const { entry } of chunk) {
       await writeRecord(
         outputStream,
         stats,
         createErrorRecord(entry, {
           wallTimeMs: amortizedWallTimeMs,
-          errorCode: result.timedOut ? 'ENGINE_BATCH_TIMEOUT' : `EXIT_${result.exitCode}`
+          errorCode: result.timedOut ? 'ENGINE_BATCH_TIMEOUT' : `EXIT_${result.exitCode}`,
+          context: errorContext
         })
       );
     }
@@ -85,7 +102,8 @@ async function runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeo
         stats,
         createErrorRecord(entry, {
           wallTimeMs: amortizedWallTimeMs,
-          errorCode: 'ENGINE_BATCH_OUTPUT_MISMATCH'
+          errorCode: 'ENGINE_BATCH_OUTPUT_MISMATCH',
+          context: baseContext
         })
       );
     }
@@ -103,7 +121,8 @@ async function runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeo
         stats,
         createErrorRecord(entry, {
           wallTimeMs: amortizedWallTimeMs,
-          errorCode: 'ENGINE_BATCH_INVALID_JSON'
+          errorCode: 'ENGINE_BATCH_INVALID_JSON',
+          context: baseContext
         })
       );
       continue;
@@ -114,9 +133,10 @@ async function runJsonlChunk(enginePath, chunk, outputStream, stats, engineTimeo
       response.error !== undefined
         ? createErrorRecord(entry, {
             wallTimeMs: amortizedWallTimeMs,
-            errorCode: response.error.code ?? 'ENGINE_BATCH_ERROR'
+            errorCode: response.error.code ?? 'ENGINE_BATCH_ERROR',
+            context: baseContext
           })
-        : createOkRecord(applyAnalyticsMetadata(entry, response), response, amortizedWallTimeMs)
+        : createOkRecord(applyAnalyticsMetadata(entry, response), response, amortizedWallTimeMs, baseContext)
     );
   }
 }
@@ -144,4 +164,18 @@ async function runInstance(enginePath, entry, input, engineTimeoutMs) {
 
   const response = JSON.parse(result.stdout);
   return createOkRecord(entry, response, wallTimeMs);
+}
+
+function hashText(value) {
+  if (!value) {
+    return null;
+  }
+  return createHash('sha256').update(value).digest('hex');
+}
+
+function truncateText(value, maxLength) {
+  if (!value) {
+    return null;
+  }
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
 }

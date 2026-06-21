@@ -239,6 +239,19 @@ Los checks de calidad incluyen:
 - conteos por escenario contra el manifest esperado,
 - consistencia entre `manifestFingerprint` y el manifest usado.
 
+Los records de `analytics:run` incluyen contexto de chunk para depuracion:
+
+```text
+chunkIndex
+chunkSize
+chunkEstimatedCost
+engineExitCode
+engineStderrHash
+engineStderrSnippet
+```
+
+En corridas exitosas los campos de stderr quedan en `null`. Cuando un proceso batch falla, esos campos permiten ubicar el chunk afectado y agrupar fallos repetidos sin depender solo de `errorCode`.
+
 Para verificar que los artefactos principales son coherentes despues de `analytics:aggregate`:
 
 ```bash
