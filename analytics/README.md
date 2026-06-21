@@ -98,6 +98,9 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | `ANALYTICS_CHUNK_STRATEGY` | `cost-balanced` | Estrategia para armar chunks en modo batch. `cost-balanced` distribuye escenarios pesados; `sequential` conserva el orden del manifest. |
 | `ANALYTICS_ENGINE_TIMEOUT_MS` | `30000` | Timeout por corrida individual del solver. |
 | `ANALYTICS_RUNS_FILE` | autodetecta `data/analytics/runs` o `data/analytics/latest-runs.jsonl` | Input para `analytics:aggregate`; puede ser JSONL, Parquet o directorio Parquet particionado. `analytics:report` lo muestra como referencia del reporte. |
+| `ANALYTICS_EXPECTED_MANIFEST` | manifest de `latest-run.json` cuando coincide | Manifest o shard usado por `analytics:aggregate` para validar completitud y conteos por escenario. |
+| `ANALYTICS_ALLOW_PARTIAL` | `false` | Permite que quality pase cuando la corrida tiene menos filas que el manifest esperado. Usar solo para agregaciones parciales intencionales. |
+| `ANALYTICS_MAX_ERROR_RATE` | `0` | Tasa maxima de records con `status=error` permitida por quality, entre `0` y `1`. |
 | `PYTHON` | `.venv/bin/python` si existe; si no, `python3` | Ejecutable Python usado por `analytics:aggregate`. |
 
 Antes de correr `analytics:run`, compilar el engine:
@@ -213,6 +216,17 @@ estimatedIdealSecondsAtConcurrency
 ```
 
 Estos campos separan el tiempo reportado por el engine del wall time amortizado del runner. Son aproximados, pero sirven para decidir si el siguiente cuello esta en solver, runner/JSON/procesos o escritura.
+
+`latest-run.json` tambien guarda `manifestFingerprint` con el hash SHA-256 del manifest, el total de entradas y los conteos por escenario. `analytics:aggregate` usa esa metadata, cuando coincide con el `ANALYTICS_RUN_ID` solicitado, para activar checks de completitud en `latest-quality.json`.
+
+Los checks de calidad incluyen:
+
+- columnas requeridas y valores validos,
+- unicidad por `scenarioName`, `instanceId` y `seed`,
+- tasa de errores contra `ANALYTICS_MAX_ERROR_RATE`,
+- cantidad total de records contra el manifest esperado,
+- conteos por escenario contra el manifest esperado,
+- consistencia entre `manifestFingerprint` y el manifest usado.
 
 Antes de una corrida grande, se puede medir la mejor combinacion local de batch y concurrencia:
 

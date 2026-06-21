@@ -56,16 +56,14 @@ async function resolveDefaultRunsInput() {
     return latestRun.jsonlOutput;
   }
 
-  const partitionedRuns = path.join(repoRoot, 'data/analytics/runs');
   const latestJsonl = path.join(repoRoot, 'data/analytics/latest-runs.jsonl');
 
-  if (await pathExists(partitionedRuns)) {
-    return 'data/analytics/runs';
-  }
   if (await pathExists(latestJsonl)) {
     return 'data/analytics/latest-runs.jsonl';
   }
-  return 'data/analytics/latest-runs.jsonl';
+  throw new Error(
+    'No analytics run metadata found. Run pnpm analytics:run first or pass ANALYTICS_RUN_ID/ANALYTICS_RUNS_FILE.'
+  );
 }
 
 async function readLatestRun() {

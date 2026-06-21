@@ -81,11 +81,20 @@ def main() -> None:
     if not input_path.exists():
         raise SystemExit(f"Input file not found: {input_path}")
 
+    expected_manifest = load_manifest(resolve_path(REPO_ROOT, args.expected_manifest)) if args.expected_manifest else None
+    run_metadata = load_json(resolve_path(REPO_ROOT, args.run_metadata)) if args.run_metadata else None
     previous_summary_path = find_latest_history_summary(history_output)
     runs = scan_runs(input_path)
     summary = summarize_runs(runs)
     rows = summary.to_dicts()
-    quality = validate_runs(runs, rows)
+    quality = validate_runs(
+        runs,
+        rows,
+        expected_manifest=expected_manifest,
+        run_metadata=run_metadata,
+        allow_partial=args.allow_partial,
+        max_error_rate=args.max_error_rate,
+    )
     comparison = compare_with_previous_summary(rows, previous_summary_path, REPO_ROOT)
     timestamp = create_timestamp()
 
@@ -120,6 +129,12 @@ def main() -> None:
                 "csv": relative_to_repo(REPO_ROOT, csv_output),
                 "parquet": relative_to_repo(REPO_ROOT, parquet_output),
                 "quality": relative_to_repo(REPO_ROOT, quality_output),
+                "expectedManifest": relative_to_repo(REPO_ROOT, resolve_path(REPO_ROOT, args.expected_manifest))
+                if args.expected_manifest
+                else None,
+                "runMetadata": relative_to_repo(REPO_ROOT, resolve_path(REPO_ROOT, args.run_metadata))
+                if args.run_metadata
+                else None,
                 "comparison": relative_to_repo(REPO_ROOT, comparison_output),
                 "history": [relative_to_repo(REPO_ROOT, path) for path in history_paths],
                 "charts": [relative_to_repo(REPO_ROOT, path) for path in chart_paths],
@@ -155,7 +170,35 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--charts-output", default=str(DEFAULT_CHARTS_OUTPUT), help="Charts output directory.")
     parser.add_argument("--queries-input", default=str(DEFAULT_QUERIES_INPUT), help="DuckDB SQL queries directory.")
     parser.add_argument("--duckdb-output", default=str(DEFAULT_DUCKDB_OUTPUT), help="DuckDB query output directory.")
+    parser.add_argument("--expected-manifest", help="Manifest or manifest shard used to validate completeness.")
+    parser.add_argument("--run-metadata", help="latest-run.json metadata used to validate run identity.")
+    parser.add_argument(
+        "--allow-partial",
+        action="store_true",
+        default=os.environ.get("ANALYTICS_ALLOW_PARTIAL", "false").lower() in {"1", "true", "yes"},
+        help="Allow aggregate quality to pass when the manifest has more entries than the runs input.",
+    )
+    parser.add_argument(
+        "--max-error-rate",
+        type=float,
+        default=float(os.environ.get("ANALYTICS_MAX_ERROR_RATE", "0")),
+        help="Maximum allowed error rate, from 0 to 1.",
+    )
     return parser.parse_args()
+
+
+def load_json(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_manifest(path: Path) -> dict:
+    if path.suffix == ".jsonl":
+        scenarios = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+        return {
+            "kind": "manifest-shard",
+            "scenarios": scenarios,
+        }
+    return load_json(path)
 
 
 if __name__ == "__main__":

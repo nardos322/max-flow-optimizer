@@ -7,14 +7,27 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 
 async function main() {
-  const inputPath = path.resolve(repoRoot, process.env.ANALYTICS_RUNS_FILE ?? (await resolveDefaultRunsInput()));
+  const latestRun = await readLatestRun();
+  const runIdInput = process.env.ANALYTICS_RUN_ID?.trim();
+  const matchingLatestRun = !runIdInput || latestRun?.runId === runIdInput ? latestRun : null;
+  const inputPath = path.resolve(repoRoot, process.env.ANALYTICS_RUNS_FILE ?? (await resolveDefaultRunsInput(latestRun)));
   const scriptPath = path.join(repoRoot, 'analytics/python/analyze_runs.py');
   const python = resolvePython();
+  const args = [scriptPath, '--input', inputPath];
 
-  await runPython(python, [scriptPath, '--input', inputPath]);
+  if (matchingLatestRun) {
+    args.push('--run-metadata', path.join(repoRoot, 'data/analytics/latest-run.json'));
+  }
+  if (process.env.ANALYTICS_EXPECTED_MANIFEST) {
+    args.push('--expected-manifest', path.resolve(repoRoot, process.env.ANALYTICS_EXPECTED_MANIFEST));
+  } else if (matchingLatestRun?.manifest) {
+    args.push('--expected-manifest', path.resolve(repoRoot, matchingLatestRun.manifest));
+  }
+
+  await runPython(python, args);
 }
 
-async function resolveDefaultRunsInput() {
+async function resolveDefaultRunsInput(latestRun) {
   const runIdInput = process.env.ANALYTICS_RUN_ID?.trim();
   if (runIdInput) {
     const runPath = path.join(repoRoot, 'data/analytics/runs', `runId=${runIdInput}`);
@@ -24,7 +37,6 @@ async function resolveDefaultRunsInput() {
     return path.relative(repoRoot, runPath);
   }
 
-  const latestRun = await readLatestRun();
   if (latestRun?.parquetOutput) {
     return latestRun.parquetOutput;
   }
@@ -32,16 +44,14 @@ async function resolveDefaultRunsInput() {
     return latestRun.jsonlOutput;
   }
 
-  const partitionedRuns = path.join(repoRoot, 'data/analytics/runs');
   const latestJsonl = path.join(repoRoot, 'data/analytics/latest-runs.jsonl');
 
-  if (fs.existsSync(partitionedRuns)) {
-    return 'data/analytics/runs';
-  }
   if (fs.existsSync(latestJsonl)) {
     return 'data/analytics/latest-runs.jsonl';
   }
-  return 'data/analytics/latest-runs.jsonl';
+  throw new Error(
+    'No analytics run metadata found. Run pnpm analytics:run first or pass ANALYTICS_RUN_ID/ANALYTICS_RUNS_FILE.'
+  );
 }
 
 async function readLatestRun() {

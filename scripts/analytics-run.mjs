@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { spawn } from 'node:child_process';
 
 import {
@@ -24,6 +25,7 @@ async function main() {
   const manifestShardPath = resolveManifestShardPath();
   const manifestSourcePath = manifestShardPath ?? manifestPath;
   const manifest = await readManifest(manifestSourcePath, manifestShardPath !== null);
+  const manifestFingerprint = await createManifestFingerprint(manifest, manifestSourcePath);
   const concurrency = readConcurrencyEnv();
   const engineTimeoutMs = readPositiveIntegerEnv('ANALYTICS_ENGINE_TIMEOUT_MS', 30000);
   const batchSize = readPositiveIntegerEnv('ANALYTICS_BATCH_SIZE', 250);
@@ -98,6 +100,7 @@ async function main() {
     enginePath: path.relative(repoRoot, enginePath),
     manifest: path.relative(repoRoot, manifestSourcePath),
     manifestKind: manifest.kind,
+    manifestFingerprint,
     manifestEntries: manifest.scenarios.length,
     skippedExistingRuns: manifest.scenarios.length - filteredEntries.length,
     resume,
@@ -170,6 +173,27 @@ async function readManifest(sourcePath, isShard) {
     inputMode: scenarios.some((entry) => entry.inputPath) ? 'files' : 'generated',
     scenarios,
     kind: 'manifest-shard'
+  };
+}
+
+async function createManifestFingerprint(manifest, sourcePath) {
+  const content = await fs.readFile(sourcePath);
+  const scenariosByName = new Map();
+
+  for (const entry of manifest.scenarios) {
+    scenariosByName.set(entry.scenarioName, (scenariosByName.get(entry.scenarioName) ?? 0) + 1);
+  }
+
+  return {
+    source: path.relative(repoRoot, sourcePath),
+    sha256: crypto.createHash('sha256').update(content).digest('hex'),
+    entries: manifest.scenarios.length,
+    inputMode: manifest.inputMode ?? null,
+    manifestOrder: manifest.manifestOrder ?? null,
+    runsPerScenario: manifest.runsPerScenario ?? null,
+    scenarios: [...scenariosByName.entries()]
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([name, entries]) => ({ name, entries }))
   };
 }
 
