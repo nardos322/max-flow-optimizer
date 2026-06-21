@@ -54,11 +54,11 @@ def register_runs_view(connection: duckdb.DuckDBPyConnection, runs_input: Path) 
             raise FileNotFoundError(f"No analytics run files found in {runs_input}.")
         source = " union all by name ".join(sources)
     elif runs_input.suffix == ".parquet":
-        source = f"read_parquet('{escaped_path}')"
+        source = f"select * from read_parquet('{escaped_path}')"
     else:
-        source = f"read_json_auto('{escaped_path}', format = 'newline_delimited')"
+        source = f"select * from read_json_auto('{escaped_path}', format = 'newline_delimited')"
 
-    connection.sql(f"create or replace view analytics_runs as select * from ({source})")
+    connection.sql(f"create or replace view analytics_runs as {source}")
 
 
 def run_query(connection: duckdb.DuckDBPyConnection, query_path: Path) -> list[dict[str, Any]]:

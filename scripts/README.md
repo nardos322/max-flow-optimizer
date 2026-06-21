@@ -10,6 +10,7 @@ Scripts de desarrollo local y automatizaciones pequenas.
 - `analytics-aggregate.mjs`: ejecuta el pipeline Python modular en `analytics/python/` para calcular agregados por escenario, exportar Parquet, correr quality checks, guardar historico, ejecutar queries DuckDB y generar graficos con Matplotlib.
 - `analytics-report.mjs`: genera un reporte markdown local desde los agregados, quality checks, comparacion historica y graficos.
 - `analytics-verify.mjs`: valida metadata, outputs, quality checks, summary y fingerprint de manifest de la ultima corrida o de `ANALYTICS_RUN_ID`.
+- `analytics-profile.mjs`: ejecuta `pnpm analytics` con presets `small`, `50k`, `500k` o `benchmark`.
 - `analytics-tune.mjs`: prueba combinaciones de `ANALYTICS_BATCH_SIZE` y `ANALYTICS_CONCURRENCY` sobre una muestra temporal para recomendar valores por maquina.
 - `analytics-timed.mjs`: ejecuta `generate`, `run`, `aggregate` y `report`, midiendo segundos por etapa.
 
@@ -75,17 +76,19 @@ estimatedIdealSecondsAtConcurrency
 Corrida pequena para desarrollo:
 
 ```bash
-ANALYTICS_SCENARIOS=small-sparse ANALYTICS_RUNS_PER_SCENARIO=1 pnpm analytics:generate
-pnpm analytics:run
-pnpm analytics:aggregate
-pnpm analytics:verify
-pnpm analytics:report
+pnpm analytics:small
 ```
 
 Corrida de 50k instancias con los 10 escenarios por defecto:
 
 ```bash
 ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=100 ANALYTICS_CONCURRENCY=auto pnpm analytics
+```
+
+Preset equivalente:
+
+```bash
+pnpm analytics:50k
 ```
 
 Corrida de 500k instancias con salida Parquet:
@@ -99,6 +102,12 @@ ANALYTICS_BATCH_SIZE=500 \
 ANALYTICS_CONCURRENCY=8 \
 ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics
+```
+
+Preset equivalente:
+
+```bash
+pnpm analytics:500k
 ```
 
 La medicion local recomendada para `500k` es `ANALYTICS_BATCH_SIZE=500` con `ANALYTICS_CONCURRENCY=8`: `run-500k-batch500-concurrency8-final` completo `500000` instancias en `120.11s`, `4162.85 rows/s`, `0` errores. La comparacion directa con `BATCH_SIZE=250`, `CONCURRENCY=8` fue `152.14s`, `3286.45 rows/s`, `0` errores.

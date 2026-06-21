@@ -20,6 +20,15 @@ Comando completo:
 pnpm analytics
 ```
 
+Perfiles predefinidos:
+
+```bash
+pnpm analytics:small
+pnpm analytics:50k
+pnpm analytics:500k
+pnpm analytics:benchmark
+```
+
 ## Arquitectura
 
 ```text
@@ -83,6 +92,7 @@ Esos outputs estan ignorados por git. Se versionan los scripts, queries y docume
 | Variable | Default | Uso |
 | --- | --- | --- |
 | `ANALYTICS_RUNS_PER_SCENARIO` | `10` | Instancias generadas por escenario. |
+| `ANALYTICS_PROFILE` | unset | Nombre del perfil usado por `analytics:profile`, solo informativo para la corrida. |
 | `ANALYTICS_SCENARIOS` | todos | Lista separada por coma de escenarios a generar. |
 | `ANALYTICS_MANIFEST_ORDER` | `scenario` | Orden del manifest. Usar `interleaved` para mezclar escenarios por indice y balancear mejor los workers. |
 | `ANALYTICS_MANIFEST_SHARD_SIZE` | `1000` | Cantidad de entradas por shard JSONL generado en `data/generated/manifest`. |
@@ -164,6 +174,12 @@ Corrida recomendada de 50k instancias:
 ANALYTICS_RUNS_PER_SCENARIO=5000 ANALYTICS_MANIFEST_ORDER=interleaved ANALYTICS_BATCH_SIZE=100 ANALYTICS_CONCURRENCY=auto pnpm analytics
 ```
 
+Equivalente con preset:
+
+```bash
+pnpm analytics:50k
+```
+
 `ANALYTICS_BATCH_SIZE=500` y `ANALYTICS_CONCURRENCY=8` son la configuracion recomendada medida para corridas de `500k` en esta maquina. La corrida final `run-500k-batch500-concurrency8-final` proceso `500000` instancias en `120.11s`, `4162.85 rows/s`, con `0` errores. Como referencia, `BATCH_SIZE=250`, `CONCURRENCY=8` proceso la misma escala en `152.14s`, `3286.45 rows/s`, con `0` errores. En otra maquina, volver a medir con `pnpm analytics:tune`.
 
 Corrida de 500k instancias con salida Parquet:
@@ -177,6 +193,12 @@ ANALYTICS_BATCH_SIZE=500 \
 ANALYTICS_CONCURRENCY=8 \
 ANALYTICS_UPDATE_LATEST_OUTPUT=false \
 pnpm analytics
+```
+
+Equivalente con preset:
+
+```bash
+pnpm analytics:500k
 ```
 
 Para reagregar o reportar una corrida especifica:
