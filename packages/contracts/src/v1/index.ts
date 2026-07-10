@@ -5,12 +5,18 @@ import type { z } from 'zod';
 import {
   ApiErrorSchema,
   HealthResponseSchema,
+  RunDetailSchema,
+  RunsListResponseSchema,
+  RunSummarySchema,
   SolveRequestSchema,
   SolveResponseSchema
 } from './schemas.js';
 import type {
   ApiErrorV1,
   HealthResponseV1,
+  RunDetailV1,
+  RunsListResponseV1,
+  RunSummaryV1,
   SolveRequestV1,
   SolveResponseV1
 } from './schemas.js';
@@ -45,6 +51,9 @@ export type ValidateFunction<T> = ((data: unknown) => data is T) & {
 export type ValidatorSet = {
   validateSolveRequest: ValidateFunction<SolveRequestV1>;
   validateSolveResponse: ValidateFunction<SolveResponseV1>;
+  validateRunSummary: ValidateFunction<RunSummaryV1>;
+  validateRunDetail: ValidateFunction<RunDetailV1>;
+  validateRunsListResponse: ValidateFunction<RunsListResponseV1>;
   validateApiError: ValidateFunction<ApiErrorV1>;
   validateHealthResponse: ValidateFunction<HealthResponseV1>;
   formatErrors(errors?: ZodValidationIssue[] | null): FormattedValidationError[];
@@ -149,12 +158,18 @@ function createZodValidator<T>(schema: z.ZodType<T>): ValidateFunction<T> {
 export function createValidatorSet(): ValidatorSet {
   const validateSolveRequest = createZodValidator(SolveRequestSchema);
   const validateSolveResponse = createZodValidator(SolveResponseSchema);
+  const validateRunSummary = createZodValidator(RunSummarySchema);
+  const validateRunDetail = createZodValidator(RunDetailSchema);
+  const validateRunsListResponse = createZodValidator(RunsListResponseSchema);
   const validateApiError = createZodValidator(ApiErrorSchema);
   const validateHealthResponse = createZodValidator(HealthResponseSchema);
 
   return {
     validateSolveRequest,
     validateSolveResponse,
+    validateRunSummary,
+    validateRunDetail,
+    validateRunsListResponse,
     validateApiError,
     validateHealthResponse,
     formatErrors(errors) {

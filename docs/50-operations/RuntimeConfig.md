@@ -11,6 +11,8 @@ Definir variables de entorno y defaults para ejecutar localmente sin ambiguedad.
 | `ENGINE_PATH` | No | `<repo-root>/services/engine-cpp/build/maxflow_engine` | Override opcional de la ruta del binario `maxflow_engine`. |
 | `ENGINE_TIMEOUT_MS` | No | `2000` | Timeout de ejecucion del motor en ms. |
 | `MAX_REQUEST_BYTES` | No | `2500000` | Tamano maximo de body permitido por request. |
+| `RUNS_DB_PATH` | No | `<repo-root>/data/app/maxflow.sqlite` | Ruta del archivo SQLite para historial local de corridas. |
+| `RUNS_PERSISTENCE_ENABLED` | No | `true` | Habilita persistencia automatica de corridas desde `POST /v1/solve`. |
 | `MAX_DAYS` | No | `500` | Limite semantico maximo de elementos en `days`. |
 | `MAX_MEDICS` | No | `500` | Limite semantico maximo de elementos en `medics`. |
 | `MAX_PERIODS` | No | `100` | Limite semantico maximo de elementos en `periods`. |
@@ -27,6 +29,8 @@ Definir variables de entorno y defaults para ejecutar localmente sin ambiguedad.
 - Si `ENGINE_PATH` existe: la API usa esa ruta como override explicito.
 - Si `ENGINE_PATH` no existe: la API intenta resolver el binario en `<repo-root>/services/engine-cpp/build/maxflow_engine`.
 - Si no existe ni el override ni la ruta por defecto: fail-fast con error claro de startup.
+- Si `RUNS_PERSISTENCE_ENABLED=true`, la API crea la tabla `runs` en `RUNS_DB_PATH` al iniciar.
+- Si `RUNS_PERSISTENCE_ENABLED=false`, `POST /v1/solve` no persiste y los endpoints de historial responden sin datos persistidos.
 - No usar secretos en v1 (sin auth/DB remota).
 - Si una variable no esta presente, se usa el default documentado en este archivo.
 

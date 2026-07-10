@@ -46,4 +46,66 @@ paths:
             application/json:
               schema:
                 $ref: "./schemas/error.schema.json"
-
+  /v1/runs:
+    get:
+      summary: List persisted solve runs
+      operationId: listRuns
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [feasible, infeasible, error]
+        - name: instanceId
+          in: query
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+      responses:
+        "200":
+          description: Run history page
+        "400":
+          description: Invalid query
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/error.schema.json"
+  /v1/runs/{runId}:
+    get:
+      summary: Get one persisted solve run
+      operationId: getRun
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 128
+      responses:
+        "200":
+          description: Run detail
+        "404":
+          description: Run not found
+          content:
+            application/json:
+              schema:
+                $ref: "./schemas/error.schema.json"

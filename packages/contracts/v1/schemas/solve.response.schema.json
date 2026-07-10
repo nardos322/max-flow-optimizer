@@ -13,6 +13,15 @@
     "stats"
   ],
   "properties": {
+    "runId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
     "instanceId": {
       "type": "string",
       "minLength": 1,

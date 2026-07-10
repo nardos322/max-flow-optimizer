@@ -52,6 +52,7 @@ export function toApiErrorCode(code: string): ApiErrorCode {
     'ENGINE_TIMEOUT',
     'ENGINE_INVALID_OUTPUT',
     'ENGINE_INTERNAL_ERROR',
+    'NOT_FOUND',
     'INTERNAL_ERROR'
   ]);
 

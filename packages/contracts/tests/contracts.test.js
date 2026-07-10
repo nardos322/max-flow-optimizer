@@ -3,7 +3,13 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createValidatorSet, loadOpenApiDocument, SolveRequestSchema } from '../dist/index.js';
+import {
+  createValidatorSet,
+  loadOpenApiDocument,
+  RunDetailSchema,
+  RunsListQuerySchema,
+  SolveRequestSchema
+} from '../dist/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
@@ -26,6 +32,8 @@ test('openapi document exposes v1 endpoints', () => {
   const openapi = loadOpenApiDocument();
   assert.match(openapi, /\/health:/);
   assert.match(openapi, /\/v1\/solve:/);
+  assert.match(openapi, /\/v1\/runs:/);
+  assert.match(openapi, /\/v1\/runs\/\{runId\}:/);
 });
 
 test('health response schema accepts the canonical payload', () => {
@@ -41,9 +49,77 @@ test('request schema accepts all canonical input fixtures', () => {
   }
 });
 
+test('request schema accepts optional solve metadata', () => {
+  const payload = readJson('input/tiny-feasible.json');
+  payload.metadata = {
+    source: 'web-fixture',
+    datasetName: 'tiny-feasible'
+  };
+
+  assert.equal(validators.validateSolveRequest(payload), true);
+});
+
 test('zod request schema is exported for direct consumers', () => {
   const payload = readJson('input/tiny-feasible.json');
   assert.equal(SolveRequestSchema.safeParse(payload).success, true);
+});
+
+test('run history schemas accept P1 payloads', () => {
+  const input = readJson('input/tiny-feasible.json');
+  const response = {
+    ...readJson('expected/tiny-feasible.response.json'),
+    runId: '0f7d2f6a-4eb7-4e82-9ea3-f6b7d8cbfd7f',
+    createdAt: '2026-07-10T12:00:00.000Z'
+  };
+  const summary = {
+    runId: response.runId,
+    instanceId: response.instanceId,
+    createdAt: response.createdAt,
+    status: 'feasible',
+    feasible: true,
+    requiredFlow: response.requiredFlow,
+    maxFlow: response.maxFlow,
+    runtimeMs: response.stats.runtimeMs,
+    nodes: response.stats.nodes,
+    edges: response.stats.edges,
+    inputHash: 'sha256:abc',
+    source: 'unknown'
+  };
+  const listResponse = {
+    items: [summary],
+    pagination: {
+      limit: 20,
+      offset: 0,
+      total: 1
+    }
+  };
+  const detail = {
+    runId: response.runId,
+    instanceId: response.instanceId,
+    createdAt: response.createdAt,
+    status: 'feasible',
+    input,
+    response
+  };
+
+  assert.equal(validators.validateSolveResponse(response), true);
+  assert.equal(validators.validateRunSummary(summary), true);
+  assert.equal(validators.validateRunsListResponse(listResponse), true);
+  assert.equal(validators.validateRunDetail(detail), true);
+  assert.equal(RunDetailSchema.safeParse(detail).success, true);
+});
+
+test('run list query schema parses defaults and rejects invalid status', () => {
+  assert.deepEqual(RunsListQuerySchema.parse({}), {
+    limit: 20,
+    offset: 0
+  });
+  assert.deepEqual(RunsListQuerySchema.parse({ limit: '5', offset: '10', status: 'feasible' }), {
+    limit: 5,
+    offset: 10,
+    status: 'feasible'
+  });
+  assert.equal(RunsListQuerySchema.safeParse({ status: 'unknown' }).success, false);
 });
 
 test('response and error schemas accept canonical expected fixtures', () => {

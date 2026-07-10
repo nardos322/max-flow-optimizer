@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,7 +27,8 @@ const app = createApp({
       ...process.env,
       NODE_ENV: 'test',
       ENGINE_PATH: enginePath,
-      LOG_LEVEL: 'silent'
+      LOG_LEVEL: 'silent',
+      RUNS_PERSISTENCE_ENABLED: 'false'
     }
   })
 });
@@ -157,6 +159,7 @@ describe('API v1', () => {
           NODE_ENV: 'test',
           ENGINE_PATH: enginePath,
           LOG_LEVEL: 'silent',
+          RUNS_PERSISTENCE_ENABLED: 'false',
           MAX_REQUEST_BYTES: '100'
         }
       })
@@ -185,7 +188,8 @@ describe('API v1', () => {
           ...process.env,
           NODE_ENV: 'test',
           ENGINE_PATH: enginePath,
-          LOG_LEVEL: 'silent'
+          LOG_LEVEL: 'silent',
+          RUNS_PERSISTENCE_ENABLED: 'false'
         }
       }),
       engineClient
@@ -206,7 +210,8 @@ describe('API v1', () => {
           ...process.env,
           NODE_ENV: 'test',
           ENGINE_PATH: enginePath,
-          LOG_LEVEL: 'info'
+          LOG_LEVEL: 'info',
+          RUNS_PERSISTENCE_ENABLED: 'false'
         }
       }),
       logger
@@ -233,7 +238,8 @@ describe('API v1', () => {
           ...process.env,
           NODE_ENV: 'test',
           ENGINE_PATH: enginePath,
-          LOG_LEVEL: 'info'
+          LOG_LEVEL: 'info',
+          RUNS_PERSISTENCE_ENABLED: 'false'
         }
       }),
       logger
@@ -252,6 +258,119 @@ describe('API v1', () => {
     expect(completedLog?.payload.instanceId).toBe('invalid-duplicate-id');
   });
 
+  it('persists solve runs and exposes run history', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'maxflow-runs-'));
+    const input = {
+      ...readJson<Record<string, unknown>>('input/tiny-feasible.json'),
+      metadata: {
+        source: 'web-fixture',
+        datasetName: 'tiny-feasible'
+      }
+    };
+    const runsApp = createApp({
+      config: loadConfig({
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          ENGINE_PATH: enginePath,
+          LOG_LEVEL: 'silent',
+          RUNS_DB_PATH: path.join(tempDir, 'runs.sqlite'),
+          RUNS_PERSISTENCE_ENABLED: 'true'
+        }
+      })
+    });
+
+    const solveResponse = await request(runsApp).post('/v1/solve').send(input).expect(200);
+
+    expect(validators.validateSolveResponse(solveResponse.body)).toBe(true);
+    expect(solveResponse.body.runId).toEqual(expect.any(String));
+    expect(new Date(solveResponse.body.createdAt).toString()).not.toBe('Invalid Date');
+
+    const listResponse = await request(runsApp).get('/v1/runs').expect(200);
+
+    expect(validators.validateRunsListResponse(listResponse.body)).toBe(true);
+    expect(listResponse.body.pagination).toEqual({
+      limit: 20,
+      offset: 0,
+      total: 1
+    });
+    expect(listResponse.body.items[0]).toMatchObject({
+      runId: solveResponse.body.runId,
+      instanceId: solveResponse.body.instanceId,
+      status: 'feasible',
+      feasible: true,
+      requiredFlow: solveResponse.body.requiredFlow,
+      maxFlow: solveResponse.body.maxFlow,
+      runtimeMs: solveResponse.body.stats.runtimeMs,
+      nodes: solveResponse.body.stats.nodes,
+      edges: solveResponse.body.stats.edges,
+      source: 'web-fixture'
+    });
+    expect(listResponse.body.items[0].inputHash).toMatch(/^sha256:/);
+
+    const detailResponse = await request(runsApp).get(`/v1/runs/${solveResponse.body.runId}`).expect(200);
+
+    expect(validators.validateRunDetail(detailResponse.body)).toBe(true);
+    expect(detailResponse.body).toMatchObject({
+      runId: solveResponse.body.runId,
+      instanceId: solveResponse.body.instanceId,
+      status: 'feasible',
+      input,
+      response: solveResponse.body
+    });
+  });
+
+  it('filters and paginates persisted runs', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'maxflow-runs-'));
+    const runsApp = createApp({
+      config: loadConfig({
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NODE_ENV: 'test',
+          ENGINE_PATH: enginePath,
+          LOG_LEVEL: 'silent',
+          RUNS_DB_PATH: path.join(tempDir, 'runs.sqlite'),
+          RUNS_PERSISTENCE_ENABLED: 'true'
+        }
+      })
+    });
+
+    await request(runsApp).post('/v1/solve').send(readJson('input/tiny-feasible.json')).expect(200);
+    await request(runsApp).post('/v1/solve').send(readJson('input/tiny-infeasible-availability.json')).expect(200);
+
+    const statusResponse = await request(runsApp).get('/v1/runs?status=infeasible').expect(200);
+    expect(validators.validateRunsListResponse(statusResponse.body)).toBe(true);
+    expect(statusResponse.body.pagination.total).toBe(1);
+    expect(statusResponse.body.items[0].status).toBe('infeasible');
+
+    const instanceResponse = await request(runsApp).get('/v1/runs?instanceId=tiny-feasible').expect(200);
+    expect(instanceResponse.body.pagination.total).toBe(1);
+    expect(instanceResponse.body.items[0].instanceId).toBe('tiny-feasible');
+
+    const pagedResponse = await request(runsApp).get('/v1/runs?limit=1&offset=1').expect(200);
+    expect(validators.validateRunsListResponse(pagedResponse.body)).toBe(true);
+    expect(pagedResponse.body.items).toHaveLength(1);
+    expect(pagedResponse.body.pagination).toEqual({
+      limit: 1,
+      offset: 1,
+      total: 2
+    });
+  });
+
+  it('returns run query validation errors and missing run errors', async () => {
+    const response = await request(app).get('/v1/runs?status=unknown').expect(400);
+
+    expect(validators.validateApiError(response.body)).toBe(true);
+    expect(response.body.error.code).toBe('INVALID_INPUT');
+
+    const missingResponse = await request(app).get('/v1/runs/missing-run').expect(404);
+
+    expect(validators.validateApiError(missingResponse.body)).toBe(true);
+    expect(missingResponse.body.error.code).toBe('NOT_FOUND');
+  });
+
   it('maps engine failures to ENGINE_* errors', async () => {
     const failingApp = createApp({
       config: loadConfig({
@@ -260,7 +379,8 @@ describe('API v1', () => {
           ...process.env,
           NODE_ENV: 'test',
           ENGINE_PATH: path.join(repoRoot, 'services', 'engine-cpp', 'build', 'missing-engine'),
-          LOG_LEVEL: 'silent'
+          LOG_LEVEL: 'silent',
+          RUNS_PERSISTENCE_ENABLED: 'false'
         }
       })
     });

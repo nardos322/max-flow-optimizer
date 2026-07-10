@@ -21,11 +21,14 @@
 - `POST /v1/solve`
   - Uso: validar y resolver una instancia del problema.
   - Content-Type: `application/json`
+- `GET /v1/runs`
+  - Uso: listar historial local de corridas persistidas.
+- `GET /v1/runs/:runId`
+  - Uso: consultar input y response completos de una corrida persistida.
 
 ### Fuera de alcance v1
 - Endpoints de autenticacion.
 - Endpoints CRUD de hospitales/medicos/dias persistidos.
-- Endpoints de historial de corridas (solo si luego se agrega DB en v1.1).
 
 ## 2. `POST /v1/solve` - Request (JSON)
 ```json
@@ -49,9 +52,15 @@
     { "medicId": "m1", "dayId": "d1" },
     { "medicId": "m1", "dayId": "d3" },
     { "medicId": "m2", "dayId": "d2" }
-  ]
+  ],
+  "metadata": {
+    "source": "web-fixture",
+    "datasetName": "demo"
+  }
 }
 ```
+
+`metadata` es opcional y compatible con requests MVP existentes.
 
 ## 3. `POST /v1/solve` - Validaciones
 ### 3.1 Capa estructural (`packages/contracts`)
@@ -83,6 +92,8 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
 ## 4. `POST /v1/solve` - Response (factible)
 ```json
 {
+  "runId": "0f7d2f6a-4eb7-4e82-9ea3-f6b7d8cbfd7f",
+  "createdAt": "2026-07-10T12:00:00.000Z",
   "instanceId": "demo-001",
   "feasible": true,
   "requiredFlow": 3,
@@ -100,9 +111,13 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
 }
 ```
 
+`runId` y `createdAt` aparecen cuando `RUNS_PERSISTENCE_ENABLED=true`.
+
 ## 5. `POST /v1/solve` - Response (infactible)
 ```json
 {
+  "runId": "0f7d2f6a-4eb7-4e82-9ea3-f6b7d8cbfd7f",
+  "createdAt": "2026-07-10T12:00:00.000Z",
   "instanceId": "demo-001",
   "feasible": false,
   "requiredFlow": 3,
@@ -148,7 +163,80 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
 ## 6. Codigos de estado
 - `200`: ejecucion correcta (factible o infactible) y `GET /health`.
 - `400`: validacion de input fallida (`POST /v1/solve`).
+- `404`: recurso no encontrado (`GET /v1/runs/:runId`).
 - `500`: error interno en API o motor.
+
+## 6.1 `GET /v1/runs`
+Lista corridas persistidas en orden descendente por `createdAt`.
+
+Query params:
+
+| Param | Default | Limite | Descripcion |
+|---|---:|---:|---|
+| `limit` | `20` | `100` | Cantidad maxima de items. |
+| `offset` | `0` | - | Offset numerico. |
+| `status` | unset | - | `feasible`, `infeasible` o `error`. |
+| `instanceId` | unset | - | Filtro exacto por instancia. |
+
+Response `200`:
+
+```json
+{
+  "items": [
+    {
+      "runId": "0f7d2f6a-4eb7-4e82-9ea3-f6b7d8cbfd7f",
+      "instanceId": "demo-001",
+      "createdAt": "2026-07-10T12:00:00.000Z",
+      "status": "feasible",
+      "feasible": true,
+      "requiredFlow": 3,
+      "maxFlow": 3,
+      "runtimeMs": 2,
+      "nodes": 13,
+      "edges": 18,
+      "inputHash": "sha256:...",
+      "source": "web-fixture"
+    }
+  ],
+  "pagination": {
+    "limit": 20,
+    "offset": 0,
+    "total": 1
+  }
+}
+```
+
+## 6.2 `GET /v1/runs/:runId`
+Devuelve una corrida completa.
+
+Response `200`:
+
+```json
+{
+  "runId": "0f7d2f6a-4eb7-4e82-9ea3-f6b7d8cbfd7f",
+  "instanceId": "demo-001",
+  "createdAt": "2026-07-10T12:00:00.000Z",
+  "status": "feasible",
+  "input": {},
+  "response": {}
+}
+```
+
+Response `404`:
+
+```json
+{
+  "error": {
+    "requestId": "8e950b8f-f8c3-49fc-835b-4015f4963ca1",
+    "timestamp": "2026-07-10T12:00:00.000Z",
+    "code": "NOT_FOUND",
+    "message": "Run was not found.",
+    "details": {
+      "runId": "missing"
+    }
+  }
+}
+```
 
 ## 7. Error de validacion (ejemplo)
 El listado completo de `error.code` y la forma esperada de `details` por codigo vive en `docs/30-api/ErrorCatalog.md`.

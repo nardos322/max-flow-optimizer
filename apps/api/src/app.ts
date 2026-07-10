@@ -5,18 +5,21 @@ import { createValidatorSet, type ValidatorSet } from '@maxflow/contracts';
 
 import { type ApiConfig, loadConfig } from './config.js';
 import { createHealthController } from './controllers/healthController.js';
+import { createGetRunController, createListRunsController } from './controllers/runsController.js';
 import { createSolveController } from './controllers/solveController.js';
 import { CliEngineClient, type EngineClient } from './engineClient.js';
 import { createErrorMiddleware } from './middleware/errorMiddleware.js';
 import { createRequestContextMiddleware } from './middleware/requestContextMiddleware.js';
 import { createHealthRoutes } from './routes/healthRoutes.js';
 import { createV1Routes } from './routes/v1Routes.js';
+import { createRunsStore, type RunsStore } from './services/runsStore.js';
 import { createSolveService } from './services/solveService.js';
 
 type CreateAppOptions = {
   config?: ApiConfig;
   validators?: ValidatorSet;
   engineClient?: EngineClient;
+  runsStore?: RunsStore;
   logger?: Logger;
 };
 
@@ -25,7 +28,8 @@ export function createApp(options: CreateAppOptions = {}) {
   const validators = options.validators ?? createValidatorSet();
   const logger = options.logger ?? pino({ level: config.logLevel });
   const engineClient = options.engineClient ?? new CliEngineClient(config, validators, logger);
-  const solveService = createSolveService({ config, validators, engineClient });
+  const runsStore = options.runsStore ?? (config.runsPersistenceEnabled ? createRunsStore({ dbPath: config.runsDbPath }) : undefined);
+  const solveService = createSolveService({ config, validators, engineClient, runsStore });
   const app = express();
 
   app.disable('x-powered-by');
@@ -38,7 +42,9 @@ export function createApp(options: CreateAppOptions = {}) {
     createV1Routes({
       solveController: createSolveController({
         solveService
-      })
+      }),
+      listRunsController: createListRunsController({ runsStore }),
+      getRunController: createGetRunController({ runsStore })
     })
   );
   app.use(createErrorMiddleware(logger));

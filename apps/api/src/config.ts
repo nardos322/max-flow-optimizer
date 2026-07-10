@@ -10,6 +10,8 @@ export type ApiConfig = {
   enginePath: string;
   engineTimeoutMs: number;
   maxRequestBytes: number;
+  runsDbPath: string;
+  runsPersistenceEnabled: boolean;
   logLevel: string;
   limits: {
     maxDays: number;
@@ -54,10 +56,28 @@ function parseIntegerEnv(env: NodeJS.ProcessEnv, name: string, fallback: number)
   return value;
 }
 
+function parseBooleanEnv(env: NodeJS.ProcessEnv, name: string, fallback: boolean): boolean {
+  const rawValue = env[name];
+  if (rawValue === undefined || rawValue === '') {
+    return fallback;
+  }
+
+  if (rawValue === 'true') {
+    return true;
+  }
+
+  if (rawValue === 'false') {
+    return false;
+  }
+
+  throw new Error(`${name} must be either "true" or "false".`);
+}
+
 export function loadConfig(options: LoadConfigOptions = {}): ApiConfig {
   const env = options.env ?? process.env;
   const repoRoot = findRepoRoot(options.cwd ?? process.cwd());
   const defaultEnginePath = path.join(repoRoot, 'services', 'engine-cpp', 'build', 'maxflow_engine');
+  const defaultRunsDbPath = path.join(repoRoot, 'data', 'app', 'maxflow.sqlite');
 
   return {
     nodeEnv: env.NODE_ENV ?? 'development',
@@ -66,6 +86,8 @@ export function loadConfig(options: LoadConfigOptions = {}): ApiConfig {
     enginePath: env.ENGINE_PATH && env.ENGINE_PATH.length > 0 ? env.ENGINE_PATH : defaultEnginePath,
     engineTimeoutMs: parseIntegerEnv(env, 'ENGINE_TIMEOUT_MS', 2000),
     maxRequestBytes: parseIntegerEnv(env, 'MAX_REQUEST_BYTES', 2500000),
+    runsDbPath: env.RUNS_DB_PATH && env.RUNS_DB_PATH.length > 0 ? env.RUNS_DB_PATH : defaultRunsDbPath,
+    runsPersistenceEnabled: parseBooleanEnv(env, 'RUNS_PERSISTENCE_ENABLED', true),
     logLevel: env.LOG_LEVEL ?? 'info',
     limits: {
       maxDays: parseIntegerEnv(env, 'MAX_DAYS', DEFAULT_DOMAIN_LIMITS.maxDays),
