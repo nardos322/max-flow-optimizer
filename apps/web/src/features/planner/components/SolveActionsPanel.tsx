@@ -44,6 +44,8 @@ export function SolveActionsPanel({
             <p className="mt-1">
               maxFlow {lastSolveResult.maxFlow} / requiredFlow {lastSolveResult.requiredFlow}
             </p>
+            {lastSolveResult.runId ? <p className="mt-1 text-xs">runId: {lastSolveResult.runId}</p> : null}
+            {lastSolveResult.createdAt ? <p className="mt-1 text-xs">createdAt: {lastSolveResult.createdAt}</p> : null}
           </div>
         ) : (
           <EmptyState title="Sin corrida todavia" message="Cuando el borrador sea valido podras ejecutar la resolucion desde aqui." />

@@ -19,7 +19,13 @@ export const initialAppState: AppState = {
   instanceDraft: createEmptyDraft(),
   lastSolveResult: null,
   lastSolveError: null,
-  isSolving: false
+  isSolving: false,
+  runsList: null,
+  selectedRun: null,
+  isLoadingRuns: false,
+  runsError: null,
+  runsFilterStatus: 'all',
+  runsOffset: 0
 };
 
 export function appStateReducer(state: AppState, action: AppAction): AppState {
@@ -68,6 +74,53 @@ export function appStateReducer(state: AppState, action: AppAction): AppState {
         ...state,
         isSolving: false,
         lastSolveError: action.error
+      };
+    case 'beginLoadRuns':
+      return {
+        ...state,
+        isLoadingRuns: true,
+        runsError: null
+      };
+    case 'loadRunsSuccess':
+      return {
+        ...state,
+        isLoadingRuns: false,
+        runsList: action.result,
+        runsError: null
+      };
+    case 'loadRunsError':
+      return {
+        ...state,
+        isLoadingRuns: false,
+        runsError: action.error
+      };
+    case 'selectRun':
+      return {
+        ...state,
+        selectedRun: action.run,
+        runsError: null
+      };
+    case 'clearSelectedRun':
+      return {
+        ...state,
+        selectedRun: null
+      };
+    case 'setRunsFilterStatus':
+      return {
+        ...state,
+        runsFilterStatus: action.status,
+        runsOffset: 0
+      };
+    case 'setRunsOffset':
+      return {
+        ...state,
+        runsOffset: Math.max(0, action.offset)
+      };
+    case 'restoreRunDraft':
+      return {
+        ...resetSolveState(state, replaceDraft(action.run.input)),
+        activeSection: 'planner',
+        selectedRun: action.run
       };
     default:
       return state;

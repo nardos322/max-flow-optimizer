@@ -1,4 +1,4 @@
-import type { SolveResponseV1 } from '@maxflow/contracts/v1';
+import type { RunDetailV1, RunsListResponseV1, RunStatusV1, SolveResponseV1 } from '@maxflow/contracts/v1';
 
 import type { ApiErrorDetails, AppSection, InstanceDraft } from '../types.js';
 
@@ -16,4 +16,12 @@ export type AppAction =
   | { type: 'toggleAvailability'; medicId: string; dayId: string }
   | { type: 'beginSolve' }
   | { type: 'solveSuccess'; result: SolveResponseV1 }
-  | { type: 'solveError'; error: ApiErrorDetails };
+  | { type: 'solveError'; error: ApiErrorDetails }
+  | { type: 'beginLoadRuns' }
+  | { type: 'loadRunsSuccess'; result: RunsListResponseV1 }
+  | { type: 'loadRunsError'; error: ApiErrorDetails }
+  | { type: 'selectRun'; run: RunDetailV1 }
+  | { type: 'clearSelectedRun' }
+  | { type: 'setRunsFilterStatus'; status: RunStatusV1 | 'all' }
+  | { type: 'setRunsOffset'; offset: number }
+  | { type: 'restoreRunDraft'; run: RunDetailV1 };

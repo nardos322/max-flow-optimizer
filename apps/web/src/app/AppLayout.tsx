@@ -1,6 +1,7 @@
 import { MedicsPage } from '../features/medics/index.js';
 import { PeriodsPage } from '../features/periods/index.js';
 import { PlannerPage } from '../features/planner/index.js';
+import { RunsPage } from '../features/runs/index.js';
 import { useAppState } from '../state/appState.js';
 import { AppHeader } from './AppHeader.js';
 import { AppNav } from './AppNav.js';
@@ -17,6 +18,7 @@ export function AppLayout() {
         {state.activeSection === 'periods' ? <PeriodsPage /> : null}
         {state.activeSection === 'medics' ? <MedicsPage /> : null}
         {state.activeSection === 'planner' ? <PlannerPage /> : null}
+        {state.activeSection === 'runs' ? <RunsPage /> : null}
       </main>
     </div>
   );
