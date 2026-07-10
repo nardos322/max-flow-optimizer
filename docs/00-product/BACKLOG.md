@@ -19,6 +19,7 @@
 
 ## P1 - v1.1 (mejoras sin romper MVP)
 Spec de alcance: `docs/00-product/P1Spec.md`.
+Ruta de implementacion: `docs/00-product/P1ImplementationRoute.md`.
 
 1. Persistir corridas en SQLite.
 2. Endpoint `GET /v1/runs` para historial.
