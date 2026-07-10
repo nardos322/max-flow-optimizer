@@ -18,6 +18,8 @@
 10. README de demo end-to-end.
 
 ## P1 - v1.1 (mejoras sin romper MVP)
+Spec de alcance: `docs/00-product/P1Spec.md`.
+
 1. Persistir corridas en SQLite.
 2. Endpoint `GET /v1/runs` para historial.
 3. Diagnosticos de infactibilidad mas completos.
