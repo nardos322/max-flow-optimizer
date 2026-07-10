@@ -53,7 +53,7 @@ export function AppHeader() {
               setImportError(null);
             }}
           >
-            Fixture OK
+            Caso factible
           </PrimaryButton>
           <PrimaryButton
             tone="neutral"
@@ -63,10 +63,10 @@ export function AppHeader() {
               setImportError(null);
             }}
           >
-            Fixture KO
+            Caso infactible
           </PrimaryButton>
           <PrimaryButton tone="neutral" type="button" onClick={() => fileInputRef.current?.click()}>
-            Import JSON
+            Importar JSON
           </PrimaryButton>
         </div>
       </div>

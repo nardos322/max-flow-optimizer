@@ -1,4 +1,4 @@
-import type { SolveResponseV1 } from '@maxflow/contracts/v1';
+import type { RunDetailV1, SolveResponseV1 } from '@maxflow/contracts/v1';
 
 import type { InstanceDraft } from '../../types.js';
 import { buildAssignmentRows } from './assignmentRows.js';
@@ -9,16 +9,52 @@ export function buildCsvContent(draft: InstanceDraft, result: SolveResponseV1 | 
     return null;
   }
 
-  const header = ['dayId', 'date', 'periodId', 'medicId', 'medicName'];
-  const body = rows.map((row) => [row.dayId, row.date, row.periodId, row.medicId, row.medicName].map(escapeCsv).join(','));
+  const body = rows.map((row) =>
+    [
+      result?.runId ?? '',
+      result?.createdAt ?? '',
+      result?.instanceId ?? '',
+      result?.feasible ? 'feasible' : 'infeasible',
+      row.dayId,
+      row.date,
+      row.periodId,
+      row.medicId,
+      row.medicName,
+      result?.requiredFlow ?? '',
+      result?.maxFlow ?? '',
+      result?.stats.runtimeMs ?? ''
+    ]
+      .map(escapeCsv)
+      .join(',')
+  );
 
-  return [header.join(','), ...body].join('\n');
+  return [CSV_HEADER.join(','), ...body].join('\n');
 }
 
-function escapeCsv(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.split('"').join('""')}"`;
+export function buildRunCsvContent(run: RunDetailV1): string | null {
+  return buildCsvContent(run.input, run.response);
+}
+
+const CSV_HEADER = [
+  'runId',
+  'createdAt',
+  'instanceId',
+  'status',
+  'dayId',
+  'date',
+  'periodId',
+  'medicId',
+  'medicName',
+  'requiredFlow',
+  'maxFlow',
+  'runtimeMs'
+];
+
+function escapeCsv(value: string | number): string {
+  const serializedValue = String(value);
+  if (serializedValue.includes(',') || serializedValue.includes('"') || serializedValue.includes('\n')) {
+    return `"${serializedValue.split('"').join('""')}"`;
   }
 
-  return value;
+  return serializedValue;
 }

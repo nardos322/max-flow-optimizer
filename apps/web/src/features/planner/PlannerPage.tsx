@@ -29,9 +29,9 @@ export function PlannerPage() {
           {state.lastSolveError
             ? 'Error'
             : state.lastSolveResult?.feasible
-              ? 'Feasible'
+              ? 'Factible'
               : state.lastSolveResult
-                ? 'Infeasible'
+                ? 'Infactible'
                 : 'Draft'}
         </Badge>
       }

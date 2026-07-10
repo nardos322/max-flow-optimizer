@@ -153,8 +153,9 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
 ## 5.3 Exportacion UI derivada del contrato
 - Export JSON: serializa exactamente la respuesta de `POST /v1/solve`.
 - Export CSV: solo disponible si `feasible=true`.
-- Export CSV: se deriva de `solveResponse.assignments` unido con el `instanceDraft` actual del frontend.
-- Columnas CSV v1: `dayId,date,periodId,medicId,medicName`.
+- Export CSV de resultado actual: se deriva de `solveResponse.assignments` unido con el `instanceDraft` actual del frontend.
+- Export CSV historico: se deriva de `run.response.assignments` unido con `run.input`.
+- Columnas CSV P1: `runId,createdAt,instanceId,status,dayId,date,periodId,medicId,medicName,requiredFlow,maxFlow,runtimeMs`.
 - Filas CSV ordenadas por `dayId`.
 - `dayId`, `periodId`, `medicId`: salen de `assignments`.
 - `date`: se resuelve desde `days`.

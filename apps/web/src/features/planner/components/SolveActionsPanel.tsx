@@ -40,7 +40,9 @@ export function SolveActionsPanel({
                 : 'border-amber-200 bg-amber-50 text-amber-800'
             }`}
           >
-            <p className="font-semibold">{lastSolveResult.feasible ? 'Instancia factible.' : 'Instancia infactible.'}</p>
+            <p className="font-semibold">
+              {lastSolveResult.feasible ? 'Se encontro una asignacion factible.' : 'No se encontro una asignacion factible.'}
+            </p>
             <p className="mt-1">
               maxFlow {lastSolveResult.maxFlow} / requiredFlow {lastSolveResult.requiredFlow}
             </p>

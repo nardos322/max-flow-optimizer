@@ -7,6 +7,7 @@ import { downloadTextFile } from '../../shared/browser/index.js';
 import { Badge, EmptyState, PageSection, Panel, PrimaryButton, SelectInput } from '../../shared/ui/index.js';
 import { useAppDispatch, useAppState } from '../../state/appState.js';
 import type { ApiErrorDetails } from '../../types.js';
+import { buildRunCsvContent } from '../planner/exportResult.js';
 
 const PAGE_SIZE = 20;
 
@@ -174,6 +175,7 @@ function RunDetailPanel() {
   const state = useAppState();
   const dispatch = useAppDispatch();
   const run = state.selectedRun;
+  const csvContent = run ? buildRunCsvContent(run) : null;
 
   if (!run) {
     return (
@@ -206,7 +208,7 @@ function RunDetailPanel() {
 
         <div className="flex flex-wrap gap-2">
           <PrimaryButton type="button" onClick={() => dispatch({ type: 'restoreRunDraft', run })}>
-            Restaurar draft
+            Usar como borrador
           </PrimaryButton>
           <PrimaryButton
             type="button"
@@ -214,6 +216,18 @@ function RunDetailPanel() {
             onClick={() => downloadTextFile(`${run.instanceId}-${run.runId}.json`, JSON.stringify(run, null, 2), 'application/json')}
           >
             Export JSON
+          </PrimaryButton>
+          <PrimaryButton
+            type="button"
+            tone="neutral"
+            disabled={!csvContent}
+            onClick={() => {
+              if (csvContent) {
+                downloadTextFile(`${run.instanceId}-${run.runId}.csv`, csvContent, 'text/csv');
+              }
+            }}
+          >
+            Export CSV
           </PrimaryButton>
           <PrimaryButton type="button" tone="neutral" onClick={() => dispatch({ type: 'clearSelectedRun' })}>
             Cerrar
