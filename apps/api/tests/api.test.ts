@@ -77,6 +77,30 @@ function normalizeRuntimeMs(payload: unknown): unknown {
   return payload;
 }
 
+function normalizeForCanonicalSnapshot(payload: unknown): unknown {
+  const normalized = normalizeRuntimeMs(payload);
+
+  if (
+    typeof normalized === 'object' &&
+    normalized !== null &&
+    'diagnostics' in normalized &&
+    typeof (normalized as { diagnostics?: unknown }).diagnostics === 'object' &&
+    (normalized as { diagnostics?: unknown }).diagnostics !== null
+  ) {
+    const diagnostics = (normalized as { diagnostics: Record<string, unknown> }).diagnostics;
+    return {
+      ...normalized,
+      diagnostics: {
+        summaryCode: diagnostics.summaryCode,
+        message: diagnostics.message,
+        uncoveredDays: diagnostics.uncoveredDays
+      }
+    };
+  }
+
+  return normalized;
+}
+
 describe('API v1', () => {
   it('responds to GET /health', async () => {
     const response = await request(app).get('/health').expect(200);
@@ -102,7 +126,32 @@ describe('API v1', () => {
     const response = await request(app).post('/v1/solve').send(readJson(inputPath)).expect(200);
 
     expect(validators.validateSolveResponse(response.body)).toBe(true);
-    expect(normalizeRuntimeMs(response.body)).toEqual(readJson(expectedPath));
+    expect(normalizeForCanonicalSnapshot(response.body)).toEqual(readJson(expectedPath));
+  });
+
+  it('adds enriched diagnostics to infeasible API responses', async () => {
+    const response = await request(app).post('/v1/solve').send(readJson('input/tiny-infeasible-availability.json')).expect(200);
+
+    expect(validators.validateSolveResponse(response.body)).toBe(true);
+    expect(response.body.diagnostics).toMatchObject({
+      summaryCode: 'INSUFFICIENT_COVERAGE',
+      uncoveredDays: ['d3'],
+      capacity: {
+        requiredDays: 3,
+        totalMedicCapacity: 4,
+        availablePairs: 2
+      },
+      daysWithoutAvailability: ['d3'],
+      periods: [
+        {
+          periodId: 'p2',
+          requiredDays: 1,
+          maxCoverableDays: 0,
+          uncoveredDays: ['d3']
+        }
+      ],
+      medics: []
+    });
   });
 
   it.each([

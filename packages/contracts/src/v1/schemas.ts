@@ -103,7 +103,39 @@ export const SolveDiagnosticsSchema = z
   .object({
     summaryCode: z.literal('INSUFFICIENT_COVERAGE'),
     message: z.string().min(1).max(500),
-    uncoveredDays: z.array(idSchema).refine(hasUniqueItems, { message: 'Array items must be unique.' })
+    uncoveredDays: z.array(idSchema).refine(hasUniqueItems, { message: 'Array items must be unique.' }),
+    capacity: z
+      .object({
+        requiredDays: nonNegativeIntegerSchema,
+        totalMedicCapacity: nonNegativeIntegerSchema,
+        availablePairs: nonNegativeIntegerSchema
+      })
+      .strict()
+      .optional(),
+    daysWithoutAvailability: z.array(idSchema).refine(hasUniqueItems, { message: 'Array items must be unique.' }).optional(),
+    periods: z
+      .array(
+        z
+          .object({
+            periodId: idSchema,
+            requiredDays: nonNegativeIntegerSchema,
+            maxCoverableDays: nonNegativeIntegerSchema,
+            uncoveredDays: z.array(idSchema).refine(hasUniqueItems, { message: 'Array items must be unique.' })
+          })
+          .strict()
+      )
+      .optional(),
+    medics: z
+      .array(
+        z
+          .object({
+            medicId: idSchema,
+            availableDays: nonNegativeIntegerSchema,
+            maxDaysPerMedic: nonNegativeIntegerSchema
+          })
+          .strict()
+      )
+      .optional()
   })
   .strict();
 

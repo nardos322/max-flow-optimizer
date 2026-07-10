@@ -120,6 +120,102 @@
             "minLength": 1,
             "maxLength": 128
           }
+        },
+        "capacity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "requiredDays",
+            "totalMedicCapacity",
+            "availablePairs"
+          ],
+          "properties": {
+            "requiredDays": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "totalMedicCapacity": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "availablePairs": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "daysWithoutAvailability": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "periods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "periodId",
+              "requiredDays",
+              "maxCoverableDays",
+              "uncoveredDays"
+            ],
+            "properties": {
+              "periodId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "requiredDays": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxCoverableDays": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "uncoveredDays": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 128
+                }
+              }
+            }
+          }
+        },
+        "medics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "medicId",
+              "availableDays",
+              "maxDaysPerMedic"
+            ],
+            "properties": {
+              "medicId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "availableDays": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "maxDaysPerMedic": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
         }
       }
     }

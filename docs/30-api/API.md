@@ -131,7 +131,22 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
   "diagnostics": {
     "summaryCode": "INSUFFICIENT_COVERAGE",
     "message": "Unable to cover all days under current constraints.",
-    "uncoveredDays": ["d3"]
+    "uncoveredDays": ["d3"],
+    "capacity": {
+      "requiredDays": 3,
+      "totalMedicCapacity": 4,
+      "availablePairs": 2
+    },
+    "daysWithoutAvailability": ["d3"],
+    "periods": [
+      {
+        "periodId": "p2",
+        "requiredDays": 1,
+        "maxCoverableDays": 0,
+        "uncoveredDays": ["d3"]
+      }
+    ],
+    "medics": []
   }
 }
 ```
@@ -142,6 +157,11 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
 - `message` es un resumen legible y estable a nivel funcional.
 - `uncoveredDays` lista los `dayId` no cubiertos en la solucion de max-flow.
 - `uncoveredDays` debe venir sin duplicados y ordenado ascendentemente por `dayId`.
+- `capacity`, `daysWithoutAvailability`, `periods` y `medics` son campos P1 opcionales compatibles.
+- `capacity` resume capacidad global.
+- `daysWithoutAvailability` lista dias sin ningun medico disponible.
+- `periods` lista periodos con dias descubiertos o capacidad local insuficiente.
+- `medics` lista medicos sin disponibilidad.
 - En `feasible=true`, `diagnostics` no debe estar presente.
 
 ## 5.2 Determinismo del resultado

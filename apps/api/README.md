@@ -79,7 +79,22 @@ Response infactible:
   "diagnostics": {
     "summaryCode": "INSUFFICIENT_COVERAGE",
     "message": "Unable to cover all days under current constraints.",
-    "uncoveredDays": ["d1"]
+    "uncoveredDays": ["d1"],
+    "capacity": {
+      "requiredDays": 1,
+      "totalMedicCapacity": 0,
+      "availablePairs": 0
+    },
+    "daysWithoutAvailability": ["d1"],
+    "periods": [
+      {
+        "periodId": "p1",
+        "requiredDays": 1,
+        "maxCoverableDays": 0,
+        "uncoveredDays": ["d1"]
+      }
+    ],
+    "medics": []
   }
 }
 ```

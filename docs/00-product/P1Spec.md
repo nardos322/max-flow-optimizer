@@ -247,6 +247,7 @@ El contrato v1 existente se conserva. P1 agrega campos opcionales dentro de `dia
     "totalMedicCapacity": 8,
     "availablePairs": 12
   },
+  "daysWithoutAvailability": ["d3"],
   "periods": [
     {
       "periodId": "p1",

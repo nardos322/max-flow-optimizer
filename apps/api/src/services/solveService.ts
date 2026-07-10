@@ -6,6 +6,7 @@ import { findPrimaryDomainError } from '@maxflow/domain';
 import type { ApiConfig } from '../config.js';
 import type { EngineClient } from '../engineClient.js';
 import { ApiHttpError, toApiErrorCode } from '../errors.js';
+import { enrichDiagnostics } from './diagnostics.js';
 import type { RunsStore } from './runsStore.js';
 
 type SolveServiceDependencies = {
@@ -45,7 +46,7 @@ export function createSolveService({ config, validators, engineClient, runsStore
         );
       }
 
-      const engineResponse = await engineClient.solve(requestId, stripMetadataForEngine(input));
+      const engineResponse = enrichDiagnostics(input, await engineClient.solve(requestId, stripMetadataForEngine(input)));
 
       if (!config.runsPersistenceEnabled || !runsStore) {
         return engineResponse;
