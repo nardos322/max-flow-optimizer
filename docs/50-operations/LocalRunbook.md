@@ -41,6 +41,8 @@ PORT=3000
 # ENGINE_PATH=/absolute/path/to/maxflow_engine
 ENGINE_TIMEOUT_MS=2000
 MAX_REQUEST_BYTES=2500000
+RUNS_DB_PATH=../../data/app/maxflow.sqlite
+RUNS_PERSISTENCE_ENABLED=true
 MAX_DAYS=500
 MAX_MEDICS=500
 MAX_PERIODS=100
@@ -57,6 +59,8 @@ VITE_API_BASE_URL=/api
 - `ENGINE_PATH`: override opcional para un binario `maxflow_engine` fuera de la ruta estandar del repo.
 - `ENGINE_TIMEOUT_MS`: timeout duro del proceso hijo en milisegundos.
 - `MAX_REQUEST_BYTES`: tamano maximo del payload HTTP aceptado por API.
+- `RUNS_DB_PATH`: ruta del archivo SQLite usado por el historial local.
+- `RUNS_PERSISTENCE_ENABLED`: habilita o deshabilita persistencia automatica de corridas.
 - `MAX_DAYS`: limite semantico de `days`.
 - `MAX_MEDICS`: limite semantico de `medics`.
 - `MAX_PERIODS`: limite semantico de `periods`.
@@ -86,6 +90,21 @@ Regla operativa:
 - `pnpm run dev:full` existe para bootstrap en una maquina nueva o cuando se necesita recompilar el engine antes de arrancar.
 - `pnpm run build:engine` usa `Ninja` como generador de CMake.
 - Si el engine se compila en la ruta estandar del repo, no hace falta configurar `ENGINE_PATH`.
+
+## 6.1 Ejecutar con Docker Compose
+```bash
+docker compose up --build
+```
+
+URLs:
+- Web: `http://127.0.0.1:4173`
+- API: `http://127.0.0.1:3000`
+
+Notas:
+- La imagen `api` compila el engine C++ dentro del build Docker.
+- La DB SQLite del historial se monta en el volumen `maxflow-runs`.
+- Para reiniciar conservando historial, usar `docker compose down` sin borrar volumenes.
+- Para borrar historial de demo, usar `docker compose down -v`.
 
 ## 7. Verificacion rapida
 1. API health:

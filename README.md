@@ -130,6 +130,19 @@ URLs locales:
 pnpm dev
 ```
 
+Demo con Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+URLs:
+
+- Web: `http://127.0.0.1:4173`
+- API: `http://127.0.0.1:3000`
+
+La base SQLite del historial queda persistida en el volumen `maxflow-runs`.
+
 ## Comandos Utiles
 
 ```bash

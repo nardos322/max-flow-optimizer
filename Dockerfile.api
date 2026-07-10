@@ -1,0 +1,36 @@
+FROM node:24-bookworm
+
+WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ca-certificates g++ make ninja-build python3 python3-pip \
+  && python3 -m pip install --break-system-packages cmake==3.28.3 \
+  && rm -rf /var/lib/apt/lists/*
+
+RUN corepack enable && corepack prepare pnpm@9.12.2 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/domain/package.json packages/domain/package.json
+
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+
+RUN pnpm --filter @maxflow/contracts build \
+  && pnpm --filter @maxflow/domain build \
+  && pnpm run build:engine \
+  && pnpm --filter @maxflow/api build
+
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV ENGINE_PATH=/app/services/engine-cpp/build/maxflow_engine
+ENV RUNS_DB_PATH=/app/data/app/maxflow.sqlite
+ENV RUNS_PERSISTENCE_ENABLED=true
+ENV LOG_LEVEL=info
+
+EXPOSE 3000
+
+CMD ["pnpm", "--filter", "@maxflow/api", "start"]
