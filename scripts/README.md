@@ -9,6 +9,7 @@ Scripts de desarrollo local y automatizaciones pequenas.
 - `analytics-run.mjs`: ejecuta escenarios generados contra el engine C++ y escribe JSONL en `data/analytics`.
 - `analytics-aggregate.mjs`: ejecuta el pipeline Python modular en `analytics/python/` para calcular agregados por escenario, exportar Parquet, correr quality checks, guardar historico, ejecutar queries DuckDB y generar graficos con Matplotlib.
 - `analytics-report.mjs`: genera un reporte markdown local desde los agregados, quality checks, comparacion historica y graficos.
+- `analytics-compare.mjs`: compara performance por fixture/dataset contra el engine y genera `performance-comparison` en `analytics/reports`.
 - `analytics-verify.mjs`: valida metadata, outputs, quality checks, summary y fingerprint de manifest de la ultima corrida o de `ANALYTICS_RUN_ID`.
 - `analytics-profile.mjs`: ejecuta `pnpm analytics` con presets `small`, `50k`, `500k` o `benchmark`.
 - `analytics-tune.mjs`: prueba combinaciones de `ANALYTICS_BATCH_SIZE` y `ANALYTICS_CONCURRENCY` sobre una muestra temporal para recomendar valores por maquina.
@@ -36,6 +37,19 @@ Compilar engine y correr pipeline completo:
 pnpm analytics:setup
 pnpm run build:engine
 pnpm analytics
+```
+
+Comparativa rapida por dataset sin levantar API:
+
+```bash
+pnpm run build:engine
+pnpm analytics:compare
+```
+
+Por defecto incluye fixtures canonicos validos y hasta 10 escenarios de `data/generated/manifest.json` si existe. Para omitir generados:
+
+```bash
+ANALYTICS_COMPARE_GENERATED_LIMIT=0 pnpm analytics:compare
 ```
 
 `pnpm analytics:setup` crea `.venv` e instala `polars==1.14.0`, `matplotlib==3.9.2` y `duckdb==1.1.3`. `analytics:aggregate` usa automaticamente `.venv/bin/python` si existe.

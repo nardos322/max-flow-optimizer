@@ -13,6 +13,7 @@
     "analytics:run": "node ./scripts/analytics-run.mjs",
     "analytics:aggregate": "node ./scripts/analytics-aggregate.mjs",
     "analytics:report": "node ./scripts/analytics-report.mjs",
+    "analytics:compare": "node ./scripts/analytics-compare.mjs",
     "analytics:verify": "node ./scripts/analytics-verify.mjs",
     "analytics:profile": "node ./scripts/analytics-profile.mjs",
     "analytics:small": "node ./scripts/analytics-profile.mjs small",
