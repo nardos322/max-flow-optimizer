@@ -34,6 +34,7 @@ export function createApp(options: CreateAppOptions = {}) {
 
   app.disable('x-powered-by');
   app.use(createRequestContextMiddleware(logger));
+  app.use(createCorsMiddleware());
   app.use(express.json({ limit: config.maxRequestBytes }));
 
   app.use(createHealthRoutes({ healthController: createHealthController() }));
@@ -50,4 +51,19 @@ export function createApp(options: CreateAppOptions = {}) {
   app.use(createErrorMiddleware(logger));
 
   return app;
+}
+
+function createCorsMiddleware() {
+  return (request: express.Request, response: express.Response, next: express.NextFunction) => {
+    response.setHeader('Access-Control-Allow-Origin', '*');
+    response.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+    response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (request.method === 'OPTIONS') {
+      response.sendStatus(204);
+      return;
+    }
+
+    next();
+  };
 }
