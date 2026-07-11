@@ -29,12 +29,16 @@ Ruta de implementacion: `docs/00-product/P1ImplementationRoute.md`.
 6. Exportacion CSV enriquecida.
 
 ## P2 - v2+ (expansion)
-1. Autenticacion (JWT o session-based).
-2. Soporte multi-hospital (tenantId).
-3. RBAC basico (admin/viewer).
-4. Objetivos de optimizacion (equidad, preferencias).
-5. Batch solving y pipelines de analitica/big data.
-6. Dashboard historico y tendencias.
+Spec de alcance inicial: `docs/00-product/P2Spec.md`.
+Ruta de implementacion: `docs/00-product/P2ImplementationRoute.md`.
+
+1. P2a: Optimizacion por equidad con min-cost max-flow.
+2. Preferencias y penalizaciones configurables.
+3. Batch solving y pipelines de analitica/big data.
+4. Dashboard historico y tendencias.
+5. Autenticacion (JWT o session-based).
+6. Soporte multi-hospital (tenantId).
+7. RBAC basico (admin/viewer).
 
 ## Criterio de entrada a sprint
 Cada item debe incluir:

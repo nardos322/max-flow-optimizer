@@ -8,6 +8,8 @@ Documentos de alcance, plan y entrega del MVP.
 - `BACKLOG.md`: trabajo futuro fuera de v1.
 - `P1Spec.md`: alcance cerrado para v1.1.
 - `P1ImplementationRoute.md`: orden de implementacion recomendado para v1.1.
+- `P2Spec.md`: alcance inicial de optimizacion v2 con min-cost max-flow.
+- `P2ImplementationRoute.md`: orden de implementacion recomendado para P2a.
 - `ImplementationRoute.md`: tareas secuenciadas para implementar.
 - `FrontendSpec.md`: contrato visual y de componentes del frontend.
 - `ReleaseChecklist.md`: checklist de salida v1.
