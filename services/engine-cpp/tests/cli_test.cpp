@@ -95,6 +95,24 @@ TEST(CliTest, EmitsCanonicalResponseForStdinAndFileModes) {
   std::filesystem::remove(temp_valid_path);
 }
 
+TEST(CliTest, EmitsFairnessOptimizationResponse) {
+  std::stringstream stdin_stream(
+      engine::SerializeJson(engine::test::WrapInput("req-fairness", "input/fairness-balanced-choice.json")));
+  std::ostringstream stdout_stream;
+  std::ostringstream stderr_stream;
+
+  EXPECT_EQ(engine::RunCli(engine::CliOptions{.use_stdin = true, .input_path = "", .batch_jsonl = false},
+                           stdin_stream, stdout_stream, stderr_stream),
+            0);
+  EXPECT_TRUE(stderr_stream.str().empty());
+
+  engine::JsonValue actual = engine::ParseJson(stdout_stream.str());
+  engine::JsonValue expected = engine::test::LoadJsonFixture("expected/fairness-balanced-choice.response.json");
+  engine::test::NormalizeRuntimeMs(actual);
+  EXPECT_EQ(actual, expected);
+  EXPECT_EQ(actual.at("optimization").at("objective").get<std::string>(), "fairness");
+}
+
 TEST(CliTest, EmitsJsonlResponsesForBatchMode) {
   std::stringstream stdin_stream;
   stdin_stream << engine::SerializeJson(engine::test::WrapInput("req-1", "input/tiny-feasible.json")) << '\n';

@@ -54,6 +54,10 @@ TEST(SolverTest, MatchesCanonicalExactResponses) {
                      "expected/valid-same-instance-different-order.response.json");
 }
 
+TEST(SolverTest, OptimizesFairnessWhenRequested) {
+  ExpectFixtureMatch("input/fairness-balanced-choice.json", "expected/fairness-balanced-choice.response.json");
+}
+
 TEST(SolverTest, SatisfiesSmokeInvariantsForMediumFixture) {
   const engine::SolveInput medium = engine::test::LoadSolveInput("input/medium-random-50x50.json");
   const engine::SolveResponse medium_response = engine::SolveInstance(medium);

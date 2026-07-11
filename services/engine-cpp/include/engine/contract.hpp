@@ -30,6 +30,15 @@ struct AvailabilityInput {
   std::string day_id;
 };
 
+enum class OptimizationObjective {
+  kNone,
+  kFairness,
+};
+
+struct OptimizationInput {
+  OptimizationObjective objective = OptimizationObjective::kNone;
+};
+
 struct SolveInput {
   std::string instance_id;
   int max_days_per_medic = 0;
@@ -37,6 +46,7 @@ struct SolveInput {
   std::vector<DayInput> days;
   std::vector<MedicInput> medics;
   std::vector<AvailabilityInput> availability;
+  OptimizationInput optimization;
 };
 
 struct InternalRequest {
@@ -62,6 +72,23 @@ struct SolveStats {
   int runtime_ms = 0;
 };
 
+struct MedicLoad {
+  std::string medic_id;
+  std::string medic_name;
+  int assigned_days = 0;
+};
+
+struct SolveOptimization {
+  OptimizationObjective objective = OptimizationObjective::kFairness;
+  bool optimal = false;
+  int score = 0;
+  int total_cost = 0;
+  int max_assigned_days = 0;
+  int min_assigned_days = 0;
+  int spread = 0;
+  std::vector<MedicLoad> load_by_medic;
+};
+
 struct SolveResponse {
   std::string instance_id;
   bool feasible = false;
@@ -69,6 +96,7 @@ struct SolveResponse {
   int max_flow = 0;
   std::vector<Assignment> assignments;
   SolveStats stats;
+  std::optional<SolveOptimization> optimization;
   std::optional<Diagnostics> diagnostics;
 };
 

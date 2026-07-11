@@ -26,8 +26,8 @@
     }
   ],
   "stats": {
-    "nodes": 20,
-    "edges": 40,
+    "nodes": 27,
+    "edges": 45,
     "runtimeMs": 0
   },
   "optimization": {

@@ -129,6 +129,13 @@ describe('API v1', () => {
     expect(normalizeForCanonicalSnapshot(response.body)).toEqual(readJson(expectedPath));
   });
 
+  it('solves fairness optimization requests', async () => {
+    const response = await request(app).post('/v1/solve').send(readJson('input/fairness-balanced-choice.json')).expect(200);
+
+    expect(validators.validateSolveResponse(response.body)).toBe(true);
+    expect(normalizeRuntimeMs(response.body)).toEqual(readJson('expected/fairness-balanced-choice.response.json'));
+  });
+
   it('adds enriched diagnostics to infeasible API responses', async () => {
     const response = await request(app).post('/v1/solve').send(readJson('input/tiny-infeasible-availability.json')).expect(200);
 

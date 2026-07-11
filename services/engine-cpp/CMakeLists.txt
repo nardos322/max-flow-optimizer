@@ -32,11 +32,13 @@ add_library(engine_core
   src/analytics.cpp
   src/cli.cpp
   src/contract.cpp
+  src/cost_flow.cpp
   src/max_flow.cpp
   src/error.cpp
   src/graph.cpp
   src/json.cpp
   src/normalized_instance.cpp
+  src/optimization_network.cpp
   src/problem_network.cpp
   src/solver.cpp
 )
@@ -60,6 +62,7 @@ function(add_engine_test test_name source_file)
 endfunction()
 
 add_engine_test(engine_json_test tests/json_test.cpp)
+add_engine_test(engine_cost_flow_test tests/cost_flow_test.cpp)
 add_engine_test(engine_max_flow_test tests/max_flow_test.cpp)
 add_engine_test(engine_problem_network_test tests/problem_network_test.cpp)
 add_engine_test(engine_solver_test tests/solver_test.cpp)

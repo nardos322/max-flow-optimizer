@@ -98,6 +98,29 @@ AvailabilityInput ParseAvailability(const JsonValue& value) {
   return availability;
 }
 
+OptimizationInput ParseOptimization(const JsonValue& value) {
+  RejectUnknownKeys(value, {"objective"}, "optimization");
+  const std::string objective = RequireString(RequireField(value, "objective", "optimization"),
+                                              "optimization.objective");
+  if (objective == "none") {
+    return OptimizationInput{OptimizationObjective::kNone};
+  }
+  if (objective == "fairness") {
+    return OptimizationInput{OptimizationObjective::kFairness};
+  }
+  ThrowInvalidInput("Unsupported optimization objective: " + objective + ".");
+}
+
+std::string OptimizationObjectiveToString(OptimizationObjective objective) {
+  switch (objective) {
+    case OptimizationObjective::kNone:
+      return "none";
+    case OptimizationObjective::kFairness:
+      return "fairness";
+  }
+  ThrowInternalError("Unsupported optimization objective.");
+}
+
 JsonValue ToJsonAssignments(const std::vector<Assignment>& assignments) {
   JsonValue output = JsonValue::array();
   for (const Assignment& assignment : assignments) {
@@ -108,10 +131,30 @@ JsonValue ToJsonAssignments(const std::vector<Assignment>& assignments) {
   return output;
 }
 
+JsonValue ToJsonOptimization(const SolveOptimization& optimization) {
+  JsonValue load_by_medic = JsonValue::array();
+  for (const MedicLoad& load : optimization.load_by_medic) {
+    load_by_medic.push_back(JsonValue{{"medicId", load.medic_id},
+                                      {"medicName", load.medic_name},
+                                      {"assignedDays", load.assigned_days}});
+  }
+
+  return JsonValue{{"objective", OptimizationObjectiveToString(optimization.objective)},
+                   {"optimal", optimization.optimal},
+                   {"score", optimization.score},
+                   {"totalCost", optimization.total_cost},
+                   {"maxAssignedDays", optimization.max_assigned_days},
+                   {"minAssignedDays", optimization.min_assigned_days},
+                   {"spread", optimization.spread},
+                   {"loadByMedic", load_by_medic}};
+}
+
 }  // namespace
 
 SolveInput ParseSolveInput(const JsonValue& value) {
-  RejectUnknownKeys(value, {"instanceId", "maxDaysPerMedic", "periods", "days", "medics", "availability"},
+  RejectUnknownKeys(value,
+                    {"instanceId", "maxDaysPerMedic", "periods", "days", "medics", "availability", "metadata",
+                     "optimization"},
                     "solve input");
   SolveInput input;
   input.instance_id = RequireString(RequireField(value, "instanceId", "solve input"), "instanceId");
@@ -154,6 +197,10 @@ SolveInput ParseSolveInput(const JsonValue& value) {
     input.availability.push_back(ParseAvailability(item));
   }
 
+  if (value.contains("optimization")) {
+    input.optimization = ParseOptimization(value.at("optimization"));
+  }
+
   return input;
 }
 
@@ -175,6 +222,10 @@ JsonValue ToJson(const SolveResponse& response) {
   root["stats"] = JsonValue{{"nodes", response.stats.nodes},
                              {"edges", response.stats.edges},
                              {"runtimeMs", response.stats.runtime_ms}};
+
+  if (response.optimization.has_value()) {
+    root["optimization"] = ToJsonOptimization(*response.optimization);
+  }
 
   if (response.diagnostics.has_value()) {
     JsonValue uncovered = JsonValue::array();
