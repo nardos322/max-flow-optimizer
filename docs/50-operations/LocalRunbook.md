@@ -1,4 +1,4 @@
-# Local Runbook - Arranque MVP
+# Local Runbook - Arranque v1.1
 
 ## 1. Objetivo
 Pasar de repositorio clonado a demo funcional local con comandos concretos.
@@ -121,8 +121,10 @@ curl -s -X POST http://localhost:3000/v1/solve \
 ## 8. Suite de calidad
 ```bash
 pnpm lint
+pnpm typecheck
 pnpm test
 pnpm build
+pnpm analytics:compare
 ```
 
 ## 9. Troubleshooting rapido

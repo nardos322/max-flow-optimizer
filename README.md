@@ -1,6 +1,6 @@
 # Max Flow Optimizer
 
-MVP para asignar dias de feriado a medicos usando un modelo de flujo maximo. El proyecto combina un motor C++ reutilizable, una API TypeScript y una UI React para cargar instancias, resolver factibilidad y exportar resultados.
+Demo local para asignar dias de feriado a medicos usando un modelo de flujo maximo. El proyecto combina un motor C++ reutilizable, una API TypeScript y una UI React para cargar instancias, resolver factibilidad, persistir corridas, consultar historial y exportar resultados.
 
 ## Tech Stack
 
@@ -34,7 +34,8 @@ El sistema convierte un problema operativo facil de explicar, pero propenso a er
 
 - **Factibilidad automatica:** determina si todos los dias pueden cubrirse bajo las reglas definidas.
 - **Asignacion trazable:** cuando existe solucion, devuelve `dayId -> medicId` y metricas del solver.
-- **Errores claros:** separa errores de contrato, errores de dominio y casos infactibles.
+- **Historial local:** persiste corridas en SQLite y permite restaurar una corrida anterior como borrador.
+- **Errores claros:** separa errores de contrato, errores de dominio y casos infactibles con diagnosticos enriquecidos.
 - **Demo end-to-end:** incluye UI, API, motor, fixtures, smoke tests, benchmark y documentacion.
 - **Base extensible:** el motor de flujo esta separado de la UI y la API, lo que permite reutilizarlo en problemas parecidos.
 
@@ -50,28 +51,32 @@ El nucleo tecnico esta en `services/engine-cpp`: un motor C++ que construye una 
 
 La API se comunica con el motor mediante JSON por `stdin/stdout`, asi que el solver no depende de Express, React ni del contrato visual de la app. Esa separacion permite evolucionar el frontend o exponer otro servicio sin reescribir el algoritmo.
 
-## Alcance Del MVP
+## Alcance Actual
 
-Incluido en v1:
+Incluido en v1.1:
 
 - UI web con secciones `Periodos`, `Medicos` y `Planificador`.
+- Seccion `Historial` para consultar corridas persistidas.
 - Carga manual de periodos, dias, medicos y disponibilidad.
 - Fixtures `OK` y `KO` para demo rapida.
 - Endpoint `GET /health`.
 - Endpoint `POST /v1/solve`.
+- Endpoints `GET /v1/runs` y `GET /v1/runs/:runId`.
 - Validaciones estructurales con schemas compartidos.
 - Validaciones de dominio antes de invocar el motor.
 - Motor C++ de max-flow con salida deterministica.
 - Resultado factible con asignaciones y metricas.
-- Diagnostico minimo para casos infactibles.
-- Exportacion JSON y CSV.
-- Tests unitarios, integracion API, smoke y benchmark local.
+- Diagnostico enriquecido para casos infactibles.
+- Persistencia local de corridas en SQLite.
+- Restauracion de una corrida historica como borrador.
+- Exportacion JSON y CSV enriquecido para resultado actual e historico.
+- Comparativa local de performance con `pnpm analytics:compare`.
+- Demo reproducible con Docker Compose.
+- Tests unitarios, integracion API, smoke, benchmark local y quality gates.
 
-Fuera de alcance en v1:
+Fuera de alcance:
 
 - autenticacion y multiusuario,
-- persistencia de corridas,
-- historial de ejecuciones,
 - integracion con sistemas hospitalarios reales,
 - optimizacion por preferencias, equidad o costos,
 - edicion avanzada tipo calendario,
@@ -83,6 +88,7 @@ Fuera de alcance en v1:
 flowchart LR
   UI["apps/web<br/>React + Vite"] -->|"POST /v1/solve"| API["apps/api<br/>Express + TypeScript"]
   API -->|"stdin JSON wrapper<br/>requestId + input"| ENGINE["services/engine-cpp<br/>Dinic max-flow"]
+  API --> SQLITE["SQLite<br/>historial local"]
   API --> CONTRACTS["packages/contracts<br/>Schemas Zod + tipos"]
   API --> DOMAIN["packages/domain<br/>Validaciones semanticas"]
   UI --> CONTRACTS
@@ -153,6 +159,8 @@ pnpm test
 pnpm build
 pnpm smoke:api
 pnpm benchmark:api
+pnpm analytics:compare
+pnpm typecheck
 ```
 
 ## Flujo De Demo
@@ -160,10 +168,11 @@ pnpm benchmark:api
 1. Cargar `Fixture OK` en la UI.
 2. Revisar `Periodos` y `Medicos`.
 3. Resolver desde `Planificador`.
-4. Ver `feasible=true`, asignaciones y metricas.
+4. Ver `feasible=true`, asignaciones, metricas, `runId` y `createdAt`.
 5. Exportar JSON/CSV.
-6. Cargar `Fixture KO`.
-7. Resolver y mostrar `feasible=false` con diagnostico de infactibilidad.
+6. Abrir `Historial`, inspeccionar la corrida y restaurarla como borrador.
+7. Cargar `Fixture KO`.
+8. Resolver y mostrar `feasible=false` con diagnostico enriquecido de infactibilidad.
 
 El guion completo esta en [DemoScript.md](docs/00-product/DemoScript.md).
 
@@ -177,16 +186,7 @@ El guion completo esta en [DemoScript.md](docs/00-product/DemoScript.md).
 
 ## Mejoras Posibles
 
-Evolucion natural para una v1.1:
-
-- Persistir corridas en SQLite o PostgreSQL.
-- Agregar endpoint `GET /v1/runs` para historial.
-- Guardar inputs, resultados, metricas y diagnosticos por corrida.
-- Mejorar diagnosticos de infactibilidad para explicar cuellos de botella.
-- Agregar Docker Compose para demo one-command.
-- Enriquecer exportacion CSV con resumen por medico y periodo.
-
-Evolucion para una v2:
+Evolucion recomendada para v2:
 
 - Autenticacion y roles.
 - Soporte multi-hospital o multi-equipo.
@@ -197,8 +197,10 @@ Evolucion para una v2:
 
 ## Estado Actual
 
-- MVP v1 implementado de punta a punta.
-- Bloques `0` a `5` completados en la ruta de implementacion.
+- v1.1 implementada de punta a punta a nivel codigo.
+- P1 completada: persistencia SQLite, historial, restauracion, diagnosticos enriquecidos, CSV P1, comparativa de performance y Docker Compose.
+- Verificacion local ejecutada: `pnpm test`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm analytics:compare`.
+- Pendiente operativo: smoke manual de `docker compose up --build` en una maquina con Docker disponible.
 - Release checklist documentado en [ReleaseChecklist.md](docs/00-product/ReleaseChecklist.md).
 - Backlog priorizado en [BACKLOG.md](docs/00-product/BACKLOG.md).
 
