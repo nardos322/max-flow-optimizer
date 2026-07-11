@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Max Flow Optimizer API
   version: 1.0.0
-  description: API MVP para resolver asignacion de feriados por flujo maximo.
+  description: API v1 para resolver asignacion de feriados por flujo maximo, historial local y optimizacion opcional.
 servers:
   - url: http://localhost:3000
 paths:
@@ -19,7 +19,7 @@ paths:
                 $ref: "./schemas/health.response.schema.json"
   /v1/solve:
     post:
-      summary: Resolve one assignment instance
+      summary: Resolve one assignment instance with optional optimization
       operationId: solveInstance
       requestBody:
         required: true

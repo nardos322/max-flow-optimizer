@@ -117,12 +117,13 @@ Objetivo P2a:
 2. Si la instancia es factible, minimizar una funcion de costo que penaliza concentrar dias en el mismo medico.
 3. Si hay empate de costo, preservar determinismo por orden canonico de ids.
 
-La funcion de costo exacta debe documentarse en `docs/10-model/Model.md` cuando se implemente.
+La funcion de costo exacta queda documentada en `docs/10-model/Model.md`.
 
-Propuesta inicial de costo:
+Funcion de costo P2a:
 - Cada medico tiene aristas de capacidad unitaria por nivel de carga.
 - El primer dia asignado a un medico cuesta menos que el segundo, el segundo menos que el tercero, etc.
 - Costos crecientes empujan el flujo a repartir dias antes de concentrarlos.
+- Para la carga marginal `k`, el costo es `k * (k - 1) / 2`.
 
 Ejemplo conceptual:
 
@@ -133,7 +134,7 @@ Ejemplo conceptual:
 | 3er dia | 3 |
 | 4to dia | 6 |
 
-Los valores exactos pueden ajustarse, pero deben ser monotonicamente crecientes.
+Estos valores son parte del contrato funcional P2a y no deben cambiar sin actualizar fixtures, docs y criterios de aceptacion.
 
 ## 7. Response
 Cuando se solicita optimizacion, la response agrega `optimization`.

@@ -75,3 +75,76 @@ Para garantizar que mismo input implique mismo output:
 - La salida final debe ordenarse por `dayId`.
 
 Con estas reglas, si existen multiples max-flows validos, v1 elige en forma deterministica una solucion inducida por el orden estable de la red residual.
+
+## 10. Extension P2a - Optimizacion por equidad
+P2a mantiene las restricciones duras del modelo v1 y agrega un objetivo secundario:
+
+```text
+Entre todas las asignaciones factibles, preferir una distribucion mas pareja de dias entre medicos.
+```
+
+La decision tecnica para P2a es min-cost max-flow.
+
+Orden lexicografico de objetivos:
+1. Maximizar el flujo total.
+2. Si `maxflow = |D|`, minimizar el costo de equidad.
+3. Si hay empate de costo, conservar determinismo por orden canonico de ids.
+
+Si no se solicita optimizacion, el solver conserva el comportamiento v1.
+
+## 11. Funcion de costo P2a
+Sea `x_m` la cantidad de dias asignados al medico `m`.
+
+La equidad se modela con costos marginales crecientes por cada unidad adicional de carga de un medico:
+
+| Carga marginal | Costo |
+|---:|---:|
+| 1er dia asignado al medico | 0 |
+| 2do dia asignado al medico | 1 |
+| 3er dia asignado al medico | 3 |
+| 4to dia asignado al medico | 6 |
+
+Formula inicial:
+
+```text
+cost(k) = k * (k - 1) / 2
+```
+
+donde `k` es la posicion marginal 1-indexed del dia asignado a un medico.
+
+Propiedades:
+- `cost(k)` es entero y no negativo.
+- `cost(k)` es monotonicamente creciente.
+- Concentrar dias en el mismo medico aumenta el costo mas rapido que repartirlos.
+- La funcion no cambia la factibilidad; solo desempata entre flujos completos.
+
+El score publico P2a se define inicialmente como `spread`:
+
+```text
+spread = max_m(x_m) - min_m(x_m)
+```
+
+`totalCost` queda expuesto para trazabilidad tecnica del min-cost max-flow.
+
+## 12. Construccion conceptual P2a
+La red debe permitir que la unidad 1, 2, ..., `C` de carga de cada medico tenga costo marginal distinto.
+
+Construccion recomendada:
+- Reemplazar el arco unico `s -> m` de capacidad `C` por `C` arcos o niveles equivalentes de capacidad `1`.
+- Cada nivel `k` de medico tiene costo `cost(k)`.
+- El resto de las restricciones se conservan:
+  - maximo global `C`,
+  - maximo 1 dia por medico-periodo,
+  - disponibilidad por dia,
+  - cobertura unitaria de cada dia.
+
+La implementacion exacta puede usar nodos auxiliares o arcos paralelos si la estructura del motor lo permite. La condicion importante es que cada unidad adicional asignada al mismo medico pague el costo marginal correspondiente.
+
+## 13. Metricas P2a
+Para una response optimizada, el motor/API deben reportar:
+- `totalCost`: costo minimo encontrado para el flujo completo.
+- `score`: valor publico comparable dentro del objetivo `fairness`.
+- `maxAssignedDays`: maximo de `x_m`.
+- `minAssignedDays`: minimo de `x_m`.
+- `spread`: diferencia entre maximo y minimo.
+- `loadByMedic`: carga final por medico, ordenada por `medicId`.

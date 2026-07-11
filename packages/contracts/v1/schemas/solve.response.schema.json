@@ -218,6 +218,77 @@
           }
         }
       }
+    },
+    "optimization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objective",
+        "optimal",
+        "score",
+        "totalCost",
+        "maxAssignedDays",
+        "minAssignedDays",
+        "spread",
+        "loadByMedic"
+      ],
+      "properties": {
+        "objective": {
+          "type": "string",
+          "const": "fairness"
+        },
+        "optimal": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalCost": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxAssignedDays": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minAssignedDays": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "spread": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "loadByMedic": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "medicId",
+              "medicName",
+              "assignedDays"
+            ],
+            "properties": {
+              "medicId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "medicName": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "assignedDays": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
     }
   },
   "allOf": [
@@ -240,6 +311,11 @@
           "assignments": {
             "maxItems": 0
           }
+        },
+        "not": {
+          "required": [
+            "optimization"
+          ]
         }
       },
       "else": {

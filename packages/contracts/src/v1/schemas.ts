@@ -70,6 +70,14 @@ export const SolveRequestMetadataSchema = z
   })
   .strict();
 
+export const OptimizationObjectiveSchema = z.enum(['none', 'fairness']);
+
+export const OptimizationRequestSchema = z
+  .object({
+    objective: OptimizationObjectiveSchema
+  })
+  .strict();
+
 export const SolveRequestSchema = z
   .object({
     instanceId: idSchema,
@@ -78,7 +86,8 @@ export const SolveRequestSchema = z
     days: z.array(DaySchema).min(1),
     medics: z.array(MedicSchema).min(1),
     availability: z.array(AvailabilitySchema),
-    metadata: SolveRequestMetadataSchema.optional()
+    metadata: SolveRequestMetadataSchema.optional(),
+    optimization: OptimizationRequestSchema.optional()
   })
   .strict();
 
@@ -139,6 +148,27 @@ export const SolveDiagnosticsSchema = z
   })
   .strict();
 
+export const OptimizationLoadByMedicSchema = z
+  .object({
+    medicId: idSchema,
+    medicName: z.string().min(1).max(128),
+    assignedDays: nonNegativeIntegerSchema
+  })
+  .strict();
+
+export const SolveOptimizationSchema = z
+  .object({
+    objective: z.literal('fairness'),
+    optimal: z.boolean(),
+    score: nonNegativeIntegerSchema,
+    totalCost: nonNegativeIntegerSchema,
+    maxAssignedDays: nonNegativeIntegerSchema,
+    minAssignedDays: nonNegativeIntegerSchema,
+    spread: nonNegativeIntegerSchema,
+    loadByMedic: z.array(OptimizationLoadByMedicSchema)
+  })
+  .strict();
+
 export const FeasibleSolveResponseSchema = z
   .object({
     runId: idSchema.optional(),
@@ -149,6 +179,7 @@ export const FeasibleSolveResponseSchema = z
     maxFlow: nonNegativeIntegerSchema,
     assignments: z.array(AssignmentSchema),
     stats: SolveStatsSchema,
+    optimization: SolveOptimizationSchema.optional(),
     diagnostics: z.never().optional()
   })
   .strict();
@@ -163,7 +194,8 @@ export const InfeasibleSolveResponseSchema = z
     maxFlow: nonNegativeIntegerSchema,
     assignments: z.array(AssignmentSchema).max(0),
     stats: SolveStatsSchema,
-    diagnostics: SolveDiagnosticsSchema
+    diagnostics: SolveDiagnosticsSchema,
+    optimization: z.never().optional()
   })
   .strict();
 
@@ -250,10 +282,14 @@ export type DayV1 = z.infer<typeof DaySchema>;
 export type MedicV1 = z.infer<typeof MedicSchema>;
 export type AvailabilityV1 = z.infer<typeof AvailabilitySchema>;
 export type SolveRequestMetadataV1 = z.infer<typeof SolveRequestMetadataSchema>;
+export type OptimizationObjectiveV1 = z.infer<typeof OptimizationObjectiveSchema>;
+export type OptimizationRequestV1 = z.infer<typeof OptimizationRequestSchema>;
 export type SolveRequestV1 = z.infer<typeof SolveRequestSchema>;
 export type AssignmentV1 = z.infer<typeof AssignmentSchema>;
 export type SolveStatsV1 = z.infer<typeof SolveStatsSchema>;
 export type SolveDiagnosticsV1 = z.infer<typeof SolveDiagnosticsSchema>;
+export type OptimizationLoadByMedicV1 = z.infer<typeof OptimizationLoadByMedicSchema>;
+export type SolveOptimizationV1 = z.infer<typeof SolveOptimizationSchema>;
 export type FeasibleSolveResponseV1 = z.infer<typeof FeasibleSolveResponseSchema>;
 export type InfeasibleSolveResponseV1 = z.infer<typeof InfeasibleSolveResponseSchema>;
 export type SolveResponseV1 = z.infer<typeof SolveResponseSchema>;

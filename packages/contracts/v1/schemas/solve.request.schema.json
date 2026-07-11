@@ -135,6 +135,22 @@
           "maxLength": 128
         }
       }
+    },
+    "optimization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "objective"
+      ],
+      "properties": {
+        "objective": {
+          "type": "string",
+          "enum": [
+            "none",
+            "fairness"
+          ]
+        }
+      }
     }
   }
 }

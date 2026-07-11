@@ -1,0 +1,87 @@
+{
+  "instanceId": "fairness-balanced-choice",
+  "maxDaysPerMedic": 3,
+  "periods": [
+    {
+      "id": "p1",
+      "dayIds": ["d1", "d2"]
+    },
+    {
+      "id": "p2",
+      "dayIds": ["d3", "d4"]
+    }
+  ],
+  "days": [
+    {
+      "id": "d1",
+      "date": "2026-04-17"
+    },
+    {
+      "id": "d2",
+      "date": "2026-04-18"
+    },
+    {
+      "id": "d3",
+      "date": "2026-04-20"
+    },
+    {
+      "id": "d4",
+      "date": "2026-04-21"
+    }
+  ],
+  "medics": [
+    {
+      "id": "m1",
+      "name": "Ana"
+    },
+    {
+      "id": "m2",
+      "name": "Luis"
+    },
+    {
+      "id": "m3",
+      "name": "Marta"
+    }
+  ],
+  "availability": [
+    {
+      "medicId": "m1",
+      "dayId": "d1"
+    },
+    {
+      "medicId": "m1",
+      "dayId": "d3"
+    },
+    {
+      "medicId": "m2",
+      "dayId": "d1"
+    },
+    {
+      "medicId": "m2",
+      "dayId": "d2"
+    },
+    {
+      "medicId": "m2",
+      "dayId": "d4"
+    },
+    {
+      "medicId": "m3",
+      "dayId": "d2"
+    },
+    {
+      "medicId": "m3",
+      "dayId": "d3"
+    },
+    {
+      "medicId": "m3",
+      "dayId": "d4"
+    }
+  ],
+  "metadata": {
+    "source": "p2-fixture",
+    "datasetName": "fairness-balanced-choice"
+  },
+  "optimization": {
+    "objective": "fairness"
+  }
+}

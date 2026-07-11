@@ -1,4 +1,4 @@
-# API Contract - MVP
+# API Contract - v1
 
 ## 0. Fuente de verdad del contrato
 - Schemas Zod: `packages/contracts/src/v1`
@@ -56,11 +56,20 @@
   "metadata": {
     "source": "web-fixture",
     "datasetName": "demo"
+  },
+  "optimization": {
+    "objective": "fairness"
   }
 }
 ```
 
-`metadata` es opcional y compatible con requests MVP existentes.
+`metadata` y `optimization` son opcionales y compatibles con requests MVP/P1 existentes.
+
+`optimization.objective` acepta:
+- `none`: comportamiento de factibilidad actual.
+- `fairness`: solicita optimizacion P2a por equidad de carga con min-cost max-flow.
+
+Si `optimization` no existe, la API debe comportarse como `objective=none`.
 
 ## 3. `POST /v1/solve` - Validaciones
 ### 3.1 Capa estructural (`packages/contracts`)
@@ -107,11 +116,25 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
     "nodes": 13,
     "edges": 18,
     "runtimeMs": 2
+  },
+  "optimization": {
+    "objective": "fairness",
+    "optimal": true,
+    "score": 1,
+    "totalCost": 1,
+    "maxAssignedDays": 2,
+    "minAssignedDays": 1,
+    "spread": 1,
+    "loadByMedic": [
+      { "medicId": "m1", "medicName": "Ana", "assignedDays": 2 },
+      { "medicId": "m2", "medicName": "Luis", "assignedDays": 1 }
+    ]
   }
 }
 ```
 
 `runId` y `createdAt` aparecen cuando `RUNS_PERSISTENCE_ENABLED=true`.
+`optimization` aparece solo cuando se solicita un objetivo distinto de `none` y la instancia es factible.
 
 ## 5. `POST /v1/solve` - Response (infactible)
 ```json
@@ -164,18 +187,31 @@ Si se excede un limite, la API responde `400` con `code=INVALID_INPUT` y `detail
 - `medics` lista medicos sin disponibilidad.
 - En `feasible=true`, `diagnostics` no debe estar presente.
 
-## 5.2 Determinismo del resultado
+## 5.2 `optimization` - Contrato P2a
+- `optimization` es opcional.
+- En request, `optimization.objective='fairness'` solicita optimizacion por equidad.
+- En response factible, `optimization.objective` es `fairness`.
+- `optimal=true` indica que el motor encontro el flujo maximo de costo minimo para el modelo implementado.
+- `score` es el valor publico para comparar soluciones del mismo objetivo.
+- `totalCost` expone el costo tecnico de min-cost max-flow.
+- `loadByMedic` lista carga final por medico, ordenada por `medicId`.
+- `spread = maxAssignedDays - minAssignedDays`.
+- En `feasible=false`, `optimization` no debe estar presente.
+
+## 5.3 Determinismo del resultado
 - La API debe devolver `assignments` ordenado ascendentemente por `dayId`.
 - `diagnostics.uncoveredDays` debe devolverse ordenado ascendentemente por `dayId`.
+- `optimization.loadByMedic` debe devolverse ordenado ascendentemente por `medicId`.
 - `stats.edges` cuenta aristas dirigidas del grafo de trabajo del motor antes de expandir residual.
 - `stats.runtimeMs` mide solo el tiempo del motor, no el tiempo total HTTP.
 
-## 5.3 Exportacion UI derivada del contrato
+## 5.4 Exportacion UI derivada del contrato
 - Export JSON: serializa exactamente la respuesta de `POST /v1/solve`.
 - Export CSV: solo disponible si `feasible=true`.
 - Export CSV de resultado actual: se deriva de `solveResponse.assignments` unido con el `instanceDraft` actual del frontend.
 - Export CSV historico: se deriva de `run.response.assignments` unido con `run.input`.
 - Columnas CSV P1: `runId,createdAt,instanceId,status,dayId,date,periodId,medicId,medicName,requiredFlow,maxFlow,runtimeMs`.
+- Columnas CSV P2 cuando existan metricas: `optimizationObjective,optimizationScore,optimizationTotalCost,medicAssignedDays,loadSpread`.
 - Filas CSV ordenadas por `dayId`.
 - `dayId`, `periodId`, `medicId`: salen de `assignments`.
 - `date`: se resuelve desde `days`.

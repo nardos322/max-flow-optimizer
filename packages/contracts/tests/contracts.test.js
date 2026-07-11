@@ -59,6 +59,13 @@ test('request schema accepts optional solve metadata', () => {
   assert.equal(validators.validateSolveRequest(payload), true);
 });
 
+test('request schema accepts P2 fairness optimization', () => {
+  const payload = readJson('input/fairness-balanced-choice.json');
+
+  assert.equal(validators.validateSolveRequest(payload), true);
+  assert.equal(SolveRequestSchema.safeParse(payload).success, true);
+});
+
 test('zod request schema is exported for direct consumers', () => {
   const payload = readJson('input/tiny-feasible.json');
   assert.equal(SolveRequestSchema.safeParse(payload).success, true);
@@ -107,6 +114,25 @@ test('run history schemas accept P1 payloads', () => {
   assert.equal(validators.validateRunsListResponse(listResponse), true);
   assert.equal(validators.validateRunDetail(detail), true);
   assert.equal(RunDetailSchema.safeParse(detail).success, true);
+});
+
+test('solve response schema accepts P2 fairness optimization payloads', () => {
+  const response = readJson('expected/fairness-balanced-choice.response.json');
+  const detail = {
+    runId: '3d3b1a3b-b57f-46f4-b514-15dbd6af8f4a',
+    instanceId: response.instanceId,
+    createdAt: '2026-07-10T12:00:00.000Z',
+    status: 'feasible',
+    input: readJson('input/fairness-balanced-choice.json'),
+    response: {
+      ...response,
+      runId: '3d3b1a3b-b57f-46f4-b514-15dbd6af8f4a',
+      createdAt: '2026-07-10T12:00:00.000Z'
+    }
+  };
+
+  assert.equal(validators.validateSolveResponse(response), true);
+  assert.equal(validators.validateRunDetail(detail), true);
 });
 
 test('run list query schema parses defaults and rejects invalid status', () => {
@@ -210,6 +236,20 @@ test('request schema rejects representative structural violations', () => {
         payload.medics[0].role = 'backup';
       },
       expected: { keyword: 'additionalProperties', path: 'medics.0' }
+    },
+    {
+      name: 'unknown optimization objective',
+      mutate(payload) {
+        payload.optimization = { objective: 'speed' };
+      },
+      expected: { keyword: 'enum', path: 'optimization.objective' }
+    },
+    {
+      name: 'additional optimization property',
+      mutate(payload) {
+        payload.optimization = { objective: 'fairness', weight: 2 };
+      },
+      expected: { keyword: 'additionalProperties', path: 'optimization' }
     }
   ];
 
@@ -289,6 +329,24 @@ test('response schema rejects representative structural violations', () => {
         return payload;
       })(),
       expected: { keyword: 'additionalProperties', path: 'stats' }
+    },
+    {
+      name: 'infeasible response with optimization',
+      payload: (() => {
+        const payload = cloneJson(infeasibleResponse);
+        payload.optimization = {
+          objective: 'fairness',
+          optimal: false,
+          score: 0,
+          totalCost: 0,
+          maxAssignedDays: 0,
+          minAssignedDays: 0,
+          spread: 0,
+          loadByMedic: []
+        };
+        return payload;
+      })(),
+      expected: { keyword: 'not', path: 'optimization' }
     }
   ];
 
