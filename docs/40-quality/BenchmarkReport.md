@@ -1,7 +1,8 @@
-# Benchmark Report - 2026-05-08
+# Benchmark Report - 2026-07-12
 
 ## Entorno
-- Fecha: `2026-05-08`
+- Fecha base P1: `2026-05-08`
+- Fecha medicion P2: `2026-07-12`
 - Plataforma: `linux 5.15.146.1-microsoft-standard-WSL2`
 - CPU: `Intel(R) Core(TM) i5-4670K CPU @ 3.40GHz`
 - CPU count: `4`
@@ -12,7 +13,10 @@
 - API con `MAX_REQUEST_BYTES=2500000`
 - Engine compilado en `Release` con `services/engine-cpp/build/maxflow_engine`
 - Script: `pnpm benchmark:api`
-- Algoritmo del motor: Dinic sobre la red residual del modelo
+- Script P2: `pnpm analytics:compare`
+- Algoritmo del motor:
+  - `objective=none`: Dinic sobre la red residual del modelo.
+  - `objective=fairness`: min-cost max-flow con costos marginales crecientes.
 
 ## Criterio v1
 - `p50 <= 300 ms`
@@ -54,10 +58,45 @@
 - No se observaron `5xx` durante la corrida.
 - `pnpm benchmark:api` valida automaticamente p50, p95, timeout y errores `5xx`; la corrida falla con exit code distinto de cero si se viola el criterio.
 
+## Comparativa P2 - `pnpm analytics:compare`
+La comparativa P2 genera filas separadas por `objective` para fixtures reales:
+- `none`: factibilidad compatible P1.
+- `fairness`: optimizacion por equidad con min-cost max-flow.
+
+La ultima corrida local genero `30` filas:
+- `20` filas de fixtures reales (`none` y `fairness`).
+- `10` filas sinteticas generadas en modo `none`.
+
+### `fairness-balanced-choice`
+| Objective | Engine runtime | Wall time | Nodes | Edges | Spread | Score | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `none` | `0 ms` | `3 ms` | `15` | `21` | `2` | `-` | `-` |
+| `fairness` | `0 ms` | `3 ms` | `27` | `45` | `1` | `1` | `1` |
+
+Lectura: el fixture P2 demuestra el objetivo funcional esperado: fairness conserva factibilidad y reduce `spread` de `2` a `1`.
+
+### `medium-random-50x50`
+| Objective | Engine runtime | Wall time | Nodes | Edges | Spread | Score | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `none` | `0 ms` | `6 ms` | `602` | `1492` | `6` | `-` | `-` |
+| `fairness` | `7 ms` | `12 ms` | `1352` | `4742` | `0` | `0` | `0` |
+
+### `large-random-200x200`
+| Objective | Engine runtime | Wall time | Nodes | Edges | Spread | Score | Cost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `none` | `4 ms` | `102 ms` | `8402` | `40400` | `8` | `-` | `-` |
+| `fairness` | `678 ms` | `779 ms` | `17802` | `105800` | `0` | `0` | `0` |
+
+Lectura P2:
+- `fairness` incrementa nodos/aristas y runtime, como se espera por la red expandida de costos.
+- En la corrida local, el benchmark `large-random-200x200` mantiene fairness por debajo de `1s` de engine.
+- `score` es equivalente a `spread` para el objetivo `fairness`.
+
 ## Comandos reproducibles
 ```bash
 pnpm run build:engine
 pnpm --filter @maxflow/api run dev
 pnpm smoke:api
 pnpm benchmark:api
+pnpm analytics:compare
 ```

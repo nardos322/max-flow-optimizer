@@ -1,6 +1,6 @@
 # Max Flow Optimizer
 
-Demo local para asignar dias de feriado a medicos usando un modelo de flujo maximo. El proyecto combina un motor C++ reutilizable, una API TypeScript y una UI React para cargar instancias, resolver factibilidad, persistir corridas, consultar historial y exportar resultados.
+Demo local para asignar dias de feriado a medicos usando modelos de flujo. El proyecto combina un motor C++ reutilizable, una API TypeScript y una UI React para cargar instancias, resolver factibilidad, optimizar por equidad, persistir corridas, consultar historial y exportar resultados.
 
 ## Tech Stack
 
@@ -26,13 +26,14 @@ En muchos equipos operativos hay que cubrir una lista de turnos, dias criticos o
 - ningun medico puede superar el limite global `C` (`maxDaysPerMedic`),
 - ningun medico puede tomar mas de un dia dentro del mismo periodo de feriados.
 
-El problema no busca "la asignacion mas linda" ni optimizar preferencias en v1. Busca responder una pregunta previa y mas basica: **existe una asignacion valida que cumpla todas las restricciones?**
+El modo base responde una pregunta previa y mas basica: **existe una asignacion valida que cumpla todas las restricciones?** P2 agrega un segundo modo: entre las asignaciones validas, buscar una distribucion mas pareja de carga entre medicos.
 
 ## Propuesta De Valor
 
 El sistema convierte un problema operativo facil de explicar, pero propenso a errores manuales, en una validacion reproducible:
 
 - **Factibilidad automatica:** determina si todos los dias pueden cubrirse bajo las reglas definidas.
+- **Optimizacion por equidad:** cuando se solicita, usa min-cost max-flow para reducir concentracion de carga sin relajar restricciones duras.
 - **Asignacion trazable:** cuando existe solucion, devuelve `dayId -> medicId` y metricas del solver.
 - **Historial local:** persiste corridas en SQLite y permite restaurar una corrida anterior como borrador.
 - **Errores claros:** separa errores de contrato, errores de dominio y casos infactibles con diagnosticos enriquecidos.
@@ -41,7 +42,7 @@ El sistema convierte un problema operativo facil de explicar, pero propenso a er
 
 ## Motor Reutilizable
 
-El nucleo tecnico esta en `services/engine-cpp`: un motor C++ que construye una red de flujo y resuelve max-flow con Dinic. Para este MVP se usa para feriados medicos, pero el patron aplica a otros problemas de asignacion con restricciones de capacidad:
+El nucleo tecnico esta en `services/engine-cpp`: un motor C++ que construye redes de flujo y resuelve max-flow con Dinic o min-cost max-flow para equidad. Para este producto se usa para feriados medicos, pero el patron aplica a otros problemas de asignacion con restricciones de capacidad:
 
 - cobertura de turnos por personal disponible,
 - asignacion de guardias o tareas por equipo,
@@ -53,7 +54,7 @@ La API se comunica con el motor mediante JSON por `stdin/stdout`, asi que el sol
 
 ## Alcance Actual
 
-Incluido en v1.1:
+Incluido en P2:
 
 - UI web con secciones `Periodos`, `Medicos` y `Planificador`.
 - Seccion `Historial` para consultar corridas persistidas.
@@ -65,12 +66,14 @@ Incluido en v1.1:
 - Validaciones estructurales con schemas compartidos.
 - Validaciones de dominio antes de invocar el motor.
 - Motor C++ de max-flow con salida deterministica.
+- Motor C++ de min-cost max-flow para `optimization.objective='fairness'`.
 - Resultado factible con asignaciones y metricas.
+- Resultado optimizado con `score`, `totalCost`, `spread`, cargas min/max y `loadByMedic`.
 - Diagnostico enriquecido para casos infactibles.
 - Persistencia local de corridas en SQLite.
 - Restauracion de una corrida historica como borrador.
-- Exportacion JSON y CSV enriquecido para resultado actual e historico.
-- Comparativa local de performance con `pnpm analytics:compare`.
+- Exportacion JSON y CSV enriquecido para resultado actual e historico, incluyendo columnas P2 cuando existen.
+- Comparativa local de performance con `pnpm analytics:compare`, distinguiendo `none` y `fairness`.
 - Demo reproducible con Docker Compose.
 - Tests unitarios, integracion API, smoke, benchmark local y quality gates.
 
@@ -78,7 +81,8 @@ Fuera de alcance:
 
 - autenticacion y multiusuario,
 - integracion con sistemas hospitalarios reales,
-- optimizacion por preferencias, equidad o costos,
+- preferencias individuales editables o pesos arbitrarios de optimizacion,
+- optimizacion multiobjetivo completa,
 - edicion avanzada tipo calendario,
 - despliegue productivo completo.
 
@@ -87,7 +91,7 @@ Fuera de alcance:
 ```mermaid
 flowchart LR
   UI["apps/web<br/>React + Vite"] -->|"POST /v1/solve"| API["apps/api<br/>Express + TypeScript"]
-  API -->|"stdin JSON wrapper<br/>requestId + input"| ENGINE["services/engine-cpp<br/>Dinic max-flow"]
+  API -->|"stdin JSON wrapper<br/>requestId + input"| ENGINE["services/engine-cpp<br/>max-flow + min-cost"]
   API --> SQLITE["SQLite<br/>historial local"]
   API --> CONTRACTS["packages/contracts<br/>Schemas Zod + tipos"]
   API --> DOMAIN["packages/domain<br/>Validaciones semanticas"]
@@ -168,11 +172,12 @@ pnpm typecheck
 1. Cargar `Fixture OK` en la UI.
 2. Revisar `Periodos` y `Medicos`.
 3. Resolver desde `Planificador`.
-4. Ver `feasible=true`, asignaciones, metricas, `runId` y `createdAt`.
-5. Exportar JSON/CSV.
-6. Abrir `Historial`, inspeccionar la corrida y restaurarla como borrador.
-7. Cargar `Fixture KO`.
-8. Resolver y mostrar `feasible=false` con diagnostico enriquecido de infactibilidad.
+4. Cambiar modo a `Equidad` y resolver una corrida optimizada.
+5. Ver `feasible=true`, asignaciones, metricas, `optimization.spread`, `loadByMedic`, `runId` y `createdAt`.
+6. Exportar JSON/CSV.
+7. Abrir `Historial`, inspeccionar la corrida y restaurarla como borrador.
+8. Cargar `Fixture KO`.
+9. Resolver y mostrar `feasible=false` con diagnostico enriquecido de infactibilidad.
 
 El guion completo esta en [DemoScript.md](docs/00-product/DemoScript.md).
 
@@ -181,7 +186,8 @@ El guion completo esta en [DemoScript.md](docs/00-product/DemoScript.md).
 - Pipeline CI: `lint -> test -> build`.
 - Smoke local: `tiny-feasible`, `tiny-infeasible-availability` y `medium-random-50x50`.
 - Benchmark local documentado en [BenchmarkReport.md](docs/40-quality/BenchmarkReport.md).
-- Objetivo v1: p95 <= 1s para instancias de hasta 200 dias y 200 medicos en ambiente local.
+- Objetivo v1/P1: p95 <= 1s para factibilidad en instancias de hasta 200 dias y 200 medicos en ambiente local.
+- P2 mide por separado el costo de `fairness`; en la corrida local documentada, `large-random-200x200` resolvio fairness en `678 ms` de engine.
 - Salida deterministica: mismo input produce el mismo output.
 
 ## Mejoras Posibles
@@ -190,16 +196,17 @@ Evolucion recomendada para v2:
 
 - Autenticacion y roles.
 - Soporte multi-hospital o multi-equipo.
-- Objetivos de optimizacion: equidad, preferencias, costos o penalizaciones.
+- Objetivos adicionales de optimizacion: preferencias, costos operativos o penalizaciones.
 - Batch solving para multiples escenarios.
 - Dashboard historico y analitica.
 - Integracion con calendarios o sistemas internos.
 
 ## Estado Actual
 
-- v1.1 implementada de punta a punta a nivel codigo.
+- P2 implementada de punta a punta a nivel codigo.
 - P1 completada: persistencia SQLite, historial, restauracion, diagnosticos enriquecidos, CSV P1, comparativa de performance y Docker Compose.
-- Verificacion local ejecutada: `pnpm test`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm analytics:compare`.
+- P2 completada: contratos de optimizacion, min-cost max-flow, API, UI de equidad, CSV P2, historial y comparativa `none` vs `fairness`.
+- Verificacion local ejecutada para P2: `pnpm test`, `pnpm build`, `pnpm lint`, `pnpm typecheck`, `pnpm analytics:compare`.
 - Pendiente operativo: smoke manual de `docker compose up --build` en una maquina con Docker disponible.
 - Release checklist documentado en [ReleaseChecklist.md](docs/00-product/ReleaseChecklist.md).
 - Backlog priorizado en [BACKLOG.md](docs/00-product/BACKLOG.md).

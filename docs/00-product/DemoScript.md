@@ -1,9 +1,10 @@
-# Demo Script v1.1 (5-7 minutos)
+# Demo Script P2 (7-9 minutos)
 
 ## 1. Objetivo del demo
 Mostrar de punta a punta que el sistema:
 - valida una instancia,
 - resuelve factibilidad con flujo maximo,
+- optimiza por equidad con min-cost max-flow cuando se solicita,
 - devuelve asignacion valida cuando existe,
 - persiste corridas localmente,
 - permite consultar historial y restaurar una corrida,
@@ -15,6 +16,8 @@ Mostrar de punta a punta que el sistema:
 - Tener listos 2 fixtures:
   - `tiny-feasible.json`
   - `tiny-infeasible-availability.json`
+- Tener listo el fixture P2:
+  - `fairness-balanced-choice.json`
 - Opcional para demo one-command: correr con `docker compose up --build`.
 
 ## 3. Guion recomendado
@@ -29,7 +32,7 @@ Mostrar de punta a punta que el sistema:
 - En `Medicos`, mostrar medicos y disponibilidad.
 - En `Planificador`, verificar el resumen consolidado de la instancia.
 
-### Paso 3 - Resolver caso factible (60s)
+### Paso 3 - Resolver caso factible base (60s)
 - Ejecutar `POST /v1/solve` desde `Planificador`.
 - Mostrar:
   - `feasible=true`,
@@ -37,18 +40,35 @@ Mostrar de punta a punta que el sistema:
   - tabla `dayId -> medicId`,
   - metricas (`maxFlow`, `runtimeMs`, `nodes`, `edges`).
 - Validar visualmente 1 restriccion (ej: nadie supera `C`).
-- Mostrar export JSON/CSV con columnas P1.
+- Mostrar export JSON/CSV con columnas base.
 
-### Paso 4 - Historial y restauracion (90s)
+### Paso 4 - Equidad P2 (90s)
+- Cargar o importar `fairness-balanced-choice.json`.
+- Resolver primero en modo `Factibilidad`.
+- Cambiar modo a `Equidad` y resolver de nuevo.
+- Mostrar:
+  - `optimization.objective=fairness`,
+  - `score`,
+  - `spread`,
+  - `maxAssignedDays` y `minAssignedDays`,
+  - tabla `loadByMedic`.
+- Explicar la diferencia:
+  - factibilidad solo busca una asignacion valida,
+  - equidad busca una asignacion valida con carga mas pareja,
+  - ninguna optimizacion puede violar disponibilidad, limite `C` ni maximo 1 dia por periodo.
+- Mostrar que el CSV agrega columnas P2 cuando existe `optimization`.
+
+### Paso 5 - Historial y restauracion (90s)
 - Ir a `Historial`.
 - Mostrar la corrida persistida con `createdAt`, `instanceId`, estado, flujo y runtime.
 - Abrir el detalle.
 - Mostrar que el detalle conserva `input` y `response` completos.
+- Si la corrida fue optimizada, mostrar `objective` y `spread`.
 - Exportar CSV historico.
 - Usar `Usar como borrador` y volver al `Planificador`.
 - Explicar que el resultado anterior queda invalidado porque el draft restaurado es la fuente actual.
 
-### Paso 5 - Caso infactible (90s)
+### Paso 6 - Caso infactible (90s)
 - Cargar `tiny-infeasible-availability.json` usando `Fixture KO` o importando JSON.
 - Recorrer rapido `Periodos` y `Medicos` para mostrar que la entrada cambio.
 - Ejecutar solucion desde `Planificador`.
@@ -60,8 +80,9 @@ Mostrar de punta a punta que el sistema:
   - `diagnostics.capacity`,
   - `diagnostics.daysWithoutAvailability`,
   - resumen por periodo si aparece.
+- Explicar que en `feasible=false` no se emiten metricas de optimizacion porque no existe asignacion completa que optimizar.
 
-### Paso 6 - Cierre tecnico (60s)
+### Paso 7 - Cierre tecnico (60s)
 - Mostrar estructura monorepo y separacion de responsabilidades:
   - `services/engine-cpp`
   - `apps/api`
@@ -69,11 +90,12 @@ Mostrar de punta a punta que el sistema:
   - `packages/contracts`
 - Mencionar SQLite local para historial y volumen persistente en Docker Compose.
 - Mencionar pruebas, smoke local y quality gates de CI.
-- Mencionar `pnpm analytics:compare` como reporte reproducible de performance.
+- Mencionar `pnpm analytics:compare` como reporte reproducible de performance, con filas separadas para `none` y `fairness`.
 
 ## 4. Mensajes clave para portfolio
 - "El modelo matematico esta formalizado y probado."
 - "El motor C++ es reusable e independiente de la API."
+- "P2 separa factibilidad de optimizacion: primero cumple restricciones duras, despues mejora equidad."
 - "El historial hace que la demo sea reproducible y auditable localmente."
 - "Los diagnosticos explican por que una instancia no se puede cubrir."
 - "La demo es reproducible con casos factible/infactible y Docker Compose."

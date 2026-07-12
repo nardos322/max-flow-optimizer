@@ -77,3 +77,45 @@ Nota: el smoke Docker queda pendiente porque el entorno WSL usado para esta revi
 
 ### 5. Criterio de salida
 P1 esta cerrada a nivel codigo y documentacion cuando los checks anteriores estan completos. Para publicarla como release demostrable, ejecutar y marcar el smoke Docker manual en una maquina con Docker activo.
+
+## P2 - Optimization v2
+### 1. Funcionalidad
+- [x] `POST /v1/solve` mantiene compatibilidad cuando no recibe `optimization`.
+- [x] `POST /v1/solve` acepta `optimization.objective='fairness'`.
+- [x] El engine usa min-cost max-flow para equidad sin relajar restricciones duras.
+- [x] La response factible optimizada devuelve `optimization` con `score`, `totalCost`, `spread`, cargas min/max y `loadByMedic`.
+- [x] La response infactible no emite `optimization`.
+- [x] La UI permite elegir `Factibilidad` o `Equidad`.
+- [x] La UI muestra metricas y distribucion por medico cuando existe `optimization`.
+- [x] Export JSON conserva la response completa.
+- [x] Export CSV agrega columnas P2 cuando existen metricas.
+- [x] Historial conserva request/response optimizados y muestra `objective`/`spread` en detalle.
+
+### 2. Contratos y fixtures
+- [x] Schemas request/response documentan `optimization`.
+- [x] OpenAPI documenta `optimization`.
+- [x] `fairness-balanced-choice` valida request y response P2.
+- [x] La comparativa local demuestra mejora de `spread` en `fairness-balanced-choice`: `none=2`, `fairness=1`.
+
+### 3. Analytics y performance
+- [x] `pnpm analytics:compare` genera filas separadas por `objective`.
+- [x] El reporte Markdown distingue `none` y `fairness`.
+- [x] El JSON incluye `optimizationScore`, `optimizationTotalCost`, `spread`, cargas min/max y `loadByMedic`.
+- [x] La corrida local P2 mantiene `large-random-200x200` fairness dentro de 1s de engine (`678 ms` en la ultima medicion local).
+
+### 4. Calidad tecnica
+- [x] `pnpm test` en verde.
+- [x] `pnpm build` en verde.
+- [x] `pnpm lint` en verde.
+- [x] `pnpm typecheck` en verde.
+- [x] `pnpm analytics:compare` en verde.
+
+### 5. Documentacion
+- [x] README actualizado para estado P2.
+- [x] Demo script explica diferencia entre factibilidad y optimizacion.
+- [x] Benchmark report documenta comparativa P2.
+
+### 6. Pendiente operativo
+- [ ] Smoke manual Docker Compose con flujo P2 completo.
+
+Nota: el smoke Docker sigue pendiente por disponibilidad del entorno Docker, igual que en P1.
