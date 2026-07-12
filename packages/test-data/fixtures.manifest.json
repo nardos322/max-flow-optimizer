@@ -79,6 +79,13 @@
       "assertionMode": "exact-response"
     },
     {
+      "id": "fairness-balanced-choice",
+      "inputPath": "input/fairness-balanced-choice.json",
+      "expectedPath": "expected/fairness-balanced-choice.response.json",
+      "category": "feasible",
+      "assertionMode": "exact-response"
+    },
+    {
       "id": "medium-random-50x50",
       "inputPath": "input/medium-random-50x50.json",
       "expectedPath": null,

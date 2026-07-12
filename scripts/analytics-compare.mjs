@@ -55,24 +55,30 @@ async function loadFixtureDatasets() {
   const manifest = await readJson(path.join(testDataRoot, 'fixtures.manifest.json'));
   const runnableCategories = new Set(['feasible', 'infeasible', 'smoke', 'benchmark']);
 
-  return Promise.all(
+  const datasets = await Promise.all(
     manifest.fixtures
       .filter((fixture) => runnableCategories.has(fixture.category))
       .map(async (fixture) => {
         const input = await readJson(path.join(testDataRoot, fixture.inputPath));
-        return {
-          source: 'fixture',
-          dataset: fixture.id,
-          category: fixture.category,
-          input,
-          requestPayload: {
-            requestId: `compare-${fixture.id}`,
-            input
-          },
-          mode: 'single'
-        };
+        return ['none', 'fairness'].map((objective) => {
+          const objectiveInput = buildObjectiveInput(input, objective);
+          return {
+            source: 'fixture',
+            dataset: fixture.id,
+            category: fixture.category,
+            objective,
+            input: objectiveInput,
+            requestPayload: {
+              requestId: `compare-${fixture.id}-${objective}`,
+              input: objectiveInput
+            },
+            mode: 'single'
+          };
+        });
       })
   );
+
+  return datasets.flat();
 }
 
 async function loadGeneratedDatasets() {
@@ -99,6 +105,7 @@ async function loadGeneratedDatasets() {
     source: 'generated',
     dataset: scenario.instanceId,
     category: scenario.scenarioName,
+    objective: 'none',
     input: null,
     requestPayload: {
       requestId: `compare-${scenario.instanceId}`,
@@ -129,6 +136,7 @@ async function runDataset(dataset) {
       dataset: dataset.dataset,
       category: dataset.category,
       status: 'error',
+      objective: dataset.objective,
       error: result.stderr || result.stdout,
       wallTimeMs
     };
@@ -141,15 +149,19 @@ async function runDataset(dataset) {
       dataset: dataset.dataset,
       category: dataset.category,
       status: 'error',
+      objective: dataset.objective,
       error: response.error,
       wallTimeMs
     };
   }
 
+  const loadMetrics = getLoadMetrics(response, dataset.input);
+
   return {
     source: dataset.source,
     dataset: dataset.dataset,
     category: dataset.category,
+    objective: dataset.objective,
     status: 'ok',
     days: dataset.input?.days.length ?? dataset.requestPayload.daysCount,
     medics: dataset.input?.medics.length ?? dataset.requestPayload.medicsCount,
@@ -161,6 +173,12 @@ async function runDataset(dataset) {
     nodes: response.stats?.nodes ?? null,
     edges: response.stats?.edges ?? null,
     runtimeMs: response.stats?.runtimeMs ?? null,
+    optimizationScore: response.optimization?.score ?? null,
+    optimizationTotalCost: response.optimization?.totalCost ?? null,
+    maxAssignedDays: response.optimization?.maxAssignedDays ?? loadMetrics?.maxAssignedDays ?? null,
+    minAssignedDays: response.optimization?.minAssignedDays ?? loadMetrics?.minAssignedDays ?? null,
+    spread: response.optimization?.spread ?? loadMetrics?.spread ?? null,
+    loadByMedic: response.optimization?.loadByMedic ?? loadMetrics?.loadByMedic ?? null,
     wallTimeMs
   };
 }
@@ -201,18 +219,74 @@ Generated at: \`${report.generatedAt}\`
 
 Engine: \`${report.enginePath}\`
 
-| Source | Dataset | Category | Status | Days | Medics | Availability | Feasible | Flow | Nodes | Edges | Runtime | Wall time |
-| --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |
+| Source | Dataset | Category | Objective | Status | Days | Medics | Availability | Feasible | Flow | Nodes | Edges | Runtime | Wall time | Score | Cost | Spread |
+| --- | --- | --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 ${report.rows.map(renderRow).join('\n')}
 `;
 }
 
 function renderRow(row) {
   if (row.status !== 'ok') {
-    return `| ${row.source} | \`${row.dataset}\` | \`${row.category}\` | error | - | - | - | - | - | - | - | - | ${row.wallTimeMs} ms |`;
+    return `| ${row.source} | \`${row.dataset}\` | \`${row.category}\` | ${row.objective} | error | - | - | - | - | - | - | - | - | ${row.wallTimeMs} ms | - | - | - |`;
   }
 
-  return `| ${row.source} | \`${row.dataset}\` | \`${row.category}\` | ok | ${row.days} | ${row.medics} | ${row.availability ?? '-'} | ${row.feasible} | ${row.maxFlow}/${row.requiredFlow} | ${row.nodes} | ${row.edges} | ${row.runtimeMs} ms | ${row.wallTimeMs} ms |`;
+  return `| ${row.source} | \`${row.dataset}\` | \`${row.category}\` | ${row.objective} | ok | ${row.days} | ${row.medics} | ${row.availability ?? '-'} | ${row.feasible} | ${row.maxFlow}/${row.requiredFlow} | ${row.nodes} | ${row.edges} | ${row.runtimeMs} ms | ${row.wallTimeMs} ms | ${formatNullable(row.optimizationScore)} | ${formatNullable(row.optimizationTotalCost)} | ${formatNullable(row.spread)} |`;
+}
+
+function buildObjectiveInput(input, objective) {
+  const cloned = cloneJson(input);
+  if (objective === 'fairness') {
+    return {
+      ...cloned,
+      optimization: {
+        objective: 'fairness'
+      }
+    };
+  }
+
+  delete cloned.optimization;
+  return cloned;
+}
+
+function getLoadMetrics(response, input) {
+  if (!response.feasible || !input) {
+    return null;
+  }
+
+  const loadByMedic = [...input.medics]
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((medic) => ({
+      medicId: medic.id,
+      medicName: medic.name,
+      assignedDays: 0
+    }));
+  const loadByMedicId = new Map(loadByMedic.map((load) => [load.medicId, load]));
+
+  for (const assignment of response.assignments ?? []) {
+    const load = loadByMedicId.get(assignment.medicId);
+    if (load) {
+      load.assignedDays += 1;
+    }
+  }
+
+  const assignedDays = loadByMedic.map((load) => load.assignedDays);
+  const maxAssignedDays = assignedDays.length > 0 ? Math.max(...assignedDays) : 0;
+  const minAssignedDays = assignedDays.length > 0 ? Math.min(...assignedDays) : 0;
+
+  return {
+    maxAssignedDays,
+    minAssignedDays,
+    spread: maxAssignedDays - minAssignedDays,
+    loadByMedic
+  };
+}
+
+function formatNullable(value) {
+  return value ?? '-';
+}
+
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value));
 }
 
 async function readJson(filePath) {
