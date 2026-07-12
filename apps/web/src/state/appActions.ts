@@ -1,4 +1,10 @@
-import type { RunDetailV1, RunsListResponseV1, RunStatusV1, SolveResponseV1 } from '@maxflow/contracts/v1';
+import type {
+  OptimizationObjectiveV1,
+  RunDetailV1,
+  RunsListResponseV1,
+  RunStatusV1,
+  SolveResponseV1
+} from '@maxflow/contracts/v1';
 
 import type { ApiErrorDetails, AppSection, InstanceDraft } from '../types.js';
 
@@ -14,6 +20,7 @@ export type AppAction =
   | { type: 'upsertMedic'; medic: InstanceDraft['medics'][number] }
   | { type: 'deleteMedic'; medicId: string }
   | { type: 'toggleAvailability'; medicId: string; dayId: string }
+  | { type: 'setOptimizationObjective'; objective: OptimizationObjectiveV1 }
   | { type: 'beginSolve' }
   | { type: 'solveSuccess'; result: SolveResponseV1 }
   | { type: 'solveError'; error: ApiErrorDetails }

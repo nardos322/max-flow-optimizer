@@ -145,6 +145,22 @@ describe('appStateReducer', () => {
     expect(nextState.runsOffset).toBe(0);
   });
 
+  it('changes optimization objective and clears stale solve state', () => {
+    const nextState = appStateReducer(
+      {
+        ...initialAppState,
+        lastSolveResult: runDetail.response,
+        isSolving: true
+      },
+      { type: 'setOptimizationObjective', objective: 'fairness' }
+    );
+
+    expect(nextState.optimizationObjective).toBe('fairness');
+    expect(nextState.lastSolveResult).toBeNull();
+    expect(nextState.lastSolveError).toBeNull();
+    expect(nextState.isSolving).toBe(false);
+  });
+
   it('restores a selected run as the active draft and clears solve state', () => {
     const nextState = appStateReducer(
       {
@@ -165,5 +181,21 @@ describe('appStateReducer', () => {
     expect(nextState.lastSolveError).toBeNull();
     expect(nextState.activeSection).toBe('planner');
     expect(nextState.selectedRun).toEqual(runDetail);
+  });
+
+  it('restores optimization objective from a selected run input', () => {
+    const optimizedRun: RunDetailV1 = {
+      ...runDetail,
+      input: {
+        ...FIXTURE_DRAFT,
+        optimization: {
+          objective: 'fairness'
+        }
+      }
+    };
+
+    const nextState = appStateReducer(initialAppState, { type: 'restoreRunDraft', run: optimizedRun });
+
+    expect(nextState.optimizationObjective).toBe('fairness');
   });
 });

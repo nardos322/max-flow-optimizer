@@ -8,6 +8,9 @@ export function buildCsvContent(draft: InstanceDraft, result: SolveResponseV1 | 
   if (rows.length === 0) {
     return null;
   }
+  const optimizationLoadByMedic = new Map(
+    result?.optimization?.loadByMedic.map((load) => [load.medicId, load.assignedDays]) ?? []
+  );
 
   const body = rows.map((row) =>
     [
@@ -22,7 +25,12 @@ export function buildCsvContent(draft: InstanceDraft, result: SolveResponseV1 | 
       row.medicName,
       result?.requiredFlow ?? '',
       result?.maxFlow ?? '',
-      result?.stats.runtimeMs ?? ''
+      result?.stats.runtimeMs ?? '',
+      result?.optimization?.objective ?? '',
+      result?.optimization?.score ?? '',
+      result?.optimization?.totalCost ?? '',
+      optimizationLoadByMedic.get(row.medicId) ?? '',
+      result?.optimization?.spread ?? ''
     ]
       .map(escapeCsv)
       .join(',')
@@ -47,7 +55,12 @@ const CSV_HEADER = [
   'medicName',
   'requiredFlow',
   'maxFlow',
-  'runtimeMs'
+  'runtimeMs',
+  'optimizationObjective',
+  'optimizationScore',
+  'optimizationTotalCost',
+  'medicAssignedDays',
+  'loadSpread'
 ];
 
 function escapeCsv(value: string | number): string {

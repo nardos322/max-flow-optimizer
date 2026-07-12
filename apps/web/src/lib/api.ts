@@ -1,16 +1,27 @@
-import type { ApiErrorCodeV1, RunDetailV1, RunsListResponseV1, RunStatusV1, SolveResponseV1 } from '@maxflow/contracts/v1';
+import type {
+  ApiErrorCodeV1,
+  OptimizationObjectiveV1,
+  RunDetailV1,
+  RunsListResponseV1,
+  RunStatusV1,
+  SolveRequestV1,
+  SolveResponseV1
+} from '@maxflow/contracts/v1';
 import { ApiErrorSchema, RunDetailSchema, RunsListResponseSchema, SolveResponseSchema } from '@maxflow/contracts/v1/schemas';
 
 import type { ApiErrorDetails, InstanceDraft } from '../types.js';
 import { sortDraft } from '../features/draft/index.js';
 
-export async function solveDraft(instanceDraft: InstanceDraft): Promise<SolveResponseV1> {
+export async function solveDraft(
+  instanceDraft: InstanceDraft,
+  optimizationObjective: OptimizationObjectiveV1 = 'none'
+): Promise<SolveResponseV1> {
   const response = await fetch(`${resolveApiBaseUrl()}/v1/solve`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(sortDraft(instanceDraft))
+    body: JSON.stringify(buildSolveRequest(instanceDraft, optimizationObjective))
   }).catch((error: Error) => {
     throw createClientError('INTERNAL_ERROR', error.message || 'Unable to reach the API.');
   });
@@ -32,6 +43,22 @@ export async function solveDraft(instanceDraft: InstanceDraft): Promise<SolveRes
   }
 
   return solveResult.data;
+}
+
+function buildSolveRequest(instanceDraft: InstanceDraft, optimizationObjective: OptimizationObjectiveV1): SolveRequestV1 {
+  const sortedDraft = sortDraft(instanceDraft);
+  const { optimization: _optimization, ...baseRequest } = sortedDraft;
+
+  if (optimizationObjective === 'fairness') {
+    return {
+      ...baseRequest,
+      optimization: {
+        objective: 'fairness'
+      }
+    };
+  }
+
+  return baseRequest;
 }
 
 export type ListRunsParams = {

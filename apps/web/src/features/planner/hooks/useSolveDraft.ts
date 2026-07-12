@@ -10,7 +10,7 @@ export function useSolveDraft() {
     dispatch({ type: 'beginSolve' });
 
     try {
-      const result = await solveDraft(state.instanceDraft);
+      const result = await solveDraft(state.instanceDraft, state.optimizationObjective);
       dispatch({ type: 'solveSuccess', result });
     } catch (error) {
       dispatch({

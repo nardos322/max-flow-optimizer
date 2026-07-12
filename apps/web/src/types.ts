@@ -3,6 +3,7 @@ import type {
   RunDetailV1,
   RunsListResponseV1,
   RunStatusV1,
+  OptimizationObjectiveV1,
   SolveRequestV1,
   SolveResponseV1
 } from '@maxflow/contracts/v1';
@@ -19,6 +20,7 @@ export type AppState = {
   lastSolveResult: SolveResponseV1 | null;
   lastSolveError: ApiErrorDetails | null;
   isSolving: boolean;
+  optimizationObjective: OptimizationObjectiveV1;
   runsList: RunsListResponseV1 | null;
   selectedRun: RunDetailV1 | null;
   isLoadingRuns: boolean;

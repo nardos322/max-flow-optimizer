@@ -29,12 +29,47 @@ describe('planner result helpers', () => {
 
     expect(csv).toBe(
       [
-        'runId,createdAt,instanceId,status,dayId,date,periodId,medicId,medicName,requiredFlow,maxFlow,runtimeMs',
-        'run-001,2026-07-10T12:00:00.000Z,tiny-feasible,feasible,d1,2026-04-17,p1,m1,Ana,3,3,1',
-        'run-001,2026-07-10T12:00:00.000Z,tiny-feasible,feasible,d2,2026-04-18,p1,m2,Luis,3,3,1',
-        'run-001,2026-07-10T12:00:00.000Z,tiny-feasible,feasible,d3,2026-04-20,p2,m1,Ana,3,3,1'
+        'runId,createdAt,instanceId,status,dayId,date,periodId,medicId,medicName,requiredFlow,maxFlow,runtimeMs,optimizationObjective,optimizationScore,optimizationTotalCost,medicAssignedDays,loadSpread',
+        'run-001,2026-07-10T12:00:00.000Z,tiny-feasible,feasible,d1,2026-04-17,p1,m1,Ana,3,3,1,,,,,',
+        'run-001,2026-07-10T12:00:00.000Z,tiny-feasible,feasible,d2,2026-04-18,p1,m2,Luis,3,3,1,,,,,',
+        'run-001,2026-07-10T12:00:00.000Z,tiny-feasible,feasible,d3,2026-04-20,p2,m1,Ana,3,3,1,,,,,'
       ].join('\n')
     );
+  });
+
+  it('adds P2 optimization columns when present', () => {
+    const csv = buildCsvContent(FIXTURE_DRAFT, {
+      instanceId: 'tiny-feasible',
+      feasible: true,
+      requiredFlow: 3,
+      maxFlow: 3,
+      assignments: [
+        { dayId: 'd1', medicId: 'm1', periodId: 'p1' },
+        { dayId: 'd2', medicId: 'm2', periodId: 'p1' },
+        { dayId: 'd3', medicId: 'm1', periodId: 'p2' }
+      ],
+      stats: {
+        nodes: 21,
+        edges: 31,
+        runtimeMs: 2
+      },
+      optimization: {
+        objective: 'fairness',
+        optimal: true,
+        score: 1,
+        totalCost: 1,
+        maxAssignedDays: 2,
+        minAssignedDays: 1,
+        spread: 1,
+        loadByMedic: [
+          { medicId: 'm1', medicName: 'Ana', assignedDays: 2 },
+          { medicId: 'm2', medicName: 'Luis', assignedDays: 1 }
+        ]
+      }
+    });
+
+    expect(csv?.split('\n')[1]).toBe(',,tiny-feasible,feasible,d1,2026-04-17,p1,m1,Ana,3,3,2,fairness,1,1,2,1');
+    expect(csv?.split('\n')[2]).toBe(',,tiny-feasible,feasible,d2,2026-04-18,p1,m2,Luis,3,3,2,fairness,1,1,1,1');
   });
 
   it('builds historical CSV from persisted run input and response', () => {
@@ -68,8 +103,8 @@ describe('planner result helpers', () => {
 
     expect(buildRunCsvContent(run)).toBe(
       [
-        'runId,createdAt,instanceId,status,dayId,date,periodId,medicId,medicName,requiredFlow,maxFlow,runtimeMs',
-        'run-002,2026-07-10T12:01:00.000Z,tiny-feasible,feasible,d1,2026-04-17,p1,m1,Ana,3,3,2'
+        'runId,createdAt,instanceId,status,dayId,date,periodId,medicId,medicName,requiredFlow,maxFlow,runtimeMs,optimizationObjective,optimizationScore,optimizationTotalCost,medicAssignedDays,loadSpread',
+        'run-002,2026-07-10T12:01:00.000Z,tiny-feasible,feasible,d1,2026-04-17,p1,m1,Ana,3,3,2,,,,,'
       ].join('\n')
     );
     expect(buildCsvContent(mutatedCurrentDraft, run.response)).toContain('2099-01-01');

@@ -20,6 +20,7 @@ export const initialAppState: AppState = {
   lastSolveResult: null,
   lastSolveError: null,
   isSolving: false,
+  optimizationObjective: 'none',
   runsList: null,
   selectedRun: null,
   isLoadingRuns: false,
@@ -55,6 +56,14 @@ export function appStateReducer(state: AppState, action: AppAction): AppState {
       return resetSolveState(state, deleteMedic(state.instanceDraft, action.medicId));
     case 'toggleAvailability':
       return resetSolveState(state, toggleAvailability(state.instanceDraft, action.medicId, action.dayId));
+    case 'setOptimizationObjective':
+      return {
+        ...state,
+        optimizationObjective: action.objective,
+        isSolving: false,
+        lastSolveResult: null,
+        lastSolveError: null
+      };
     case 'beginSolve':
       return {
         ...state,
@@ -120,6 +129,7 @@ export function appStateReducer(state: AppState, action: AppAction): AppState {
       return {
         ...resetSolveState(state, replaceDraft(action.run.input)),
         activeSection: 'planner',
+        optimizationObjective: action.run.input.optimization?.objective ?? 'none',
         selectedRun: action.run
       };
     default:

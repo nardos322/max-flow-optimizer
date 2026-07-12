@@ -199,6 +199,12 @@ function RunDetailPanel() {
           <DetailItem label="medics" value={String(run.input.medics.length)} />
           <DetailItem label="requiredFlow" value={String(run.response.requiredFlow)} />
           <DetailItem label="maxFlow" value={String(run.response.maxFlow)} />
+          {run.response.optimization ? (
+            <>
+              <DetailItem label="objective" value={run.response.optimization.objective} />
+              <DetailItem label="spread" value={String(run.response.optimization.spread)} />
+            </>
+          ) : null}
         </dl>
 
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">

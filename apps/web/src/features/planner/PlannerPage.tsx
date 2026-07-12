@@ -1,12 +1,13 @@
 import { getDraftIssue, getDraftIssues } from '../draft/index.js';
 import { buildAssignmentRows } from './assignmentRows.js';
 import { buildCsvContent } from './exportResult.js';
-import { useAppState } from '../../state/appState.js';
+import { useAppDispatch, useAppState } from '../../state/appState.js';
 import { Badge, PageSection } from '../../shared/ui/index.js';
 import { AssignmentResultPanel } from './components/AssignmentResultPanel.js';
 import { DiagnosticsPanel } from './components/DiagnosticsPanel.js';
 import { InputSummaryPanel } from './components/InputSummaryPanel.js';
 import { MetricsPanel } from './components/MetricsPanel.js';
+import { OptimizationPanel } from './components/OptimizationPanel.js';
 import { SolveActionsPanel } from './components/SolveActionsPanel.js';
 import { useSolveDraft } from './hooks/useSolveDraft.js';
 
@@ -14,6 +15,7 @@ export type DraftIssue = ReturnType<typeof getDraftIssue>;
 
 export function PlannerPage() {
   const state = useAppState();
+  const dispatch = useAppDispatch();
   const { runSolve } = useSolveDraft();
   const draftIssue = getDraftIssue(state.instanceDraft);
   const draftIssues = getDraftIssues(state.instanceDraft);
@@ -43,6 +45,8 @@ export function PlannerPage() {
           isSolving={state.isSolving}
           lastSolveError={state.lastSolveError}
           lastSolveResult={state.lastSolveResult}
+          optimizationObjective={state.optimizationObjective}
+          onOptimizationObjectiveChange={(objective) => dispatch({ type: 'setOptimizationObjective', objective })}
           onRunSolve={runSolve}
         />
       </div>
@@ -56,6 +60,7 @@ export function PlannerPage() {
 
         <div className="space-y-5">
           <MetricsPanel lastSolveResult={state.lastSolveResult} />
+          <OptimizationPanel lastSolveResult={state.lastSolveResult} />
           <DiagnosticsPanel lastSolveResult={state.lastSolveResult} />
         </div>
       </div>
