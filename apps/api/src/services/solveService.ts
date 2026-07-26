@@ -7,7 +7,7 @@ import type { ApiConfig } from '../config.js';
 import type { EngineClient } from '../engineClient.js';
 import { ApiHttpError, toApiErrorCode } from '../errors.js';
 import { enrichDiagnostics } from './diagnostics.js';
-import type { RunsStore } from './runsStore.js';
+import type { RunsStore } from './runsStore/index.js';
 
 type SolveServiceDependencies = {
   config: ApiConfig;

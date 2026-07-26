@@ -3,7 +3,7 @@ import type { RequestHandler } from 'express';
 import { RunsListQuerySchema } from '@maxflow/contracts';
 
 import { ApiHttpError } from '../errors.js';
-import type { RunsStore } from '../services/runsStore.js';
+import type { RunsStore } from '../services/runsStore/index.js';
 
 type RunsControllerDependencies = {
   runsStore?: RunsStore;

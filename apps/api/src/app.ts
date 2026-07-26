@@ -12,7 +12,7 @@ import { createErrorMiddleware } from './middleware/errorMiddleware.js';
 import { createRequestContextMiddleware } from './middleware/requestContextMiddleware.js';
 import { createHealthRoutes } from './routes/healthRoutes.js';
 import { createV1Routes } from './routes/v1Routes.js';
-import { createRunsStore, type RunsStore } from './services/runsStore.js';
+import { createRunsStore, type RunsStore } from './services/runsStore/index.js';
 import { createSolveService } from './services/solveService.js';
 
 type CreateAppOptions = {

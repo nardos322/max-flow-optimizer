@@ -1,84 +1,16 @@
-import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
 import Database from 'better-sqlite3';
-import type {
-  RunDetailV1,
-  RunStatusV1,
-  RunSummaryV1,
-  SolveRequestV1,
-  SolveResponseV1
-} from '@maxflow/contracts';
+import type { RunStatusV1, SolveRequestV1, SolveResponseV1 } from '@maxflow/contracts';
 
-type RunsStoreOptions = {
+import { createInputHash } from './hashing.js';
+import { mapDetailRow, mapSummaryRow, type RunDetailRow, type RunRow } from './mappers.js';
+import type { RunsStore } from './types.js';
+
+type SqliteRunsStoreOptions = {
   dbPath: string;
 };
-
-export type InsertRunInput = {
-  runId: string;
-  createdAt: string;
-  input: SolveRequestV1;
-  response: SolveResponseV1;
-  contractVersion: string;
-  engineVersion?: string;
-};
-
-export type ListRunsQuery = {
-  limit: number;
-  offset: number;
-  status?: RunStatusV1;
-  instanceId?: string;
-};
-
-type RunRow = {
-  run_id: string;
-  instance_id: string;
-  created_at: string;
-  status: RunStatusV1;
-  feasible: 0 | 1;
-  required_flow: number;
-  max_flow: number;
-  runtime_ms: number;
-  nodes: number;
-  edges: number;
-  input_hash: string;
-  source: string;
-};
-
-type RunDetailRow = RunRow & {
-  input_json: string;
-  response_json: string;
-};
-
-export type RunsListResult = {
-  items: RunSummaryV1[];
-  total: number;
-};
-
-export type RunsStore = {
-  insertRun(input: InsertRunInput): void;
-  listRuns(query: ListRunsQuery): RunsListResult;
-  getRun(runId: string): RunDetailV1 | null;
-  close(): void;
-};
-
-function stableStringify(value: unknown): string {
-  if (Array.isArray(value)) {
-    return `[${value.map(stableStringify).join(',')}]`;
-  }
-
-  if (value && typeof value === 'object') {
-    const entries = Object.entries(value).sort(([left], [right]) => left.localeCompare(right));
-    return `{${entries.map(([key, item]) => `${JSON.stringify(key)}:${stableStringify(item)}`).join(',')}}`;
-  }
-
-  return JSON.stringify(value);
-}
-
-function createInputHash(input: SolveRequestV1): string {
-  return `sha256:${crypto.createHash('sha256').update(stableStringify(input)).digest('hex')}`;
-}
 
 function getRunStatus(response: SolveResponseV1): RunStatusV1 {
   return response.feasible ? 'feasible' : 'infeasible';
@@ -88,35 +20,7 @@ function getRunSource(input: SolveRequestV1): string {
   return input.metadata?.source ?? 'unknown';
 }
 
-function mapSummaryRow(row: RunRow): RunSummaryV1 {
-  return {
-    runId: row.run_id,
-    instanceId: row.instance_id,
-    createdAt: row.created_at,
-    status: row.status,
-    feasible: row.feasible === 1,
-    requiredFlow: row.required_flow,
-    maxFlow: row.max_flow,
-    runtimeMs: row.runtime_ms,
-    nodes: row.nodes,
-    edges: row.edges,
-    inputHash: row.input_hash,
-    source: row.source
-  };
-}
-
-function mapDetailRow(row: RunDetailRow): RunDetailV1 {
-  return {
-    runId: row.run_id,
-    instanceId: row.instance_id,
-    createdAt: row.created_at,
-    status: row.status,
-    input: JSON.parse(row.input_json) as SolveRequestV1,
-    response: JSON.parse(row.response_json) as SolveResponseV1
-  };
-}
-
-export function createRunsStore({ dbPath }: RunsStoreOptions): RunsStore {
+export function createSqliteRunsStore({ dbPath }: SqliteRunsStoreOptions): RunsStore {
   fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
   const db = new Database(dbPath);
@@ -292,3 +196,4 @@ export function createRunsStore({ dbPath }: RunsStoreOptions): RunsStore {
     }
   };
 }
+
